@@ -33,6 +33,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/painel/historico',
+    name: 'history',
+    component: () => import('@/History/HistoryView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/painel/configuracoes',
     name: 'settings',
     component: () => import('@/Settings/SettingsView.vue'),

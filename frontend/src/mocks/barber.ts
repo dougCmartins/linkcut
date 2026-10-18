@@ -35,9 +35,3 @@ export const initialRequests: BookingRequest[] = [
     status: AppointmentStatus.Pending,
   },
 ]
-
-/** Current month figures, in cents. */
-export const monthlyFinances = {
-  revenueInCents: 1_284_000,
-  expensesInCents: 846_000,
-}

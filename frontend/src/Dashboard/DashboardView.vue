@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { capitalize, formatLongDate, formatMonthName, toIsoDate } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import MetricCard from './MetricCard.vue'
@@ -28,13 +29,24 @@ async function logout(): Promise<void> {
 const profile = computed(() => settingsStore.profile)
 const avatarUrl = computed(() => settingsStore.resolveImage(profile.value.avatar))
 const firstName = computed(() => profile.value.name.trim().split(' ')[0] ?? profile.value.name)
+const PLACEHOLDER = '—'
+const today = new Date()
+const todayLabel = capitalize(formatLongDate(today))
+const periodTitle = t('dashboard.periodOf', { month: formatMonthName(today) })
+
 const summary = computed(() => dashboardStore.summary)
-const marginLabel = computed(() => `${summary.value.marginPercent.toFixed(1).replace('.', ',')}%`)
-const marginBadge = computed(() =>
-  summary.value.isBelowHealthyMargin
-    ? t('dashboard.marginAlert', { threshold: HEALTHY_MARGIN_PERCENT })
-    : t('dashboard.marginHealthy'),
+const revenueLabel = computed(() => (summary.value ? formatBRL(summary.value.revenueInCents) : PLACEHOLDER))
+const marginLabel = computed(() =>
+  summary.value ? `${summary.value.marginPercent.toFixed(1).replace('.', ',')}%` : PLACEHOLDER,
 )
+const marginBadge = computed(() => {
+  if (!summary.value) return undefined
+  return summary.value.isBelowHealthyMargin
+    ? t('dashboard.marginAlert', { threshold: HEALTHY_MARGIN_PERCENT })
+    : t('dashboard.marginHealthy')
+})
+
+onMounted(() => dashboardStore.loadMonthToDate(today))
 </script>
 
 <template>
@@ -42,6 +54,9 @@ const marginBadge = computed(() =>
     <header class="flex items-center gap-3">
       <AvatarImage :src="avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" size="md" />
       <div class="min-w-0 flex-1">
+        <p class="truncate text-xs font-semibold text-muted">
+          <time :datetime="toIsoDate(today)">{{ todayLabel }}</time>
+        </p>
         <h1 class="truncate text-xl leading-tight">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
         <RouterLink to="/" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
       </div>
@@ -69,16 +84,35 @@ const marginBadge = computed(() =>
       </button>
     </header>
 
-    <section class="mt-8" :aria-label="t('dashboard.period')">
-      <h2 class="text-sm font-bold text-muted">{{ t('dashboard.period') }}</h2>
+    <section class="mt-8" :aria-labelledby="'dashboard-period'">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="dashboard-period" class="text-sm font-bold text-muted">{{ periodTitle }}</h2>
+        <span
+          class="flex items-center gap-1 rounded-full bg-raised px-2.5 py-1 text-[11px] font-bold text-muted ring-1 ring-line"
+          :title="t('dashboard.monthToDateInfo')"
+        >
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v5M12 8h.01" />
+          </svg>
+          {{ t('dashboard.monthToDate') }}
+          <span class="sr-only">— {{ t('dashboard.monthToDateInfo') }}</span>
+        </span>
+      </div>
       <div class="mt-3 grid grid-cols-2 gap-3">
-        <MetricCard class="col-span-2" tone="accent" :label="t('dashboard.revenue')" :value="formatBRL(summary.revenueInCents)" />
-        <MetricCard :label="t('dashboard.profit')" :value="formatBRL(summary.profitInCents)" />
+        <RouterLink
+          to="/painel/historico"
+          class="col-span-2 rounded-card transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          :aria-label="t('dashboard.revenueLink', { value: revenueLabel })"
+        >
+          <MetricCard tone="accent" :label="t('dashboard.revenue')" :value="revenueLabel" :hint="t('dashboard.seeHistory')" />
+        </RouterLink>
+        <MetricCard :label="t('dashboard.profit')" :value="summary ? formatBRL(summary.profitInCents) : PLACEHOLDER" />
         <MetricCard
           :label="t('dashboard.margin')"
           :value="marginLabel"
           :badge="marginBadge"
-          :tone="summary.isBelowHealthyMargin ? 'danger' : 'success'"
+          :tone="summary?.isBelowHealthyMargin ? 'danger' : 'success'"
         />
       </div>
     </section>

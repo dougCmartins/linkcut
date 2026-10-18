@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatWeekdayShort, fromIsoDate, nextDays, toIsoDate } from './date'
+import { capitalize, formatLongDate, formatWeekdayShort, fromIsoDate, nextDays, toIsoDate } from './date'
 
 describe('nextDays', () => {
   it('returns consecutive days starting today at midnight', () => {
@@ -25,6 +25,30 @@ describe('toIsoDate / fromIsoDate', () => {
 
     // Assert
     expect(result).toBe(isoDate)
+  })
+})
+
+describe('formatLongDate', () => {
+  it('writes the weekday, day and month in Portuguese', () => {
+    // Arrange
+    const date = new Date(2026, 9, 18)
+
+    // Act
+    const label = capitalize(formatLongDate(date))
+
+    // Assert
+    expect(label).toBe('Domingo, 18 de outubro')
+  })
+
+  it('adds the year when asked', () => {
+    // Arrange
+    const date = new Date(2025, 0, 6)
+
+    // Act
+    const label = formatLongDate(date, { withYear: true })
+
+    // Assert
+    expect(label).toBe('segunda-feira, 6 de janeiro de 2025')
   })
 })
 

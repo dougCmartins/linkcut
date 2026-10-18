@@ -31,6 +31,25 @@ export function formatWeekdayLong(weekday: number, locale = 'pt-BR'): string {
   return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(reference)
 }
 
+/** "sábado, 18 de outubro" (adds the year when asked, e.g. for older dates). */
+export function formatLongDate(date: Date, options: { withYear?: boolean } = {}, locale = 'pt-BR'): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    ...(options.withYear ? { year: 'numeric' } : {}),
+  }).format(date)
+}
+
+/** "outubro" */
+export function formatMonthName(date: Date, locale = 'pt-BR'): string {
+  return new Intl.DateTimeFormat(locale, { month: 'long' }).format(date)
+}
+
+export function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
 export function formatDayMonth(date: Date, locale = 'pt-BR'): string {
   return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(date).replace('.', '')
 }

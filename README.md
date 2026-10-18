@@ -12,6 +12,7 @@ Telas mobile-first com dados mockados (`frontend/src/mocks/barber.ts`):
 | `/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
 | `/entrar` | Login do barbeiro (e-mail + senha + código 2FA por WhatsApp ou e-mail) |
 | `/painel` 🔒 | Painel do Barbeiro (métricas + solicitações pendentes) |
+| `/painel/historico` 🔒 | Histórico de atendimentos: filtros semana/mês/ano/personalizado, 50/100/200 por página e exportação CSV ([requisitos](docs/requisitos-historico.md)) |
 | `/painel/configuracoes` 🔒 | Configurações: abas Link, Portfólio, Agenda, Aparência e Segurança (`?aba=`) |
 
 🔒 = só com login. Em desenvolvimento, use a conta de teste `rafael@linkcut.app` / `linkcut123`; o código 2FA aparece na própria tela (detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md)).
