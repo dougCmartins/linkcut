@@ -8,12 +8,22 @@ import { useDashboardStore } from './dashboard.store'
 import { HEALTHY_MARGIN_PERCENT } from './financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
 import { useSettingsStore } from '@/Settings/settings.store'
+import { useAuthStore } from '@/Auth/auth.store'
+import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
 
 const { t } = useI18n()
 const dashboardStore = useDashboardStore()
 const bookingStore = useBookingStore()
 const settingsStore = useSettingsStore()
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+async function logout(): Promise<void> {
+  await authStore.logout()
+  await router.replace({ name: 'login' })
+}
 
 const profile = computed(() => settingsStore.profile)
 const avatarUrl = computed(() => settingsStore.resolveImage(profile.value.avatar))
@@ -46,6 +56,17 @@ const marginBadge = computed(() =>
           <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
         </svg>
       </RouterLink>
+      <button
+        type="button"
+        :aria-label="t('auth.logout')"
+        :title="t('auth.logout')"
+        class="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface ring-1 ring-line shadow-soft transition hover:-translate-y-0.5 hover:text-danger"
+        @click="logout"
+      >
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+        </svg>
+      </button>
     </header>
 
     <section class="mt-8" :aria-label="t('dashboard.period')">

@@ -10,8 +10,11 @@ Telas mobile-first com dados mockados (`frontend/src/mocks/barber.ts`):
 | `/` | Link da Bio (agregador) |
 | `/portfolio` | Portfólio / Sobre Mim |
 | `/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
-| `/painel` | Painel do Barbeiro (métricas + solicitações pendentes) |
-| `/painel/configuracoes` | Configurações: abas Link, Portfólio, Agenda e Aparência (`?aba=`) |
+| `/entrar` | Login do barbeiro (e-mail + senha + código 2FA por WhatsApp ou e-mail) |
+| `/painel` 🔒 | Painel do Barbeiro (métricas + solicitações pendentes) |
+| `/painel/configuracoes` 🔒 | Configurações: abas Link, Portfólio, Agenda e Aparência (`?aba=`) |
+
+🔒 = só com login. Em desenvolvimento, use a conta de teste `rafael@linkcut.app` / `linkcut123`; o código 2FA aparece na própria tela (detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md)).
 
 Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em [`docs/requisitos-configuracoes.md`](docs/requisitos-configuracoes.md)). Enquanto não há backend, os dados ficam no navegador (localStorage + IndexedDB para imagens), atrás de `frontend/src/Settings/settings.api.ts`.
 

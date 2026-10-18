@@ -6,10 +6,10 @@ const props = withDefaults(
     label: string
     error?: string
     hint?: string
-    type?: 'text' | 'tel' | 'url' | 'date' | 'time' | 'number'
+    type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'date' | 'time' | 'number'
     maxlength?: number
     placeholder?: string
-    inputmode?: 'text' | 'tel' | 'url' | 'numeric' | 'decimal'
+    inputmode?: 'text' | 'email' | 'tel' | 'url' | 'numeric' | 'decimal'
     autocomplete?: string
     min?: string | number
     max?: string | number
