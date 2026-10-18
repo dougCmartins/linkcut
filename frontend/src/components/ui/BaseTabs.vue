@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
+import HorizontalScroller from './HorizontalScroller.vue'
 
 export interface TabItem {
   id: string
@@ -10,14 +10,13 @@ export interface TabItem {
 
 const props = defineProps<{ tabs: TabItem[]; idPrefix: string; label: string }>()
 const activeTab = defineModel<string>({ required: true })
-const tabList = useTemplateRef<HTMLElement>('tabList')
 
 function select(index: number): void {
   const count = props.tabs.length
   const tab = props.tabs[(index + count) % count]
   if (!tab) return
   activeTab.value = tab.id
-  tabList.value?.querySelector<HTMLElement>(`#${props.idPrefix}-tab-${tab.id}`)?.focus()
+  document.getElementById(`${props.idPrefix}-tab-${tab.id}`)?.focus()
 }
 
 function onKeydown(event: KeyboardEvent): void {
@@ -36,11 +35,11 @@ function onKeydown(event: KeyboardEvent): void {
 </script>
 
 <template>
-  <div
-    ref="tabList"
+  <HorizontalScroller
     role="tablist"
-    :aria-label="label"
-    class="scrollbar-none flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-line shadow-soft"
+    :label="label"
+    :selected-key="activeTab"
+    class="gap-1 rounded-full bg-surface p-1 ring-1 ring-line shadow-soft"
     @keydown="onKeydown"
   >
     <button
@@ -64,5 +63,5 @@ function onKeydown(event: KeyboardEvent): void {
         aria-hidden="true"
       />
     </button>
-  </div>
+  </HorizontalScroller>
 </template>

@@ -146,8 +146,8 @@ onBeforeUnmount(() => {
       />
 
       <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="submit">
-        <div class="flex-1 space-y-7 overflow-y-auto px-5 pt-2 pb-6">
-          <fieldset>
+        <div class="flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6">
+          <fieldset class="min-w-0">
             <legend class="mb-3 text-sm font-bold">{{ t('booking.stepService') }}</legend>
             <div role="radiogroup" :aria-label="t('booking.stepService')" class="grid gap-3">
               <ServiceCard
@@ -160,7 +160,7 @@ onBeforeUnmount(() => {
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset class="min-w-0">
             <legend class="mb-1 text-sm font-bold">{{ t('booking.stepDay') }}</legend>
             <DayPicker
               :days="days"
@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
             />
           </fieldset>
 
-          <fieldset>
+          <fieldset class="min-w-0">
             <legend class="mb-1 text-sm font-bold">{{ t('booking.stepTime') }}</legend>
             <TimeSlotPicker
               :times="times"
@@ -182,7 +182,7 @@ onBeforeUnmount(() => {
             />
           </fieldset>
 
-          <fieldset>
+          <fieldset class="min-w-0">
             <legend class="mb-2 text-sm font-bold">{{ t('booking.stepContact') }}</legend>
             <BookingForm v-model:client-name="form.clientName" v-model:client-whatsapp="form.clientWhatsapp" />
           </fieldset>

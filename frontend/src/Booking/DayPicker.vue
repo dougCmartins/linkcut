@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import HorizontalScroller from '@/components/ui/HorizontalScroller.vue'
 import { formatDayMonth, formatWeekdayShort, toIsoDate } from '@/utils/date'
 
 const props = withDefaults(
@@ -33,7 +34,7 @@ function optionClass(option: { isoDate: string; isUnavailable: boolean }): strin
 </script>
 
 <template>
-  <div role="radiogroup" :aria-label="label" class="scrollbar-none -mx-5 flex snap-x gap-2.5 overflow-x-auto px-5 py-2">
+  <HorizontalScroller :label="label" :selected-key="selectedDate" class="gap-2.5 px-0.5 py-2">
     <button
       v-for="option in options"
       :key="option.isoDate"
@@ -49,5 +50,5 @@ function optionClass(option: { isoDate: string; isUnavailable: boolean }): strin
       <span class="text-[11px] font-semibold tracking-wider uppercase opacity-75">{{ option.weekday }}</span>
       <span class="font-display text-xl font-extrabold tracking-tight">{{ option.dayNumber }}</span>
     </button>
-  </div>
+  </HorizontalScroller>
 </template>
