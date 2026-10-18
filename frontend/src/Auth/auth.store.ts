@@ -88,11 +88,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function submitCredentials(credentials: Credentials): Promise<boolean> {
-    return run(async () => {
+  /** With a default channel saved in the settings, the code is sent right away (no channel step). */
+  async function submitCredentials(credentials: Credentials): Promise<boolean> {
+    const isAccepted = await run(async () => {
       challenge.value = await authApi.login(credentials)
       step.value = LoginStep.Channel
     }, 'login.credentials_rejected')
+    const preferred = challenge.value?.preferredChannel
+    return isAccepted && preferred ? requestCode(preferred) : isAccepted
   }
 
   function requestCode(channel: TwoFactorChannel): Promise<boolean> {

@@ -71,6 +71,14 @@ export default {
       portfolio: 'Portfólio',
       agenda: 'Agenda',
       aparencia: 'Aparência',
+      seguranca: 'Segurança',
+    },
+    security: {
+      twoFactorTitle: 'Verificação em duas etapas',
+      twoFactorDescription: 'Onde enviar o código quando você entra no painel.',
+      askEveryTime: 'Perguntar sempre',
+      askEveryTimeDetail: 'Escolher o canal a cada login',
+      switchHint: 'Mesmo com um canal padrão, você ainda pode usar outro na hora de entrar.',
     },
     preview: 'Pré-visualização',
     saveBar: {

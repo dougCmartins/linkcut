@@ -1,12 +1,14 @@
 import type { Service } from '@/Booking/booking.model'
 import type { SocialNetwork } from '@/types/socialNetwork'
 import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
+import type { TwoFactorChannel } from '@/Auth/auth.model'
 
 export const SettingsSection = {
   Profile: 'profile',
   Portfolio: 'portfolio',
   Schedule: 'schedule',
   Theme: 'theme',
+  Security: 'security',
 } as const
 
 export type SettingsSection = (typeof SettingsSection)[keyof typeof SettingsSection]
@@ -19,6 +21,7 @@ export const SettingsTab = {
   Portfolio: 'portfolio',
   Schedule: 'agenda',
   Appearance: 'aparencia',
+  Security: 'seguranca',
 } as const
 
 export type SettingsTab = (typeof SettingsTab)[keyof typeof SettingsTab]
@@ -28,6 +31,7 @@ export const TAB_SECTIONS: Record<SettingsTab, SettingsSection> = {
   [SettingsTab.Portfolio]: SettingsSection.Portfolio,
   [SettingsTab.Schedule]: SettingsSection.Schedule,
   [SettingsTab.Appearance]: SettingsSection.Theme,
+  [SettingsTab.Security]: SettingsSection.Security,
 }
 
 export const SaveResult = {
@@ -118,11 +122,17 @@ export interface ThemeSettings {
   buttonStyle: ButtonStyle
 }
 
+export interface SecuritySettings {
+  /** Where the login sends the 2FA code without asking. Null = ask every time. */
+  defaultTwoFactorChannel: TwoFactorChannel | null
+}
+
 export interface AppSettings {
   profile: ProfileSettings
   portfolio: PortfolioSettings
   schedule: ScheduleSettings
   theme: ThemeSettings
+  security: SecuritySettings
 }
 
 export function isStoredImage(source: ImageSource): source is string {

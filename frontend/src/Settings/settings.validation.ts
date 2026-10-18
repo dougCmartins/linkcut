@@ -4,10 +4,12 @@ import {
   type PortfolioSettings,
   type ProfileSettings,
   type ScheduleSettings,
+  type SecuritySettings,
   type SettingsSection,
   type ThemeSettings,
 } from './settings.model'
 import { BUTTON_SHAPES, BUTTON_STYLES } from '@/types/theme'
+import { TwoFactorChannel } from '@/Auth/auth.model'
 import { isHexColor } from '@/utils/color'
 import { isValidWhatsappNumber } from '@/utils/phone'
 import { toMinutes } from '@/utils/time'
@@ -135,9 +137,19 @@ export function validateTheme(theme: ThemeSettings): ValidationErrors {
   return errors
 }
 
+const TWO_FACTOR_CHANNELS: string[] = Object.values(TwoFactorChannel)
+
+export function validateSecurity(security: SecuritySettings): ValidationErrors {
+  const { errors, add } = createCollector()
+  const channel = security.defaultTwoFactorChannel
+  add('defaultTwoFactorChannel', channel === null || TWO_FACTOR_CHANNELS.includes(channel) ? null : { key: 'invalidOption' })
+  return errors
+}
+
 export const sectionValidators: { [K in SettingsSection]: (value: AppSettings[K]) => ValidationErrors } = {
   profile: validateProfile,
   portfolio: validatePortfolio,
   schedule: validateSchedule,
   theme: validateTheme,
+  security: validateSecurity,
 }

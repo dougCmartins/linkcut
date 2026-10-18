@@ -8,6 +8,7 @@ import LinkSettingsTab from './LinkSettingsTab.vue'
 import PortfolioSettingsTab from './PortfolioSettingsTab.vue'
 import SaveBar from './SaveBar.vue'
 import ScheduleSettingsTab from './ScheduleSettingsTab.vue'
+import SecuritySettingsTab from './SecuritySettingsTab.vue'
 import { useSettingsStore } from './settings.store'
 import { SaveResult, SettingsTab, TAB_SECTIONS } from './settings.model'
 
@@ -19,6 +20,7 @@ const TAB_COMPONENTS: Record<SettingsTab, Component> = {
   [SettingsTab.Portfolio]: PortfolioSettingsTab,
   [SettingsTab.Schedule]: ScheduleSettingsTab,
   [SettingsTab.Appearance]: AppearanceSettingsTab,
+  [SettingsTab.Security]: SecuritySettingsTab,
 }
 
 const { t } = useI18n()

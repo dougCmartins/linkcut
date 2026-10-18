@@ -111,6 +111,22 @@ describe('SettingsView', () => {
     expect(store.theme.buttonShape).toBe('square')
   })
 
+  it('saves the default 2FA channel in the Segurança tab', async () => {
+    // Arrange
+    await renderSettings('/painel/configuracoes?aba=seguranca')
+    const store = useSettingsStore()
+    expect(await screen.findByRole('tab', { name: 'Segurança', selected: true })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: /Perguntar sempre/ }).getAttribute('aria-checked')).toBe('true')
+
+    // Act
+    await fireEvent.click(screen.getByRole('radio', { name: /WhatsApp/ }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    // Assert
+    expect(store.security.defaultTwoFactorChannel).toBe('whatsapp')
+    expect(await screen.findByText('(11) •••••-8888')).toBeTruthy()
+  })
+
   it('previews and saves the button style', async () => {
     // Arrange
     await renderSettings('/painel/configuracoes?aba=aparencia')

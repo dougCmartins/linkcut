@@ -47,6 +47,8 @@ export interface LoginChallenge {
   challengeId: string
   /** Masked destinations, e.g. "(11) •••••-8888" and "ra•••@linkcut.app". */
   destinations: Record<TwoFactorChannel, string>
+  /** Default channel chosen in Settings > Segurança; null = ask every time. */
+  preferredChannel: TwoFactorChannel | null
 }
 
 export interface CodeDelivery {

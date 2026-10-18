@@ -29,12 +29,13 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 | Todas | Cores de botões e textos, tema claro/escuro | 2 paletas fixas no CSS | **Aparência** |
 | Todas | Formato dos botões (quadrado, arredondado, pílula) | Sempre pílula | **Aparência** |
 | Todas | Estilo dos botões (elevado, preenchido, contorno, sombra dura, sombra suave) | Sempre elevado | **Aparência** |
+| Login | Canal padrão do código 2FA (perguntar sempre, WhatsApp, e-mail) | Sempre perguntava | **Segurança** |
 | Painel | Nome e foto do barbeiro no cabeçalho | `mocks/barber.ts` | **Link** (reaproveitado) |
 
 ## 3. Requisitos funcionais
 
 ### Estrutura da tela
-- **RF01 — Abas.** A tela tem 4 abas: **Link**, **Portfólio**, **Agenda** e **Aparência**. A aba ativa fica na URL (`?aba=link|portfolio|agenda|aparencia`), o que permite enviar um link direto para uma aba. As abas funcionam com as setas do teclado.
+- **RF01 — Abas.** A tela tem 5 abas: **Link**, **Portfólio**, **Agenda**, **Aparência** e **Segurança**. A aba ativa fica na URL (`?aba=link|portfolio|agenda|aparencia|seguranca`), o que permite enviar um link direto para uma aba. As abas funcionam com as setas do teclado.
 - **RF02 — Pré-visualização ao vivo.** As abas Link, Portfólio e Aparência mostram um mini celular que reflete as alterações antes de salvar.
 - **RF03 — Salvar e descartar.** Cada aba tem seu próprio rascunho. Quando há alterações, aparece uma barra fixa com **Salvar** e **Descartar**. O botão Salvar fica desabilitado enquanto houver erro. A aba com alterações pendentes ganha um ponto indicador. Ao sair da tela com alterações pendentes, o sistema pede confirmação.
 

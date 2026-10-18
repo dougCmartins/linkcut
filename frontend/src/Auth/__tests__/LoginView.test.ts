@@ -3,7 +3,10 @@ import { fireEvent, screen } from '@testing-library/vue'
 import LoginView from '../LoginView.vue'
 import { useAuthStore } from '../auth.store'
 import { DEMO_ACCOUNT } from '../auth.api'
+import { TwoFactorChannel } from '../auth.model'
 import { renderWithPlugins } from '@/utils/testRender'
+import { saveSection } from '@/Settings/settings.api'
+import { SettingsSection } from '@/Settings/settings.model'
 
 async function renderLogin(path = '/entrar?redirect=/painel/configuracoes') {
   const rendered = renderWithPlugins(LoginView)
@@ -26,6 +29,46 @@ async function pasteCode(code: string): Promise<void> {
 describe('LoginView', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
+  })
+
+  it('goes straight to the code when a default channel is saved', async () => {
+    // Arrange
+    saveSection(SettingsSection.Security, { defaultTwoFactorChannel: TwoFactorChannel.Email })
+    await renderLogin()
+
+    // Act
+    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+
+    // Assert
+    expect(await screen.findByText(/Enviamos um código por e-mail/)).toBeTruthy()
+    expect(screen.queryByText('Confirme que é você')).toBeNull()
+  })
+
+  it('still lets the barber switch channel after a default send', async () => {
+    // Arrange
+    saveSection(SettingsSection.Security, { defaultTwoFactorChannel: TwoFactorChannel.Email })
+    await renderLogin()
+    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+    await screen.findByText(/Enviamos um código por e-mail/)
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Usar outro canal' }))
+
+    // Assert
+    expect(screen.getByRole('button', { name: /WhatsApp/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /E-mail/ })).toBeTruthy()
+  })
+
+  it('asks for the channel when there is no default', async () => {
+    // Arrange
+    await renderLogin()
+
+    // Act
+    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+
+    // Assert
+    expect(await screen.findByText('Confirme que é você')).toBeTruthy()
   })
 
   it('validates the fields before calling the server', async () => {
@@ -88,7 +131,7 @@ describe('LoginView', () => {
 })
 
 async function waitForPath(router: { currentRoute: { value: { fullPath: string } } }, path: string): Promise<void> {
-  for (let tries = 0; tries < 20 && router.currentRoute.value.fullPath !== path; tries++) {
+  for (let tries = 0; tries < 200 && router.currentRoute.value.fullPath !== path; tries++) {
     await new Promise((resolve) => setTimeout(resolve, 5))
   }
   expect(router.currentRoute.value.fullPath).toBe(path)

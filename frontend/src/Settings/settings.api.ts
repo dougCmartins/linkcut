@@ -38,6 +38,7 @@ export function loadSettings(): AppSettings {
       vacation: { ...defaults.schedule.vacation, ...stored.schedule?.vacation },
     },
     theme: { ...defaults.theme, ...stored.theme },
+    security: { ...defaults.security, ...stored.security },
   }
 }
 

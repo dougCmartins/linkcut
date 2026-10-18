@@ -8,6 +8,7 @@ import {
   type Session,
 } from './auth.model'
 import { CODE_LENGTH } from './auth.schemas'
+import { loadSettings } from '@/Settings/settings.api'
 
 /**
  * MOCK of the authentication API, until the backend exists.
@@ -122,11 +123,22 @@ export async function login(credentials: Credentials): Promise<LoginChallenge> {
   })
   return {
     challengeId,
-    destinations: {
-      [TwoFactorChannel.WhatsApp]: maskPhone(DEMO_ACCOUNT.phone),
-      [TwoFactorChannel.Email]: maskEmail(DEMO_ACCOUNT.email),
-    },
+    destinations: maskedDestinations(),
+    // Mock of the account profile on the server: read from the barber's saved settings.
+    preferredChannel: loadSettings().security.defaultTwoFactorChannel,
   }
+}
+
+function maskedDestinations(): Record<TwoFactorChannel, string> {
+  return {
+    [TwoFactorChannel.WhatsApp]: maskPhone(DEMO_ACCOUNT.phone),
+    [TwoFactorChannel.Email]: maskEmail(DEMO_ACCOUNT.email),
+  }
+}
+
+/** Masked 2FA destinations of the signed-in account (shown in Settings > Segurança). */
+export async function getTwoFactorDestinations(): Promise<Record<TwoFactorChannel, string>> {
+  return maskedDestinations()
 }
 
 /** Step 2: send a new code by the chosen channel. Respects the resend wait. */

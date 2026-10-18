@@ -51,12 +51,14 @@ export const useSettingsStore = defineStore('settings', () => {
   const portfolio = computed(() => saved.value.portfolio)
   const schedule = computed(() => saved.value.schedule)
   const theme = computed(() => saved.value.theme)
+  const security = computed(() => saved.value.security)
 
   const errors = computed(() => ({
     profile: sectionValidators.profile(drafts.value.profile),
     portfolio: sectionValidators.portfolio(drafts.value.portfolio),
     schedule: sectionValidators.schedule(drafts.value.schedule),
     theme: sectionValidators.theme(drafts.value.theme),
+    security: sectionValidators.security(drafts.value.security),
   }))
 
   function isDirty(section: SettingsSection): boolean {
@@ -143,6 +145,7 @@ export const useSettingsStore = defineStore('settings', () => {
     portfolio,
     schedule,
     theme,
+    security,
     errors,
     dirtySections,
     hasUnsavedChanges,

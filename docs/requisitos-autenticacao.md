@@ -24,6 +24,13 @@ A regra fica num único lugar: rotas com `meta.requiresAuth` passam pelo guard `
    - São **5 tentativas**. Cada erro mostra quantas tentativas restam, e na 5ª o processo recomeça do e-mail e senha.
    - Dá para trocar de canal sem recomeçar.
 
+### Canal padrão (Configurações → Segurança)
+
+- Opções: **Perguntar sempre** (padrão), **WhatsApp** ou **E-mail**, com o destino mascarado.
+- Com um canal padrão, depois do e-mail e da senha o código já é enviado por esse canal e a tela pula a escolha.
+- Na tela do código continua o botão **Usar outro canal**.
+- A preferência pertence à conta, porque precisa ser conhecida antes do login: o backend vai devolvê-la na resposta do login (`preferredChannel`). Na API simulada, ela é lida das configurações salvas.
+
 ## 3. Sessão
 
 - **Access token** curto (15 min) e **refresh token** (7 dias) com **rotação**: a cada renovação o refresh antigo deixa de valer.
@@ -54,4 +61,4 @@ Esses avisos **não aparecem no build de produção**. Sem backend, o login de p
 - Endpoints reais de login, envio de código (WhatsApp API e e-mail) e verificação.
 - Refresh token em cookie `HttpOnly` + `Secure`, em vez do `sessionStorage`.
 - Limite de tentativas também por IP e por conta, no servidor.
-- Opção nas Configurações para o barbeiro escolher o canal padrão do 2FA e ver os dispositivos conectados.
+- Lista de dispositivos conectados, com opção de encerrar sessões.
