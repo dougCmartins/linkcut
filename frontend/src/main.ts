@@ -3,10 +3,12 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
-import { usePalette } from './composables/usePalette'
-import './styles/main.css'
+import { useSettingsStore } from './Settings/settings.store'
+import './styles/core.css'
 
-const { palette, applyPalette } = usePalette()
-applyPalette(palette.value)
+const app = createApp(App).use(createPinia()).use(router).use(i18n)
 
-createApp(App).use(createPinia()).use(router).use(i18n).mount('#app')
+// Uploaded images live in IndexedDB; load them in the background.
+void useSettingsStore().loadStoredImages()
+
+app.mount('#app')

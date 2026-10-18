@@ -12,8 +12,9 @@ export function renderWithPlugins(component: RenderArgs[0], options: NonNullable
   setActivePinia(pinia)
   const router = createRouter({ history: createMemoryHistory(), routes })
 
-  return render(component, {
+  const result = render(component, {
     ...options,
     global: { ...options.global, plugins: [pinia, router, i18n] },
   })
+  return { ...result, router }
 }

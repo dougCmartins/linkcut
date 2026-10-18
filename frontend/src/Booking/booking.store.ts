@@ -1,13 +1,17 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { BookingRequest, BookingRequestInput, Service } from './booking.model'
+import type { BookedSlot } from './availability'
 import { AppointmentStatus } from '@/types/appointmentStatus'
-import { initialRequests, services as mockServices } from '@/mocks/barber'
+import { initialRequests } from '@/mocks/barber'
+import { useSettingsStore } from '@/Settings/settings.store'
 
 export const useBookingStore = defineStore('booking', () => {
-  const services = ref<Service[]>(mockServices)
+  const settingsStore = useSettingsStore()
   const requests = ref<BookingRequest[]>(initialRequests.map((request) => ({ ...request })))
   const isModalOpen = ref(false)
+
+  const services = computed<Service[]>(() => settingsStore.schedule.services)
 
   const pendingRequests = computed(() =>
     requests.value.filter((request) => request.status === AppointmentStatus.Pending),
@@ -16,6 +20,17 @@ export const useBookingStore = defineStore('booking', () => {
   function findService(serviceId: string): Service | undefined {
     return services.value.find((service) => service.id === serviceId)
   }
+
+  /** Pending and confirmed requests block their time slot. */
+  const bookedSlots = computed<BookedSlot[]>(() =>
+    requests.value
+      .filter((request) => request.status !== AppointmentStatus.Rejected)
+      .map((request) => ({
+        date: request.date,
+        time: request.time,
+        durationMinutes: findService(request.serviceId)?.durationMinutes ?? 0,
+      })),
+  )
 
   function submitRequest(input: BookingRequestInput): BookingRequest {
     if (!findService(input.serviceId)) {
@@ -47,6 +62,7 @@ export const useBookingStore = defineStore('booking', () => {
     requests,
     isModalOpen,
     pendingRequests,
+    bookedSlots,
     findService,
     submitRequest,
     acceptRequest,

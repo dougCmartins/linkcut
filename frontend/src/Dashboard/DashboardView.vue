@@ -7,15 +7,17 @@ import PendingRequestCard from './PendingRequestCard.vue'
 import { useDashboardStore } from './dashboard.store'
 import { HEALTHY_MARGIN_PERCENT } from './financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
-import { barberProfile } from '@/mocks/barber'
+import { useSettingsStore } from '@/Settings/settings.store'
 import { formatBRL } from '@/utils/currency'
 
 const { t } = useI18n()
 const dashboardStore = useDashboardStore()
 const bookingStore = useBookingStore()
-const profile = barberProfile
+const settingsStore = useSettingsStore()
 
-const firstName = computed(() => profile.name.split(' ')[0] ?? profile.name)
+const profile = computed(() => settingsStore.profile)
+const avatarUrl = computed(() => settingsStore.resolveImage(profile.value.avatar))
+const firstName = computed(() => profile.value.name.trim().split(' ')[0] ?? profile.value.name)
 const summary = computed(() => dashboardStore.summary)
 const marginLabel = computed(() => `${summary.value.marginPercent.toFixed(1).replace('.', ',')}%`)
 const marginBadge = computed(() =>
@@ -27,12 +29,23 @@ const marginBadge = computed(() =>
 
 <template>
   <main class="mx-auto w-full max-w-md px-4 pt-6 pb-12">
-    <header class="flex items-center gap-3 pr-28">
-      <AvatarImage :src="profile.avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" size="md" />
-      <div>
-        <h1 class="text-xl leading-tight">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
+    <header class="flex items-center gap-3">
+      <AvatarImage :src="avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" size="md" />
+      <div class="min-w-0 flex-1">
+        <h1 class="truncate text-xl leading-tight">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
         <RouterLink to="/" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
       </div>
+      <RouterLink
+        to="/painel/configuracoes"
+        :aria-label="t('dashboard.settings')"
+        :title="t('dashboard.settings')"
+        class="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface ring-1 ring-line shadow-soft transition hover:-translate-y-0.5 hover:text-accent"
+      >
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+        </svg>
+      </RouterLink>
     </header>
 
     <section class="mt-8" :aria-label="t('dashboard.period')">

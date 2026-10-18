@@ -6,31 +6,33 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import SmartImage from '@/components/ui/SmartImage.vue'
 import SocialLinks from '@/components/ui/SocialLinks.vue'
 import { useBookingStore } from '@/Booking/booking.store'
-import { barberProfile } from '@/mocks/barber'
+import { useSettingsStore } from '@/Settings/settings.store'
+import { buildWhatsappUrl } from '@/utils/phone'
 
 const { t } = useI18n()
 const bookingStore = useBookingStore()
-const profile = barberProfile
+const settingsStore = useSettingsStore()
 
-const whatsappUrl = computed(
-  () => `https://wa.me/${profile.whatsappNumber}?text=${encodeURIComponent(t('bioLink.whatsappMessage'))}`,
-)
+const profile = computed(() => settingsStore.profile)
+const avatarUrl = computed(() => settingsStore.resolveImage(profile.value.avatar))
+const backgroundUrl = computed(() => settingsStore.resolveImage(profile.value.background))
+const whatsappUrl = computed(() => buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage))
 </script>
 
 <template>
   <main class="relative min-h-dvh overflow-hidden">
     <!-- Background photo with an overlay so text stays readable -->
     <div class="absolute inset-0 -z-10" aria-hidden="true">
-      <SmartImage :src="profile.coverUrl" alt="" class="size-full object-cover opacity-60 blur-[2px] scale-105" />
+      <SmartImage v-if="backgroundUrl" :src="backgroundUrl" alt="" class="size-full scale-105 object-cover opacity-60 blur-[2px]" />
       <div class="absolute inset-0 [background:var(--hero-overlay)]" />
     </div>
 
     <div class="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center px-5 pt-20 pb-10">
       <header class="flex flex-col items-center text-center">
-        <AvatarImage :src="profile.avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" />
-        <h1 class="mt-5 text-3xl leading-none">{{ profile.name }}</h1>
-        <p class="mt-1.5 text-sm font-semibold text-accent">{{ profile.handle }}</p>
-        <p class="mt-3 max-w-xs text-[15px] leading-relaxed text-muted">{{ profile.bio }}</p>
+        <AvatarImage :src="avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" />
+        <h1 class="mt-5 text-3xl leading-none break-words">{{ profile.name }}</h1>
+        <p v-if="profile.handle" class="mt-1.5 text-sm font-semibold text-accent">{{ profile.handle }}</p>
+        <p v-if="profile.bio" class="mt-3 max-w-xs text-[15px] leading-relaxed text-muted break-words">{{ profile.bio }}</p>
       </header>
 
       <nav class="mt-10 flex w-full flex-col gap-5">

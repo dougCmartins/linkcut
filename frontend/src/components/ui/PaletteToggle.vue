@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { usePalette } from '@/composables/usePalette'
-import { Palette } from '@/types/palette'
+import { useVisitorMode } from '@/composables/useTheme'
+import { useSettingsStore } from '@/Settings/settings.store'
+import { ThemeMode } from '@/types/theme'
 
+/** Light/dark switch for visitors of the public pages. The barber's mode is the default. */
 const { t } = useI18n()
-const { palette, togglePalette } = usePalette()
-const isDark = computed(() => palette.value === Palette.Dark)
+const settingsStore = useSettingsStore()
+const { visitorMode, toggleVisitorMode } = useVisitorMode()
+
+const currentMode = computed(() => visitorMode.value ?? settingsStore.theme.mode)
+const isDark = computed(() => currentMode.value === ThemeMode.Dark)
 </script>
 
 <template>
@@ -15,7 +20,7 @@ const isDark = computed(() => palette.value === Palette.Dark)
     :aria-label="t('palette.toggle')"
     :aria-pressed="isDark"
     class="flex h-10 items-center gap-2 rounded-full bg-surface/80 px-3 text-xs font-semibold text-ink ring-1 ring-line shadow-soft backdrop-blur transition hover:-translate-y-0.5"
-    @click="togglePalette"
+    @click="toggleVisitorMode(currentMode)"
   >
     <svg v-if="isDark" class="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />

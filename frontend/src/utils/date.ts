@@ -25,6 +25,12 @@ export function formatWeekdayShort(date: Date, locale = 'pt-BR'): string {
   return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date).replace('.', '')
 }
 
+/** Weekday name for 0 (Sunday) … 6 (Saturday), e.g. "segunda-feira". */
+export function formatWeekdayLong(weekday: number, locale = 'pt-BR'): string {
+  const reference = new Date(2026, 0, 4 + weekday) // 2026-01-04 is a Sunday
+  return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(reference)
+}
+
 export function formatDayMonth(date: Date, locale = 'pt-BR'): string {
   return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(date).replace('.', '')
 }

@@ -1,0 +1,231 @@
+@import 'tailwindcss';
+
+/*
+ * Core design tokens — single source of truth for colors, shadows and radii.
+ * Tailwind utilities (bg-page, text-ink, bg-accent…) read these CSS variables,
+ * so switching palette or mode only swaps variables: no component changes, no reload.
+ *
+ * A theme is chosen with two attributes on any element (usually <html>):
+ *   data-theme = default | classic | ocean | forest | wine | minimal
+ *   data-mode  = dark | light
+ * A custom accent color is applied inline (--accent, --on-accent, --accent-edge) by useTheme().
+ */
+@theme inline {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+
+  --shadow-soft: 0 18px 40px -18px var(--shadow-tint), 0 4px 12px -6px var(--shadow-tint);
+  --shadow-float: 0 30px 60px -24px var(--shadow-tint), 0 10px 24px -12px var(--shadow-tint);
+  --radius-card: 1rem;
+}
+
+/* ---------- Mode tokens (shared by every palette) ---------- */
+
+:root,
+[data-mode='dark'] {
+  --line: rgb(255 255 255 / 0.09);
+  --danger: #f0716a;
+  --success: #5fd49b;
+  --shadow-tint: rgb(0 0 0 / 0.6);
+  --hero-overlay: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--page) 55%, transparent) 0%,
+    color-mix(in srgb, var(--page) 92%, transparent) 70%,
+    var(--page) 100%
+  );
+  color-scheme: dark;
+}
+
+[data-mode='light'] {
+  --line: rgb(0 0 0 / 0.08);
+  --danger: #d0453d;
+  --success: #1f9d61;
+  --shadow-tint: rgb(40 30 10 / 0.22);
+  --hero-overlay: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--page) 55%, transparent) 0%,
+    color-mix(in srgb, var(--page) 92%, transparent) 70%,
+    var(--page) 100%
+  );
+  color-scheme: light;
+}
+
+/* ---------- Palettes ---------- */
+
+/* Default — deep purple + gold (the original LinkCut look) */
+:root,
+[data-theme='default'][data-mode='dark'] {
+  --page: #110c1a;
+  --surface: #1e1630;
+  --raised: #2a2041;
+  --ink: #f7f4fb;
+  --muted: #a99fbd;
+  --accent: #d6a740;
+  --on-accent: #1b1406;
+  --accent-edge: #8c6820;
+  --neutral-edge: #07050b;
+}
+[data-theme='default'][data-mode='light'] {
+  --page: #f3f1ec;
+  --surface: #ffffff;
+  --raised: #f4f1ea;
+  --ink: #121212;
+  --muted: #6d6a66;
+  --accent: #121212;
+  --on-accent: #ffffff;
+  --accent-edge: #b48a2c;
+  --neutral-edge: #d9d4ca;
+}
+
+/* Classic — barber-pole red on navy / cream */
+[data-theme='classic'][data-mode='dark'] {
+  --page: #14161c;
+  --surface: #1e222b;
+  --raised: #282d38;
+  --ink: #f4f1ea;
+  --muted: #a3a8b4;
+  --accent: #e0473a;
+  --on-accent: #160505;
+  --accent-edge: #8f241c;
+  --neutral-edge: #08090c;
+}
+[data-theme='classic'][data-mode='light'] {
+  --page: #f5f1e8;
+  --surface: #ffffff;
+  --raised: #efe9dc;
+  --ink: #1b1d24;
+  --muted: #6b6760;
+  --accent: #b3261e;
+  --on-accent: #ffffff;
+  --accent-edge: #6e1510;
+  --neutral-edge: #d8d0bf;
+}
+
+/* Ocean — sky blue */
+[data-theme='ocean'][data-mode='dark'] {
+  --page: #0b1420;
+  --surface: #12202f;
+  --raised: #1a2c40;
+  --ink: #eef5fb;
+  --muted: #93a7ba;
+  --accent: #3fb6e8;
+  --on-accent: #04131c;
+  --accent-edge: #1d6f92;
+  --neutral-edge: #050b12;
+}
+[data-theme='ocean'][data-mode='light'] {
+  --page: #eef4f8;
+  --surface: #ffffff;
+  --raised: #e3edf4;
+  --ink: #0e1a26;
+  --muted: #5d6f80;
+  --accent: #0b6fa4;
+  --on-accent: #ffffff;
+  --accent-edge: #074a6e;
+  --neutral-edge: #cbd9e4;
+}
+
+/* Forest — green */
+[data-theme='forest'][data-mode='dark'] {
+  --page: #0d1511;
+  --surface: #15211b;
+  --raised: #1e2e25;
+  --ink: #eff5f0;
+  --muted: #9db0a3;
+  --accent: #6cc58f;
+  --on-accent: #06150c;
+  --accent-edge: #2f7a4d;
+  --neutral-edge: #060b08;
+}
+[data-theme='forest'][data-mode='light'] {
+  --page: #f1f4ef;
+  --surface: #ffffff;
+  --raised: #e6ece3;
+  --ink: #13201a;
+  --muted: #5f6e64;
+  --accent: #1f6b45;
+  --on-accent: #ffffff;
+  --accent-edge: #123f29;
+  --neutral-edge: #cfd9cc;
+}
+
+/* Wine — burgundy / rose */
+[data-theme='wine'][data-mode='dark'] {
+  --page: #170b10;
+  --surface: #241219;
+  --raised: #321a24;
+  --ink: #f9eff2;
+  --muted: #b89aa5;
+  --accent: #e2789a;
+  --on-accent: #22070f;
+  --accent-edge: #8e3553;
+  --neutral-edge: #0b0407;
+}
+[data-theme='wine'][data-mode='light'] {
+  --page: #f8f0f2;
+  --surface: #ffffff;
+  --raised: #f1e4e8;
+  --ink: #24101a;
+  --muted: #75606a;
+  --accent: #7d1d3f;
+  --on-accent: #ffffff;
+  --accent-edge: #4d0f25;
+  --neutral-edge: #e2ced5;
+}
+
+/* Minimal — black & white */
+[data-theme='minimal'][data-mode='dark'] {
+  --page: #0f0f10;
+  --surface: #1a1a1c;
+  --raised: #242427;
+  --ink: #f5f5f5;
+  --muted: #a1a1a6;
+  --accent: #f5f5f5;
+  --on-accent: #111111;
+  --accent-edge: #6b6b70;
+  --neutral-edge: #050505;
+}
+[data-theme='minimal'][data-mode='light'] {
+  --page: #fafafa;
+  --surface: #ffffff;
+  --raised: #f0f0f0;
+  --ink: #111111;
+  --muted: #6b6b6b;
+  --accent: #111111;
+  --on-accent: #ffffff;
+  --accent-edge: #9a9a9a;
+  --neutral-edge: #dcdcdc;
+}
+
+/* ---------- Base ---------- */
+
+@layer base {
+  body {
+    @apply bg-page text-ink font-sans antialiased;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-extrabold tracking-tight;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
