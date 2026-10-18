@@ -2,12 +2,15 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { themeAttributes } from '@/composables/useTheme'
+import { provideButtonStyle } from '@/composables/useButtonStyle'
 import type { ThemeSettings } from './settings.model'
 
 /** Mini phone that renders its content with the given theme (independent from the page theme). */
 const props = defineProps<{ theme: ThemeSettings }>()
 const { t } = useI18n()
 const attributes = computed(() => themeAttributes(props.theme))
+// Buttons inside the preview follow the draft style, not the saved one.
+provideButtonStyle(computed(() => props.theme.buttonStyle))
 </script>
 
 <template>

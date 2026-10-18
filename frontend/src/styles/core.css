@@ -38,6 +38,8 @@
   --danger: #f0716a;
   --success: #5fd49b;
   --shadow-tint: rgb(0 0 0 / 0.6);
+  /* Figma uses 16% black on white; dark pages need more to stay visible. */
+  --soft-button-shadow: rgb(0 0 0 / 0.55);
   --hero-overlay: linear-gradient(
     180deg,
     color-mix(in srgb, var(--page) 55%, transparent) 0%,
@@ -52,6 +54,7 @@
   --danger: #d0453d;
   --success: #1f9d61;
   --shadow-tint: rgb(40 30 10 / 0.22);
+  --soft-button-shadow: rgb(0 0 0 / 0.16);
   --hero-overlay: linear-gradient(
     180deg,
     color-mix(in srgb, var(--page) 55%, transparent) 0%,
@@ -227,6 +230,35 @@
 
 @utility rounded-button {
   border-radius: calc(var(--control-height, 2.75rem) * var(--button-roundness, 0.5));
+}
+
+/* ---------- Button styles (Figma kit, 36px buttons) ----------
+ * One "Figma pixel" = button height / 36, so every size keeps the kit's proportions:
+ *   outline / hard shadow border  1px  -> height / 36 (never thinner than 1px)
+ *   hard shadow                   4px 4px 0 0
+ *   soft shadow                   0 4px 4px 0 rgba(0,0,0,.16)
+ * --button-line sets the border / hard-shadow color (defaults to the text color).
+ */
+@utility button-border {
+  border: max(1px, calc(var(--control-height, 2.75rem) / 36)) solid var(--button-line, currentColor);
+}
+
+@utility button-hard-shadow {
+  --button-offset: calc(var(--control-height, 2.75rem) * 4 / 36);
+  box-shadow: var(--button-offset) var(--button-offset) 0 0 var(--button-line, var(--ink));
+}
+
+@utility button-soft-shadow {
+  --button-offset: calc(var(--control-height, 2.75rem) * 4 / 36);
+  box-shadow: 0 var(--button-offset) var(--button-offset) 0 var(--soft-button-shadow);
+}
+
+/* Pressing a hard-shadow button slides it onto its shadow. */
+@utility button-press-into-shadow {
+  &:active:not(:disabled) {
+    transform: translate(var(--button-offset), var(--button-offset));
+    box-shadow: none;
+  }
 }
 
 /* ---------- Base ---------- */

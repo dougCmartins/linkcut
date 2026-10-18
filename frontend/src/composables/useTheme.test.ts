@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applyThemeToDocument, themeAttributes, useVisitorMode } from './useTheme'
-import { ButtonShape, ThemeMode, ThemePalette } from '@/types/theme'
+import { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 
 const oceanDark = {
   palette: ThemePalette.Ocean,
   mode: ThemeMode.Dark,
   customAccent: null,
   buttonShape: ButtonShape.Pill,
+  buttonStyle: ButtonStyle.Elevated,
 }
 
 describe('applyThemeToDocument', () => {

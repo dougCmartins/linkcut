@@ -1,6 +1,6 @@
 import type { Service } from '@/Booking/booking.model'
 import type { SocialNetwork } from '@/types/socialNetwork'
-import type { ButtonShape, ThemeMode, ThemePalette } from '@/types/theme'
+import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 
 export const SettingsSection = {
   Profile: 'profile',
@@ -115,6 +115,7 @@ export interface ThemeSettings {
   /** "#rrggbb" or null to use the palette accent. */
   customAccent: string | null
   buttonShape: ButtonShape
+  buttonStyle: ButtonStyle
 }
 
 export interface AppSettings {

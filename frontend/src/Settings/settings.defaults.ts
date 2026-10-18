@@ -1,6 +1,6 @@
 import type { AppSettings, DayHours, ThemeSettings } from './settings.model'
 import { SocialNetwork } from '@/types/socialNetwork'
-import { ButtonShape, ThemeMode, ThemePalette } from '@/types/theme'
+import { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 
 /** Initial settings for a new barber (also used to restore defaults and to fill missing fields). */
 
@@ -24,6 +24,7 @@ export const DEFAULT_THEME: ThemeSettings = {
   mode: ThemeMode.Dark,
   customAccent: null,
   buttonShape: ButtonShape.Pill,
+  buttonStyle: ButtonStyle.Elevated,
 }
 
 export function createDefaultSettings(): AppSettings {

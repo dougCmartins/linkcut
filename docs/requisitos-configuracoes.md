@@ -28,6 +28,7 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 | Agendamento | Bloqueio por férias | Não existia | **Agenda** (trava de férias) |
 | Todas | Cores de botões e textos, tema claro/escuro | 2 paletas fixas no CSS | **Aparência** |
 | Todas | Formato dos botões (quadrado, arredondado, pílula) | Sempre pílula | **Aparência** |
+| Todas | Estilo dos botões (elevado, preenchido, contorno, sombra dura, sombra suave) | Sempre elevado | **Aparência** |
 | Painel | Nome e foto do barbeiro no cabeçalho | `mocks/barber.ts` | **Link** (reaproveitado) |
 
 ## 3. Requisitos funcionais
@@ -70,6 +71,16 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 - **RF20 — Cor livre.** Interruptor "Usar cor personalizada" com seletor de cor (hex). O sistema calcula sozinho a cor do texto dos botões (preto ou branco) e a sombra do botão. Se o contraste da cor com o fundo ficar abaixo de 3:1, mostra um aviso.
 - **RF21 — Restaurar padrão.** Um botão volta a aparência para Padrão, escuro, botões em pílula, sem cor livre.
 - **RF23 — Formato dos botões.** Quadrado, Arredondado ou Pílula, com as mesmas proporções do kit no Figma (botões de 36 px: raio 0, 8 px e totalmente arredondado). O raio é proporcional à altura de cada botão (8/36 ≈ 22% no Arredondado), então botões maiores mantêm o mesmo visual. Vale para os botões de ação das telas públicas e do painel e para os horários do agendamento.
+- **RF24 — Estilo dos botões.** Elevado (o visual original do LinkCut, padrão), Preenchido, Contorno, Sombra dura e Sombra suave. As medidas seguem o kit do Figma (botões de 36 px), sempre proporcionais à altura do botão:
+
+  | Estilo | Borda | Sombra |
+  |---|---|---|
+  | Preenchido | — | — |
+  | Contorno | 1 px | — |
+  | Sombra dura | 1 px | 4 × 4 px, sem desfoque |
+  | Sombra suave | — | 0 × 4 px, desfoque 4 px, preto 16% (mais forte no modo escuro) |
+
+  Preto e branco viram as cores da paleta escolhida. No botão principal, a sombra dura usa a cor de borda da paleta, para não se misturar com o botão quando o destaque é da mesma cor do texto. Vale para os botões principais (Link da Bio, Agendar, Aceitar, Salvar, Solicitar Agendamento) e para a pré-visualização. Os botões secundários do painel continuam neutros.
 - **RF22 — Visitante.** O botão claro/escuro continua nas páginas públicas. O visitante pode trocar o modo só para ele (fica salvo no navegador dele), mas o padrão é o que o barbeiro escolheu. No Painel e nas Configurações vale sempre o tema do barbeiro.
 
 ## 4. Requisitos não funcionais

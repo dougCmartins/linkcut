@@ -110,4 +110,21 @@ describe('SettingsView', () => {
     expect(previewShape).toBe('square')
     expect(store.theme.buttonShape).toBe('square')
   })
+
+  it('previews and saves the button style', async () => {
+    // Arrange
+    await renderSettings('/painel/configuracoes?aba=aparencia')
+    const store = useSettingsStore()
+
+    // Act
+    await fireEvent.click(await screen.findByRole('radio', { name: 'Contorno' }))
+    const previewButtons = [...screen.getByTestId('preview-buttons').children]
+    const savedBefore = store.theme.buttonStyle
+    await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    // Assert
+    expect(previewButtons.every((button) => button.classList.contains('button-border'))).toBe(true)
+    expect(savedBefore).toBe('elevated')
+    expect(store.theme.buttonStyle).toBe('outline')
+  })
 })

@@ -180,4 +180,16 @@ describe('validateTheme', () => {
     // Assert
     expect(errors.buttonShape?.key).toBe('invalidOption')
   })
+
+  it('rejects an unknown button style', () => {
+    // Arrange
+    const { theme } = createDefaultSettings()
+    ;(theme as { buttonStyle: string }).buttonStyle = 'neon'
+
+    // Act
+    const errors = validateTheme(theme)
+
+    // Assert
+    expect(errors.buttonStyle?.key).toBe('invalidOption')
+  })
 })

@@ -7,7 +7,7 @@ import {
   type SettingsSection,
   type ThemeSettings,
 } from './settings.model'
-import { BUTTON_SHAPES } from '@/types/theme'
+import { BUTTON_SHAPES, BUTTON_STYLES } from '@/types/theme'
 import { isHexColor } from '@/utils/color'
 import { isValidWhatsappNumber } from '@/utils/phone'
 import { toMinutes } from '@/utils/time'
@@ -131,6 +131,7 @@ export function validateTheme(theme: ThemeSettings): ValidationErrors {
   const { errors, add } = createCollector()
   add('customAccent', theme.customAccent !== null && !isHexColor(theme.customAccent) ? { key: 'hexColor' } : null)
   add('buttonShape', BUTTON_SHAPES.includes(theme.buttonShape) ? null : { key: 'invalidOption' })
+  add('buttonStyle', BUTTON_STYLES.includes(theme.buttonStyle) ? null : { key: 'invalidOption' })
   return errors
 }
 

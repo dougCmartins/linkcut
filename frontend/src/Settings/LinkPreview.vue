@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SmartImage from '@/components/ui/SmartImage.vue'
 import SocialLinks from '@/components/ui/SocialLinks.vue'
+import { buttonSkinClasses } from '@/components/ui/buttonSkin'
+import { useButtonStyle } from '@/composables/useButtonStyle'
 import type { ProfileSettings } from './settings.model'
 
 defineProps<{ profile: ProfileSettings; avatarUrl: string; backgroundUrl: string }>()
 const { t } = useI18n()
+const buttonStyle = useButtonStyle()
 
-const buttonClass =
+const baseClass =
   'flex h-11 w-full items-center justify-center rounded-button px-4 font-display text-[13px] font-extrabold tracking-tight'
+const primaryClass = computed(() => [baseClass, buttonSkinClasses(buttonStyle.value, 'primary')])
+const secondaryClass = computed(() => [baseClass, buttonSkinClasses(buttonStyle.value, 'secondary')])
 </script>
 
 <template>
@@ -25,16 +31,10 @@ const buttonClass =
       <p class="mt-1 text-xs font-semibold text-accent">{{ profile.handle }}</p>
       <p class="mt-2 text-xs leading-relaxed text-muted break-words">{{ profile.bio }}</p>
 
-      <div class="mt-6 grid w-full gap-3">
-        <span :class="buttonClass" class="bg-accent text-on-accent shadow-[0_4px_0_0_var(--accent-edge)]">
-          {{ t('bioLink.book') }}
-        </span>
-        <span :class="buttonClass" class="bg-surface ring-1 ring-line shadow-[0_4px_0_0_var(--neutral-edge)]">
-          {{ t('bioLink.portfolio') }}
-        </span>
-        <span :class="buttonClass" class="bg-surface ring-1 ring-line shadow-[0_4px_0_0_var(--neutral-edge)]">
-          {{ t('bioLink.whatsapp') }}
-        </span>
+      <div class="mt-6 grid w-full gap-3.5" data-testid="preview-buttons">
+        <span :class="primaryClass">{{ t('bioLink.book') }}</span>
+        <span :class="secondaryClass">{{ t('bioLink.portfolio') }}</span>
+        <span :class="secondaryClass">{{ t('bioLink.whatsapp') }}</span>
       </div>
       <SocialLinks class="mt-6 scale-90" :links="profile.socials" :label="t('bioLink.socials')" />
     </div>

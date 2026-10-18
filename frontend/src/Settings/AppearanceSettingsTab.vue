@@ -5,6 +5,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import ChoiceChips from '@/components/ui/ChoiceChips.vue'
 import AccentColorInput from './AccentColorInput.vue'
 import ButtonShapePicker from './ButtonShapePicker.vue'
+import ButtonStylePicker from './ButtonStylePicker.vue'
 import LinkPreview from './LinkPreview.vue'
 import PalettePicker from './PalettePicker.vue'
 import PhoneFrame from './PhoneFrame.vue'
@@ -61,6 +62,10 @@ watch(() => [theme.value.palette, theme.value.mode], readPaletteColors, { flush:
 
       <SettingsCard :title="t('settings.appearance.buttonShapeTitle')" :description="t('settings.appearance.buttonShapeDescription')">
         <ButtonShapePicker v-model="theme.buttonShape" :label="t('settings.appearance.buttonShapeTitle')" />
+      </SettingsCard>
+
+      <SettingsCard :title="t('settings.appearance.buttonStyleTitle')" :description="t('settings.appearance.buttonStyleDescription')">
+        <ButtonStylePicker v-model="theme.buttonStyle" :shape="theme.buttonShape" :label="t('settings.appearance.buttonStyleTitle')" />
       </SettingsCard>
 
       <SettingsCard :title="t('settings.appearance.accentTitle')">
