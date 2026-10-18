@@ -108,6 +108,7 @@ export default {
       hoursOrder: 'O horário de fechamento precisa ser depois da abertura.',
       vacationOrder: 'A data final precisa ser depois da inicial.',
       hexColor: 'Use uma cor no formato #RRGGBB.',
+      invalidOption: 'Escolha uma das opções.',
     },
     link: {
       profileTitle: 'Perfil',
@@ -192,6 +193,13 @@ export default {
         wine: 'Vinho',
         minimal: 'Minimal',
       },
+      buttonShapeTitle: 'Formato dos botões',
+      buttonShapeDescription: 'Vale para os botões do seu link, do portfólio e do agendamento.',
+      buttonShapes: {
+        square: 'Quadrado',
+        rounded: 'Arredondado',
+        pill: 'Pílula',
+      },
       accentTitle: 'Cor personalizada',
       accentToggle: 'Usar cor personalizada',
       accentToggleDescription: 'Substitui a cor de destaque da paleta.',
@@ -200,7 +208,7 @@ export default {
       contrastOk: 'Bom contraste com o fundo ({ratio}:1).',
       contrastLow: 'Contraste baixo com o fundo ({ratio}:1). Botões e destaques podem ficar difíceis de ver.',
       reset: 'Restaurar padrão',
-      resetDescription: 'Volta para a paleta Padrão, no modo escuro, sem cor personalizada.',
+      resetDescription: 'Volta para a paleta Padrão, no modo escuro, botões em pílula e sem cor personalizada.',
     },
   },
   socials: {

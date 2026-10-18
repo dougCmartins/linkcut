@@ -36,12 +36,13 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 }
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  md: 'h-11 px-5 text-sm',
-  lg: 'h-16 px-7 text-base',
+  // --control-height feeds the `rounded-button` radius (shape chosen in Settings > Appearance).
+  md: 'h-11 [--control-height:2.75rem] px-5 text-sm',
+  lg: 'h-16 [--control-height:4rem] px-7 text-base',
 }
 
 const classes = computed(() => [
-  'inline-flex items-center justify-center gap-2 rounded-full font-display font-extrabold tracking-tight',
+  'inline-flex items-center justify-center gap-2 rounded-button font-display font-extrabold tracking-tight',
   'transition duration-150 ease-out select-none',
   'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent',
   'disabled:cursor-not-allowed disabled:opacity-40',

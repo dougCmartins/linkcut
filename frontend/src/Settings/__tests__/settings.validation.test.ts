@@ -168,4 +168,16 @@ describe('validateTheme', () => {
     // Assert
     expect(errors.customAccent?.key).toBe('hexColor')
   })
+
+  it('rejects an unknown button shape', () => {
+    // Arrange
+    const { theme } = createDefaultSettings()
+    ;(theme as { buttonShape: string }).buttonShape = 'hexagon'
+
+    // Act
+    const errors = validateTheme(theme)
+
+    // Assert
+    expect(errors.buttonShape?.key).toBe('invalidOption')
+  })
 })

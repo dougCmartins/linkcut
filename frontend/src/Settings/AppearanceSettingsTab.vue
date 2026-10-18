@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import ChoiceChips from '@/components/ui/ChoiceChips.vue'
 import AccentColorInput from './AccentColorInput.vue'
+import ButtonShapePicker from './ButtonShapePicker.vue'
 import LinkPreview from './LinkPreview.vue'
 import PalettePicker from './PalettePicker.vue'
 import PhoneFrame from './PhoneFrame.vue'
@@ -56,6 +57,10 @@ watch(() => [theme.value.palette, theme.value.mode], readPaletteColors, { flush:
 
       <SettingsCard :title="t('settings.appearance.paletteTitle')" :description="t('settings.appearance.paletteDescription')">
         <PalettePicker v-model="theme.palette" :mode="theme.mode" :label="t('settings.appearance.paletteTitle')" />
+      </SettingsCard>
+
+      <SettingsCard :title="t('settings.appearance.buttonShapeTitle')" :description="t('settings.appearance.buttonShapeDescription')">
+        <ButtonShapePicker v-model="theme.buttonShape" :label="t('settings.appearance.buttonShapeTitle')" />
       </SettingsCard>
 
       <SettingsCard :title="t('settings.appearance.accentTitle')">

@@ -95,4 +95,19 @@ describe('SettingsView', () => {
     expect(preview.dataset.mode).toBe('light')
     expect(store.theme.palette).toBe('default')
   })
+
+  it('previews and saves the button shape', async () => {
+    // Arrange
+    await renderSettings('/painel/configuracoes?aba=aparencia')
+    const store = useSettingsStore()
+
+    // Act
+    await fireEvent.click(await screen.findByRole('radio', { name: 'Quadrado' }))
+    const previewShape = screen.getByTestId('phone-preview').dataset.buttonShape
+    await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    // Assert
+    expect(previewShape).toBe('square')
+    expect(store.theme.buttonShape).toBe('square')
+  })
 })

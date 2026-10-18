@@ -1,6 +1,6 @@
 import { readonly, ref } from 'vue'
 import type { ThemeSettings } from '@/Settings/settings.model'
-import { ThemeMode, type ThemePalette } from '@/types/theme'
+import { ThemeMode, type ButtonShape, type ThemePalette } from '@/types/theme'
 import { darken, isHexColor, readableTextOn } from '@/utils/color'
 
 const CUSTOM_ACCENT_VARIABLES = ['--accent', '--on-accent', '--accent-edge'] as const
@@ -10,6 +10,7 @@ const VISITOR_MODE_KEY = 'linkcut.visitorMode'
 export interface ThemeAttributes {
   'data-theme': ThemePalette
   'data-mode': ThemeMode
+  'data-button-shape': ButtonShape
   style: Record<string, string>
 }
 
@@ -28,6 +29,7 @@ export function themeAttributes(theme: ThemeSettings, modeOverride: ThemeMode | 
   return {
     'data-theme': theme.palette,
     'data-mode': modeOverride ?? theme.mode,
+    'data-button-shape': theme.buttonShape,
     style: customAccentVariables(theme.customAccent),
   }
 }
@@ -37,6 +39,7 @@ export function applyThemeToDocument(theme: ThemeSettings, modeOverride: ThemeMo
   const attributes = themeAttributes(theme, modeOverride)
   root.dataset.theme = attributes['data-theme']
   root.dataset.mode = attributes['data-mode']
+  root.dataset.buttonShape = attributes['data-button-shape']
   CUSTOM_ACCENT_VARIABLES.forEach((name) => {
     const value = attributes.style[name]
     if (value) root.style.setProperty(name, value)

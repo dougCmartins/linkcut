@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applyThemeToDocument, themeAttributes, useVisitorMode } from './useTheme'
-import { ThemeMode, ThemePalette } from '@/types/theme'
+import { ButtonShape, ThemeMode, ThemePalette } from '@/types/theme'
 
-const oceanDark = { palette: ThemePalette.Ocean, mode: ThemeMode.Dark, customAccent: null }
+const oceanDark = {
+  palette: ThemePalette.Ocean,
+  mode: ThemeMode.Dark,
+  customAccent: null,
+  buttonShape: ButtonShape.Pill,
+}
 
 describe('applyThemeToDocument', () => {
   it('sets the palette and mode on <html>', () => {
@@ -31,6 +36,17 @@ describe('applyThemeToDocument', () => {
     expect(accent).toBe('#f5d90a')
     expect(onAccent).toBe('#000000')
     expect(document.documentElement.style.getPropertyValue('--accent')).toBe('')
+  })
+
+  it('sets the button shape on <html>', () => {
+    // Arrange
+    const theme = { ...oceanDark, buttonShape: ButtonShape.Square }
+
+    // Act
+    applyThemeToDocument(theme)
+
+    // Assert
+    expect(document.documentElement.dataset.buttonShape).toBe('square')
   })
 
   it('lets a mode override win over the barber default', () => {

@@ -208,6 +208,27 @@
   --neutral-edge: #dcdcdc;
 }
 
+/* ---------- Button shape ----------
+ * Same proportions as the Figma kit (buttons 36px tall): square 0px, rounded 8px, pill 24px.
+ * Stored as a ratio of the button height so every size keeps the proportion:
+ *   radius = button height × roundness   (8 / 36 ≈ 0.2222, pill = 0.5 = fully round)
+ * Components set their own height in --control-height (defaults to 2.75rem).
+ */
+:root,
+[data-button-shape='pill'] {
+  --button-roundness: 0.5;
+}
+[data-button-shape='rounded'] {
+  --button-roundness: 0.2222;
+}
+[data-button-shape='square'] {
+  --button-roundness: 0;
+}
+
+@utility rounded-button {
+  border-radius: calc(var(--control-height, 2.75rem) * var(--button-roundness, 0.5));
+}
+
 /* ---------- Base ---------- */
 
 @layer base {

@@ -8,7 +8,7 @@ defineProps<{ profile: ProfileSettings; avatarUrl: string; backgroundUrl: string
 const { t } = useI18n()
 
 const buttonClass =
-  'flex h-11 w-full items-center justify-center rounded-full px-4 font-display text-[13px] font-extrabold tracking-tight'
+  'flex h-11 w-full items-center justify-center rounded-button px-4 font-display text-[13px] font-extrabold tracking-tight'
 </script>
 
 <template>

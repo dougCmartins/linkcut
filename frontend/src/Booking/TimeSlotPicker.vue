@@ -14,7 +14,7 @@ const emit = defineEmits<{ select: [time: string] }>()
       type="button"
       role="radio"
       :aria-checked="time === selectedTime"
-      class="h-11 shrink-0 snap-start rounded-full px-5 font-display text-sm font-extrabold tracking-tight ring-1 transition duration-150"
+      class="h-11 shrink-0 snap-start rounded-button px-5 font-display text-sm font-extrabold tracking-tight ring-1 transition duration-150"
       :class="
         time === selectedTime
           ? 'bg-accent text-on-accent ring-accent shadow-soft'
