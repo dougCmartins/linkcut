@@ -5,14 +5,27 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import TextField from '@/components/ui/TextField.vue'
 import type { FixedExpenseInput, OneOffExpenseInput } from './expenses.model'
 import { EXPENSE_LIMITS, fieldErrors, fixedExpenseSchema, oneOffExpenseSchema } from './expenses.schemas'
-import { parseMoneyInput } from '@/utils/currency'
+import { formatMoneyInput, parseMoneyInput } from '@/utils/currency'
 
-/** Add form for a fixed (monthly) or a one-off expense. Validates with Zod before emitting. */
-const props = defineProps<{ kind: 'fixed' | 'oneOff'; today: string }>()
+/**
+ * Form for a fixed (monthly) or a one-off expense: empty to add, prefilled with `initial` to edit.
+ * Validates with Zod before emitting.
+ */
+const props = defineProps<{
+  kind: 'fixed' | 'oneOff'
+  today: string
+  initial?: FixedExpenseInput | OneOffExpenseInput
+}>()
 const emit = defineEmits<{ submitFixed: [input: FixedExpenseInput]; submitOneOff: [input: OneOffExpenseInput]; cancel: [] }>()
 const { t } = useI18n()
 
-const fields = reactive({ name: '', amount: '', dueDay: '', date: props.today })
+const initial = props.initial
+const fields = reactive({
+  name: initial ? ('name' in initial ? initial.name : initial.description) : '',
+  amount: initial ? formatMoneyInput(initial.amountInCents) : '',
+  dueDay: initial && 'dueDay' in initial ? String(initial.dueDay) : '',
+  date: initial && 'date' in initial ? initial.date : props.today,
+})
 const errors = ref<Record<string, string>>({})
 const errorFor = (field: string) => (errors.value[field] ? t(`expenses.errors.${errors.value[field]}`) : undefined)
 

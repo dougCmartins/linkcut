@@ -163,6 +163,7 @@ export default {
     oneOffDescription: 'Compras e gastos que não se repetem todo mês.',
     oneOffEmpty: 'Nenhuma despesa avulsa neste mês.',
     addOneOff: 'Adicionar despesa avulsa',
+    edit: 'Editar {name}',
     remove: 'Remover {name}',
     removedToast: '"{name}" removida',
     undo: 'Desfazer',

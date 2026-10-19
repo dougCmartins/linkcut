@@ -6,7 +6,7 @@ import UndoToast from '@/components/ui/UndoToast.vue'
 import ExpenseForm from './ExpenseForm.vue'
 import ExpenseItem from './ExpenseItem.vue'
 import { useExpensesStore, type Expense } from './expenses.store'
-import type { FixedExpense, FixedExpenseInput, OneOffExpenseInput } from './expenses.model'
+import type { FixedExpense, FixedExpenseInput, OneOffExpense, OneOffExpenseInput } from './expenses.model'
 import { dueDayInMonth, isDue } from './expenseCalculation'
 import { useUndoWindow } from '@/composables/useUndoWindow'
 import { formatBRL } from '@/utils/currency'
@@ -18,7 +18,19 @@ const today = new Date()
 const todayIso = toIsoDate(today)
 const monthName = formatMonthName(today)
 
+/** Only one form open at a time: "add fixed", "add one-off" or the id of the expense being edited. */
 const openForm = ref<'fixed' | 'oneOff' | null>(null)
+const editingId = ref<string | null>(null)
+
+function startAdd(kind: 'fixed' | 'oneOff'): void {
+  editingId.value = null
+  openForm.value = kind
+}
+
+function startEdit(id: string): void {
+  openForm.value = null
+  editingId.value = id
+}
 const undo = useUndoWindow<Expense>()
 
 const oneOffOfMonth = computed(() => store.oneOffOfMonth(today))
@@ -46,6 +58,16 @@ async function saveFixed(input: FixedExpenseInput): Promise<void> {
 async function saveOneOff(input: OneOffExpenseInput): Promise<void> {
   await store.addOneOff(input, today)
   openForm.value = null
+}
+
+async function saveEditedFixed(expense: FixedExpense, input: FixedExpenseInput): Promise<void> {
+  await store.update({ ...expense, ...input }, today)
+  editingId.value = null
+}
+
+async function saveEditedOneOff(expense: OneOffExpense, input: OneOffExpenseInput): Promise<void> {
+  await store.update({ ...expense, ...input }, today)
+  editingId.value = null
 }
 
 async function remove(id: string): Promise<void> {
@@ -112,11 +134,22 @@ onMounted(() => store.load(today))
       <div class="mt-4 rounded-card bg-surface px-4 ring-1 ring-line shadow-soft">
         <ul v-if="store.fixedByDueDay.length" class="divide-y divide-line">
           <li v-for="expense in store.fixedByDueDay" :key="expense.id">
+            <ExpenseForm
+              v-if="editingId === expense.id"
+              class="my-3"
+              kind="fixed"
+              :today="todayIso"
+              :initial="{ name: expense.name, amountInCents: expense.amountInCents, dueDay: expense.dueDay }"
+              @submit-fixed="saveEditedFixed(expense, $event)"
+              @cancel="editingId = null"
+            />
             <ExpenseItem
+              v-else
               :title="expense.name"
               :detail="fixedDetail(expense)"
               :amount-in-cents="expense.amountInCents"
               :is-counted="isDue(expense, today)"
+              @edit="startEdit(expense.id)"
               @remove="remove(expense.id)"
             />
           </li>
@@ -131,7 +164,7 @@ onMounted(() => store.load(today))
         @submit-fixed="saveFixed"
         @cancel="openForm = null"
       />
-      <BaseButton v-else class="mt-3" variant="secondary" block @click="openForm = 'fixed'">
+      <BaseButton v-else class="mt-3" variant="secondary" block @click="startAdd('fixed')">
         + {{ t('expenses.addFixed') }}
       </BaseButton>
     </section>
@@ -142,11 +175,22 @@ onMounted(() => store.load(today))
       <div class="mt-4 rounded-card bg-surface px-4 ring-1 ring-line shadow-soft">
         <ul v-if="oneOffOfMonth.length" class="divide-y divide-line">
           <li v-for="expense in oneOffOfMonth" :key="expense.id">
+            <ExpenseForm
+              v-if="editingId === expense.id"
+              class="my-3"
+              kind="oneOff"
+              :today="todayIso"
+              :initial="{ description: expense.description, amountInCents: expense.amountInCents, date: expense.date }"
+              @submit-one-off="saveEditedOneOff(expense, $event)"
+              @cancel="editingId = null"
+            />
             <ExpenseItem
+              v-else
               :title="expense.description"
               :detail="formatDayMonth(fromIsoDate(expense.date))"
               :amount-in-cents="expense.amountInCents"
               :is-counted="true"
+              @edit="startEdit(expense.id)"
               @remove="remove(expense.id)"
             />
           </li>
@@ -161,7 +205,7 @@ onMounted(() => store.load(today))
         @submit-one-off="saveOneOff"
         @cancel="openForm = null"
       />
-      <BaseButton v-else class="mt-3" variant="secondary" block @click="openForm = 'oneOff'">
+      <BaseButton v-else class="mt-3" variant="secondary" block @click="startAdd('oneOff')">
         + {{ t('expenses.addOneOff') }}
       </BaseButton>
     </section>

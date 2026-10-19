@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { addFixedExpense, addOneOffExpense, fetchExpenses, removeExpense, restoreExpense } from '../expenses.api'
+import { addFixedExpense, addOneOffExpense, fetchExpenses, removeExpense, restoreExpense, updateExpense } from '../expenses.api'
 
 const NOW = new Date(2026, 9, 17, 15, 0)
 
@@ -43,5 +43,21 @@ describe('expenses api (mock)', () => {
     // Assert
     expect(afterRemove.fixed).not.toContainEqual(rent)
     expect((await fetchExpenses(NOW)).fixed).toContainEqual(rent)
+  })
+
+  it('edits an expense keeping its id, and the change survives a reload', async () => {
+    // Arrange
+    const { fixed, oneOff } = await fetchExpenses(NOW)
+    const rent = fixed[0]!
+    const edited = { ...rent, name: 'Aluguel da cadeira (novo)', amountInCents: 180_000 }
+
+    // Act
+    await updateExpense(edited, NOW)
+
+    // Assert
+    const reloaded = await fetchExpenses(NOW)
+    expect(reloaded.fixed.find((expense) => expense.id === rent.id)).toEqual(edited)
+    expect(reloaded.fixed).toHaveLength(fixed.length)
+    expect(reloaded.oneOff).toEqual(oneOff)
   })
 })

@@ -32,6 +32,7 @@ Margem (%)      = Lucro ÷ Faturamento × 100
 | RF-D6 | **Fixas mensais** (aluguel da cadeira, internet, DAS…): nome, valor e dia do vencimento (1–31). Cada uma entra **inteira no dia do vencimento** (regime de caixa). Antes disso aparece como "Entra no dia 20" e não é somada. No mês com menos dias, o dia 31 vira o último dia do mês. |
 | RF-D7 | **Avulsas:** descrição, valor e data. A data não pode ser futura, porque só entra o que já foi pago. A lista mostra as do mês atual. |
 | RF-D8 | Remover uma despesa mostra por 5 s o aviso com **Desfazer**. |
+| RF-D8.1 | **Editar** (ícone de lápis): o formulário abre no lugar da linha, preenchido com nome, valor e dia do vencimento (ou descrição, valor e data na avulsa), com as mesmas validações do cadastro. Salvar mantém a mesma despesa (mesmo id), e o total do mês, o lucro e a margem são recalculados. Só um formulário fica aberto por vez. |
 | RF-D9 | No primeiro acesso, a tela já vem com exemplos editáveis (aluguel R$ 1.500 no dia 5, internet, DAS, lâminas e toalhas), para a margem não começar irreal em 100%. |
 | RF-D10 | O painel ganha o card **Despesas**, que abre esta tela. |
 
@@ -60,6 +61,7 @@ O ícone "i" ao lado de **Margem** explica a conta com os números do barbeiro:
 
 ## 5. Próximas etapas (backend)
 
-- `GET/POST/DELETE /expenses` no lugar do `localStorage`, e `GET /finances/month-to-date` com o resumo pronto.
+- `GET/POST/PUT/DELETE /expenses` no lugar do `localStorage`, e `GET /finances/month-to-date` com o resumo pronto.
 - O custo do serviço é dado **privado** do barbeiro: a API pública de serviços (página de agendamento) não pode devolvê-lo.
 - Taxa da maquininha (%) por forma de pagamento.
+- Histórico de valores das fixas: hoje, editar o valor de uma fixa muda também o mês atual (não há vigência por mês).

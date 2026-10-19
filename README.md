@@ -1,6 +1,23 @@
 # linkcut
 Interface do meu SaaS para barbeiros 
 
+## Telas
+
+Painel do barbeiro no celular (390 px), com dados de exemplo.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/painel-agenda.png" width="240" alt="Painel e agenda de hoje"><br><sub>Painel e agenda de hoje</sub></td>
+    <td align="center"><img src="docs/screenshots/concluir-atendimento.png" width="240" alt="Concluir atendimento"><br><sub>Concluir atendimento</sub></td>
+    <td align="center"><img src="docs/screenshots/tooltip-margem.png" width="240" alt="Tooltip da margem"><br><sub>Tooltip da margem</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/despesas.png" width="240" alt="Despesas"><br><sub>Despesas</sub></td>
+    <td align="center"><img src="docs/screenshots/editar-despesa.png" width="240" alt="Editar despesa"><br><sub>Editar despesa</sub></td>
+    <td align="center"><img src="docs/screenshots/custo-servico.png" width="240" alt="Custo por serviço"><br><sub>Custo por serviço</sub></td>
+  </tr>
+</table>
+
 ## Frontend (Vue 3 + Tailwind)
 
 Telas mobile-first com dados mockados (`frontend/src/mocks/barber.ts`):
