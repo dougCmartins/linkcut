@@ -1,148 +1,76 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  CODE_TTL_MS,
-  DEMO_ACCOUNT,
-  MAX_CODE_ATTEMPTS,
-  RESEND_DELAY_MS,
-  login,
-  maskEmail,
-  maskPhone,
-  refreshSession,
-  sendCode,
-  verifyCode,
-} from '../auth.api'
-import { AuthError, AuthErrorCode, TwoFactorChannel } from '../auth.model'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { login, logout, refreshSession, sendCode, updateTwoFactorChannel, verifyCode } from '../auth.api'
+import { installFakeIdentityApi, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
 
-const demoCredentials = { email: DEMO_ACCOUNT.email, password: DEMO_ACCOUNT.password }
-
-async function errorCodeOf(promise: Promise<unknown>): Promise<string | null> {
-  try {
-    await promise
-    return null
-  } catch (error) {
-    return error instanceof AuthError ? error.code : 'unknown'
-  }
-}
-
-async function startChallengeWithCode() {
-  const challenge = await login(demoCredentials)
-  const delivery = await sendCode(challenge.challengeId, TwoFactorChannel.WhatsApp)
-  return { challengeId: challenge.challengeId, code: delivery.devCode ?? '' }
-}
-
-describe('auth api (mock)', () => {
-  beforeEach(() => {
-    sessionStorage.clear()
-  })
-
+describe('auth api', () => {
   afterEach(() => {
-    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
-  it('rejects a wrong password with the same error as an unknown e-mail', async () => {
+  it('login sends the credentials and maps the challenge', async () => {
     // Arrange
-    const wrongPassword = { ...demoCredentials, password: 'wrong-pass' }
-    const unknownEmail = { ...demoCredentials, email: 'someone@linkcut.app' }
+    const { calls } = installFakeIdentityApi({ preferredChannel: 'sms' })
 
     // Act
-    const errors = await Promise.all([errorCodeOf(login(wrongPassword)), errorCodeOf(login(unknownEmail))])
+    const challenge = await login({ email: 'rafael@linkcut.app', password: PASSWORD })
 
     // Assert
-    expect(errors).toEqual([AuthErrorCode.InvalidCredentials, AuthErrorCode.InvalidCredentials])
+    expect(calls[0]?.body).toEqual({ email: 'rafael@linkcut.app', password: PASSWORD })
+    expect(challenge).toEqual({
+      challengeId: '01jchallenge',
+      preferredChannel: 'sms',
+      destinations: { email: 'ra****@linkcut.app', sms: '+55 •• •••••-7777' },
+    })
   })
 
-  it('asks for a second factor with masked destinations', async () => {
-    // Arrange & Act
-    const challenge = await login(demoCredentials)
-
-    // Assert
-    expect(challenge.destinations).toEqual({ whatsapp: '(11) •••••-8888', email: 'ra•••@linkcut.app' })
-  })
-
-  it('signs in with the code that was sent', async () => {
+  it('sendCode posts snake_case and turns the dates into epoch ms', async () => {
     // Arrange
-    const { challengeId, code } = await startChallengeWithCode()
+    const { calls } = installFakeIdentityApi()
+    const before = Date.now()
 
     // Act
-    const session = await verifyCode(challengeId, code)
+    const delivery = await sendCode('01jchallenge', 'sms')
 
     // Assert
-    expect(code).toMatch(/^\d{6}$/)
-    expect(session.user.email).toBe(DEMO_ACCOUNT.email)
-    expect(session.accessToken).not.toBe(session.refreshToken)
+    expect(calls[0]?.body).toEqual({ challenge_id: '01jchallenge', channel: 'sms' })
+    expect(delivery.sentTo).toBe('+55 •• •••••-7777')
+    expect(delivery.resendAvailableAt).toBeGreaterThan(before)
+    expect(delivery.expiresAt).toBeGreaterThan(delivery.resendAvailableAt)
   })
 
-  it('counts down the attempts on a wrong code and ends after the limit', async () => {
+  it('verifyCode returns the session with absolute expiry times and the user', async () => {
     // Arrange
-    const { challengeId, code } = await startChallengeWithCode()
-    const wrong = code === '000000' ? '111111' : '000000'
+    installFakeIdentityApi()
+    const before = Date.now()
 
     // Act
-    const first = await verifyCode(challengeId, wrong).catch((error: AuthError) => error)
-    for (let attempt = 2; attempt < MAX_CODE_ATTEMPTS; attempt++) await verifyCode(challengeId, wrong).catch(() => null)
-    const last = await errorCodeOf(verifyCode(challengeId, wrong))
-    const afterLimit = await errorCodeOf(verifyCode(challengeId, code))
+    const session = await verifyCode('01jchallenge', RIGHT_CODE)
 
     // Assert
-    expect(first).toMatchObject({ code: AuthErrorCode.InvalidCode, attemptsLeft: MAX_CODE_ATTEMPTS - 1 })
-    expect(last).toBe(AuthErrorCode.TooManyAttempts)
-    expect(afterLimit).toBe(AuthErrorCode.ChallengeExpired)
+    expect(session.accessToken).toBe('access-1')
+    expect(session.accessExpiresAt).toBeGreaterThanOrEqual(before + 900_000)
+    expect(session.refreshExpiresAt).toBeGreaterThanOrEqual(before + 604_800_000)
+    expect(session.user).toMatchObject({ id: 7, tenantId: 3, phoneMasked: '+55 •• •••••-7777' })
   })
 
-  it('refuses a code after it expires', async () => {
+  it('refresh, logout and channel update call the right endpoints', async () => {
     // Arrange
-    vi.useFakeTimers({ toFake: ['Date'] })
-    const { challengeId, code } = await startChallengeWithCode()
+    const { calls } = installFakeIdentityApi()
 
     // Act
-    vi.setSystemTime(Date.now() + CODE_TTL_MS + 1000)
-    const error = await errorCodeOf(verifyCode(challengeId, code))
+    const refreshed = await refreshSession('refresh-1')
+    await logout('refresh-2')
+    const user = await updateTwoFactorChannel('email')
 
     // Assert
-    expect(error).toBe(AuthErrorCode.CodeExpired)
-  })
-
-  it('only allows a resend after the waiting time', async () => {
-    // Arrange
-    vi.useFakeTimers({ toFake: ['Date'] })
-    const challenge = await login(demoCredentials)
-    await sendCode(challenge.challengeId, TwoFactorChannel.Email)
-
-    // Act
-    const tooSoon = await errorCodeOf(sendCode(challenge.challengeId, TwoFactorChannel.Email))
-    vi.setSystemTime(Date.now() + RESEND_DELAY_MS + 1000)
-    const later = await errorCodeOf(sendCode(challenge.challengeId, TwoFactorChannel.Email))
-
-    // Assert
-    expect(tooSoon).toBe(AuthErrorCode.ResendTooSoon)
-    expect(later).toBeNull()
-  })
-
-  it('rotates the refresh token: an old one cannot be reused', async () => {
-    // Arrange
-    const { challengeId, code } = await startChallengeWithCode()
-    const session = await verifyCode(challengeId, code)
-
-    // Act
-    const renewed = await refreshSession(session.refreshToken)
-    const reuse = await errorCodeOf(refreshSession(session.refreshToken))
-
-    // Assert
-    expect(renewed.refreshToken).not.toBe(session.refreshToken)
-    expect(reuse).toBe(AuthErrorCode.SessionExpired)
-  })
-})
-
-describe('masking', () => {
-  it('hides most of the phone and e-mail', () => {
-    // Arrange
-    const phone = '5521988887777'
-    const email = 'joao.silva@gmail.com'
-
-    // Act
-    const masked = [maskPhone(phone), maskEmail(email)]
-
-    // Assert
-    expect(masked).toEqual(['(21) •••••-7777', 'jo•••@gmail.com'])
+    expect(refreshed.refreshToken).toBe('refresh-2')
+    expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
+      'POST /token/refresh',
+      'POST /logout',
+      'PATCH /me/two-factor-channel',
+    ])
+    expect(calls[1]?.body).toEqual({ refresh_token: 'refresh-2' })
+    expect(user.twoFactorChannel).toBe('email')
   })
 })

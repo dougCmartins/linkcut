@@ -17,6 +17,11 @@ export function safeRedirect(target: unknown): string {
 export function installAuthGuard(router: Router): void {
   router.beforeEach(async (to) => {
     const auth = useAuthStore()
+    // The session can also end in the middle of a page (refresh refused by the API).
+    auth.onSessionExpired(() => {
+      const current = router.currentRoute.value
+      if (current.meta.requiresAuth) void router.replace({ name: LOGIN_ROUTE, query: { redirect: current.fullPath } })
+    })
 
     if (to.meta.requiresAuth && !(await auth.ensureSession())) {
       logSecurityEvent('route.access_denied', { path: to.path })

@@ -10,6 +10,8 @@ import type { LoginError } from './auth.store'
 const props = defineProps<{ delivery: CodeDelivery; error: LoginError | null; isBusy: boolean }>()
 const emit = defineEmits<{ submit: [code: string]; resend: []; changeChannel: [] }>()
 const { t } = useI18n()
+/** Where to find the code while developing (no real e-mail/SMS provider). */
+const isDev = import.meta.env.DEV
 
 const code = ref('')
 const otp = useTemplateRef<InstanceType<typeof OtpInput>>('otp')
@@ -62,8 +64,8 @@ onBeforeUnmount(() => clearInterval(timer))
       @complete="submit"
     />
 
-    <p v-if="delivery.devCode" class="rounded-card bg-accent/10 px-4 py-3 text-xs font-semibold ring-1 ring-accent/40">
-      {{ t('auth.devCode', { code: delivery.devCode }) }}
+    <p v-if="isDev" class="rounded-card bg-accent/10 px-4 py-3 text-xs font-semibold ring-1 ring-accent/40">
+      {{ t('auth.devCodeHint') }}
     </p>
 
     <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!isComplete || isBusy">

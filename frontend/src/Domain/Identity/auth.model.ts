@@ -1,9 +1,6 @@
-export const TwoFactorChannel = {
-  WhatsApp: 'whatsapp',
-  Email: 'email',
-} as const
+import type { TwoFactorChannel } from '@/types/twoFactorChannel'
 
-export type TwoFactorChannel = (typeof TwoFactorChannel)[keyof typeof TwoFactorChannel]
+export { TwoFactorChannel } from '@/types/twoFactorChannel'
 
 /** Steps of the login screen. */
 export const LoginStep = {
@@ -14,29 +11,6 @@ export const LoginStep = {
 
 export type LoginStep = (typeof LoginStep)[keyof typeof LoginStep]
 
-/** Error codes returned by the auth API (translated in the UI). */
-export const AuthErrorCode = {
-  InvalidCredentials: 'invalidCredentials',
-  InvalidCode: 'invalidCode',
-  CodeExpired: 'codeExpired',
-  TooManyAttempts: 'tooManyAttempts',
-  ResendTooSoon: 'resendTooSoon',
-  ChallengeExpired: 'challengeExpired',
-  SessionExpired: 'sessionExpired',
-} as const
-
-export type AuthErrorCode = (typeof AuthErrorCode)[keyof typeof AuthErrorCode]
-
-export class AuthError extends Error {
-  constructor(
-    public readonly code: AuthErrorCode,
-    public readonly attemptsLeft: number | null = null,
-  ) {
-    super(code)
-    this.name = 'AuthError'
-  }
-}
-
 export interface Credentials {
   email: string
   password: string
@@ -45,8 +19,8 @@ export interface Credentials {
 /** Answer to a correct e-mail + password: the second factor is still needed. */
 export interface LoginChallenge {
   challengeId: string
-  /** Masked destinations, e.g. "(11) •••••-8888" and "ra•••@linkcut.app". */
-  destinations: Record<TwoFactorChannel, string>
+  /** Masked destinations by channel; SMS is missing when the account has no phone. */
+  destinations: Partial<Record<TwoFactorChannel, string>>
   /** Default channel chosen in Settings > Segurança; null = ask every time. */
   preferredChannel: TwoFactorChannel | null
 }
@@ -57,13 +31,16 @@ export interface CodeDelivery {
   /** Epoch ms. */
   expiresAt: number
   resendAvailableAt: number
-  /** Only filled in development, while there is no real WhatsApp/e-mail sender. */
-  devCode: string | null
 }
 
 export interface SessionUser {
+  id: number
+  tenantId: number
   name: string
   email: string
+  phoneMasked: string | null
+  role: string
+  twoFactorChannel: TwoFactorChannel | null
 }
 
 export interface Session {

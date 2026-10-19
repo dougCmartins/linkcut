@@ -18,7 +18,7 @@ function signIn(): void {
     refreshToken: 'refresh',
     accessExpiresAt: now + 60_000,
     refreshExpiresAt: now + 120_000,
-    user: { name: 'Rafael Costa', email: 'rafael@linkcut.app' },
+    user: { id: 7, tenantId: 3, name: 'Rafael Costa', email: 'rafael@linkcut.app', phoneMasked: null, role: 'owner', twoFactorChannel: null },
   }
 }
 

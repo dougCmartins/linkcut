@@ -6,7 +6,6 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 import ChannelPicker from './ChannelPicker.vue'
 import CodeForm from './CodeForm.vue'
 import CredentialsForm from './CredentialsForm.vue'
-import { DEMO_ACCOUNT } from './auth.api'
 import { safeRedirect } from './auth.guard'
 import { LoginStep, type Credentials, type TwoFactorChannel } from './auth.model'
 import { useAuthStore } from './auth.store'
@@ -16,15 +15,14 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-/** Demo account is only offered while there is no backend, in development. */
-const demoAccount: Credentials | null = import.meta.env.DEV
-  ? { email: DEMO_ACCOUNT.email, password: DEMO_ACCOUNT.password }
-  : null
+/** Demo account created by the backend seeder; only offered in development. */
+const DEMO_ACCOUNT: Credentials = { email: 'rafael@linkcut.app', password: 'linkcut123' }
+const demoAccount: Credentials | null = import.meta.env.DEV ? DEMO_ACCOUNT : null
 
 const errorMessage = computed(() => {
   if (!auth.error) return ''
   const { code, attemptsLeft } = auth.error
-  return t(`auth.errors.${code}`, { attempts: attemptsLeft ?? 0 })
+  return t(`errors.api.${code}`, { attempts: attemptsLeft ?? 0 })
 })
 
 const stepTitle = computed(() => t(`auth.steps.${auth.step}.title`))

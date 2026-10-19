@@ -1,27 +1,23 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import * as authApi from './auth.api'
-import {
-  AuthError,
-  AuthErrorCode,
-  LoginStep,
-  type CodeDelivery,
-  type Credentials,
-  type LoginChallenge,
-  type Session,
-  type TwoFactorChannel,
-} from './auth.model'
+import { LoginStep, type CodeDelivery, type Credentials, type LoginChallenge, type Session, type SessionUser } from './auth.model'
+import type { TwoFactorChannel } from '@/types/twoFactorChannel'
+import { ApiErrorCode } from '@/types/apiErrorCode'
+import { setHttpAuthHandlers } from '@/http/client'
+import { ApiError } from '@/http/apiError'
+import { useApiErrors } from '@/composables/useApiErrors'
+import { setObservabilityUser } from '@/observability/sentry'
 import { logSecurityEvent } from '@/utils/logger'
 
 /** Session lives in sessionStorage: closing the browser ends it. */
 const SESSION_KEY = 'linkcut.session'
-const UNEXPECTED_ERROR = 'unexpected'
 
 /** Errors that end the login attempt and send the barber back to the first step. */
-const RESTART_ERRORS: string[] = [AuthErrorCode.TooManyAttempts, AuthErrorCode.ChallengeExpired]
+const RESTART_ERRORS: string[] = [ApiErrorCode.TooManyAttempts, ApiErrorCode.ChallengeExpired, ApiErrorCode.SendLimitReached]
 
 export interface LoginError {
-  /** i18n key under `auth.errors`. */
+  /** i18n key under `errors.api`. */
   code: string
   attemptsLeft: number | null
 }
@@ -45,22 +41,31 @@ function writeSession(session: Session | null): void {
 }
 
 export const useAuthStore = defineStore('auth', () => {
+  const apiErrors = useApiErrors()
   const session = ref<Session | null>(readSession())
   const step = ref<LoginStep>(LoginStep.Credentials)
   const challenge = ref<LoginChallenge | null>(null)
   const delivery = ref<CodeDelivery | null>(null)
   const isBusy = ref(false)
   const error = ref<LoginError | null>(null)
+  let sessionExpiredListener: (() => void) | null = null
+  /** One refresh at a time: two parallel refreshes would look like a reused (stolen) token. */
+  let refreshing: Promise<boolean> | null = null
 
   const user = computed(() => session.value?.user ?? null)
 
   function setSession(next: Session | null): void {
     session.value = next
     writeSession(next)
+    setObservabilityUser(next ? { id: next.user.id, tenantId: next.user.tenantId } : null)
+  }
+
+  function setUser(next: SessionUser): void {
+    if (session.value) setSession({ ...session.value, user: next })
   }
 
   function hasValidAccess(now = Date.now()): boolean {
-    return session.value !== null && session.value.accessExpiresAt > now
+    return Boolean(session.value) && session.value!.accessExpiresAt > now
   }
 
   function resetLogin(): void {
@@ -77,10 +82,10 @@ export const useAuthStore = defineStore('auth', () => {
       await action()
       return true
     } catch (caught) {
-      const code = caught instanceof AuthError ? caught.code : UNEXPECTED_ERROR
-      const attemptsLeft = caught instanceof AuthError ? caught.attemptsLeft : null
-      error.value = { code, attemptsLeft }
-      logSecurityEvent(event, { reason: code, attemptsLeft })
+      const code = apiErrors.errorCode(caught)
+      const attemptsLeft = apiErrors.attemptsLeft(caught)
+      error.value = { code: apiErrors.messageKey(caught), attemptsLeft }
+      logSecurityEvent(event, { reason: code, attemptsLeft, requestId: apiErrors.requestId(caught) })
       if (RESTART_ERRORS.includes(code)) resetLogin()
       return false
     } finally {
@@ -95,12 +100,13 @@ export const useAuthStore = defineStore('auth', () => {
       step.value = LoginStep.Channel
     }, 'login.credentials_rejected')
     const preferred = challenge.value?.preferredChannel
-    return isAccepted && preferred ? requestCode(preferred) : isAccepted
+    const canUsePreferred = preferred && challenge.value?.destinations[preferred]
+    return isAccepted && canUsePreferred ? requestCode(preferred) : isAccepted
   }
 
   function requestCode(channel: TwoFactorChannel): Promise<boolean> {
     return run(async () => {
-      if (!challenge.value) throw new AuthError(AuthErrorCode.ChallengeExpired)
+      if (!challenge.value) throw new ApiError(ApiErrorCode.ChallengeExpired, 410)
       delivery.value = await authApi.sendCode(challenge.value.challengeId, channel)
       step.value = LoginStep.Code
     }, 'login.code_not_sent')
@@ -117,7 +123,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function submitCode(code: string): Promise<boolean> {
     return run(async () => {
-      if (!challenge.value) throw new AuthError(AuthErrorCode.ChallengeExpired)
+      if (!challenge.value) throw new ApiError(ApiErrorCode.ChallengeExpired, 410)
       setSession(await authApi.verifyCode(challenge.value.challengeId, code))
       resetLogin()
     }, 'login.code_rejected')
@@ -128,9 +134,7 @@ export const useAuthStore = defineStore('auth', () => {
     resetLogin()
   }
 
-  /** True when there is a usable session, refreshing the access token if needed. */
-  async function ensureSession(): Promise<boolean> {
-    if (hasValidAccess()) return true
+  async function doRefresh(): Promise<boolean> {
     const current = session.value
     if (!current || current.refreshExpiresAt <= Date.now()) {
       setSession(null)
@@ -139,18 +143,58 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       setSession(await authApi.refreshSession(current.refreshToken))
       return true
-    } catch {
-      logSecurityEvent('session.refresh_failed')
+    } catch (caught) {
+      logSecurityEvent('session.refresh_failed', { reason: apiErrors.errorCode(caught) })
       setSession(null)
       return false
     }
   }
 
-  async function logout(): Promise<void> {
-    if (session.value) await authApi.logout(session.value.refreshToken)
-    setSession(null)
-    restart()
+  function refreshAccess(): Promise<boolean> {
+    refreshing ??= doRefresh().finally(() => (refreshing = null))
+    return refreshing
   }
+
+  /** True when there is a usable session, refreshing the access token if needed. */
+  async function ensureSession(): Promise<boolean> {
+    return hasValidAccess() || refreshAccess()
+  }
+
+  /** Revokes the tokens on the server, then always clears the local session (even offline). */
+  async function logout(): Promise<void> {
+    const current = session.value
+    try {
+      if (current) await authApi.logout(current.refreshToken)
+    } catch {
+      // Offline or already expired: the server tokens expire on their own.
+    } finally {
+      setSession(null)
+      restart()
+    }
+  }
+
+  /** Reloads the user from the API (e.g. the default 2FA channel). */
+  async function refreshProfile(): Promise<void> {
+    setUser(await authApi.fetchMe())
+  }
+
+  async function updateTwoFactorChannel(channel: TwoFactorChannel | null): Promise<void> {
+    setUser(await authApi.updateTwoFactorChannel(channel))
+  }
+
+  /** Called by the router guard: where to go when the session cannot be recovered mid-page. */
+  function onSessionExpired(listener: () => void): void {
+    sessionExpiredListener = listener
+  }
+
+  setHttpAuthHandlers({
+    accessToken: () => session.value?.accessToken ?? null,
+    refresh: refreshAccess,
+    onSessionExpired: () => {
+      setSession(null)
+      sessionExpiredListener?.()
+    },
+  })
 
   return {
     session,
@@ -169,5 +213,8 @@ export const useAuthStore = defineStore('auth', () => {
     restart,
     ensureSession,
     logout,
+    refreshProfile,
+    updateTwoFactorChannel,
+    onSessionExpired,
   }
 })

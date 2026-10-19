@@ -28,9 +28,23 @@ Telas no celular (390 px), com dados de exemplo.
   </tr>
 </table>
 
+## Estrutura
+
+| Pasta | O quê |
+|---|---|
+| `backend/` | API Laravel 11 (PHP 8.3), DDD pragmático, multi-tenant por `tenant_id`, Passport e 2FA por e-mail ou SMS ([arquitetura](docs/arquitetura-backend.md), [observabilidade](docs/observabilidade.md)) |
+| `frontend/` | SPA Vue 3 + Tailwind |
+| `docker-compose.yml` + `Makefile` | MySQL, API, fila, Pulse, Mailpit e SPA |
+
+```bash
+make up      # SPA :5173 · API :8087 · Pulse :8087/pulse · Mailpit :8025 · MySQL :3309
+make seed    # login de demonstração: rafael@linkcut.app / linkcut123
+make test    # testes da API · make test-web: testes do SPA
+```
+
 ## Frontend (Vue 3 + Tailwind)
 
-Telas mobile-first com dados mockados (`frontend/src/mocks/barber.ts`):
+Telas mobile-first. O login usa a API real; as demais telas ainda usam dados mockados (`frontend/src/mocks/`) até a fase delas:
 
 | Rota | Tela |
 |------|------|
@@ -43,17 +57,10 @@ Telas mobile-first com dados mockados (`frontend/src/mocks/barber.ts`):
 | `/painel/despesas` 🔒 | Despesas fixas e avulsas do mês, mais o custo dos atendimentos ([requisitos](docs/requisitos-despesas.md)) |
 | `/painel/configuracoes` 🔒 | Configurações: abas Link, Portfólio, Agenda, Aparência e Segurança (`?aba=`) |
 
-🔒 = só com login. Em desenvolvimento, use a conta de teste `rafael@linkcut.app` / `linkcut123`; o código 2FA aparece na própria tela (detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md)).
+🔒 = só com login. Em desenvolvimento, use a conta de demonstração `rafael@linkcut.app` / `linkcut123`. O código 2FA chega no Mailpit (e-mail) ou em `backend/storage/logs/sms.log` (SMS). Detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md).
 
 Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em [`docs/requisitos-configuracoes.md`](docs/requisitos-configuracoes.md)). Enquanto não há backend, os dados ficam no navegador (localStorage + IndexedDB para imagens), atrás de `frontend/src/Settings/settings.api.ts`.
 
 As cores ficam em um único arquivo, `frontend/src/styles/core.css`: 6 paletas, cada uma com versão clara e escura, mais uma cor personalizada opcional. O visitante pode alternar claro/escuro nas páginas públicas pelo botão no canto superior direito.
 
-```bash
-make up         # sobe o frontend em http://localhost:5173 (Docker)
-make test       # Vitest
-make typecheck  # vue-tsc
-make build
-```
-
-Sem Docker: `cd frontend && npm install && npm run dev`.
+Sem Docker: `cd frontend && npm install && npm run dev` (a API em `VITE_API_URL`, veja `frontend/.env.example`).

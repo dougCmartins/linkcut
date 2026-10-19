@@ -1,197 +1,123 @@
-import {
-  AuthError,
-  AuthErrorCode,
-  TwoFactorChannel,
-  type CodeDelivery,
-  type Credentials,
-  type LoginChallenge,
-  type Session,
-} from './auth.model'
-import { CODE_LENGTH } from './auth.schemas'
-import { loadSettings } from '@/Settings/settings.api'
+import type { CodeDelivery, Credentials, LoginChallenge, Session, SessionUser } from './auth.model'
+import type { TwoFactorChannel } from '@/types/twoFactorChannel'
+import { http } from '@/http/client'
 
 /**
- * MOCK of the authentication API, until the backend exists.
- * The rules live here (the backend will enforce the same ones):
- * - e-mail + password, then a 6-digit code sent by WhatsApp or e-mail (2FA);
- * - the code is valid for 5 minutes, can be resent after 30 seconds, 5 wrong tries end the attempt;
- * - short access token (15 min) + refresh token (7 days) that is rotated on every use.
- * The UI only talks to these functions, so swapping them for HTTP calls changes nothing else.
+ * Identity API (backend: src/Domain/Identity + Orchestrator/SignIn).
+ * Sign-in: e-mail + password → code by e-mail or SMS (2FA) → short access token + refresh token.
+ * The API speaks snake_case; this file is the only place that maps it to the app's models.
  */
 
-export const CODE_TTL_MS = 5 * 60_000
-export const RESEND_DELAY_MS = 30_000
-export const MAX_CODE_ATTEMPTS = 5
-const CHALLENGE_TTL_MS = 10 * 60_000
-const ACCESS_TTL_MS = 15 * 60_000
-const REFRESH_TTL_MS = 7 * 24 * 60 * 60_000
-const LATENCY_MS = import.meta.env.MODE === 'test' ? 0 : 450
-const REFRESH_STORE_KEY = 'linkcut.mockAuth.refreshTokens'
-
-/** Demo account shown on the login screen in development. */
-export const DEMO_ACCOUNT = {
-  name: 'Rafael Costa',
-  email: 'rafael@linkcut.app',
-  password: 'linkcut123',
-  phone: '11999998888',
-} as const
-
-interface PendingChallenge {
-  expiresAt: number
-  code: string | null
-  codeExpiresAt: number
-  resendAvailableAt: number
-  attemptsLeft: number
+interface UserResponse {
+  id: number
+  tenant_id: number
+  name: string
+  email: string
+  phone_masked: string | null
+  role: string
+  two_factor_channel: TwoFactorChannel | null
 }
 
-const challenges = new Map<string, PendingChallenge>()
-
-const wait = () => new Promise((resolve) => setTimeout(resolve, LATENCY_MS))
-
-function randomHex(bytes: number): string {
-  const values = crypto.getRandomValues(new Uint8Array(bytes))
-  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('')
+interface LoginChallengeResponse {
+  challenge_id: string
+  preferred_channel: TwoFactorChannel | null
+  destinations: { channel: TwoFactorChannel; masked: string }[]
 }
 
-function randomCode(): string {
-  const [value = 0] = crypto.getRandomValues(new Uint32Array(1))
-  return String(value % 10 ** CODE_LENGTH).padStart(CODE_LENGTH, '0')
+interface CodeDeliveryResponse {
+  channel: TwoFactorChannel
+  masked_destination: string
+  expires_at: string
+  resend_available_at: string
 }
 
-export function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '').slice(-11)
-  return `(${digits.slice(0, 2)}) •••••-${digits.slice(-4)}`
+interface SessionResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+  refresh_token: string
+  refresh_expires_in: number
+  user: UserResponse
 }
 
-export function maskEmail(email: string): string {
-  const [name = '', domain = ''] = email.split('@')
-  return `${name.slice(0, 2)}•••@${domain}`
-}
-
-function readRefreshTokens(): Record<string, number> {
-  try {
-    return JSON.parse(sessionStorage.getItem(REFRESH_STORE_KEY) ?? '{}') as Record<string, number>
-  } catch {
-    return {}
-  }
-}
-
-function writeRefreshTokens(tokens: Record<string, number>): void {
-  try {
-    sessionStorage.setItem(REFRESH_STORE_KEY, JSON.stringify(tokens))
-  } catch {
-    // Storage blocked: refresh only works while the page stays open.
-  }
-}
-
-function issueSession(): Session {
-  const now = Date.now()
-  const refreshToken = randomHex(24)
-  writeRefreshTokens({ ...readRefreshTokens(), [refreshToken]: now + REFRESH_TTL_MS })
+function toUser(user: UserResponse): SessionUser {
   return {
-    accessToken: randomHex(24),
-    refreshToken,
-    accessExpiresAt: now + ACCESS_TTL_MS,
-    refreshExpiresAt: now + REFRESH_TTL_MS,
-    user: { name: DEMO_ACCOUNT.name, email: DEMO_ACCOUNT.email },
+    id: user.id,
+    tenantId: user.tenant_id,
+    name: user.name,
+    email: user.email,
+    phoneMasked: user.phone_masked,
+    role: user.role,
+    twoFactorChannel: user.two_factor_channel,
   }
 }
 
-function findChallenge(challengeId: string): PendingChallenge {
-  const challenge = challenges.get(challengeId)
-  if (!challenge || challenge.expiresAt < Date.now()) {
-    challenges.delete(challengeId)
-    throw new AuthError(AuthErrorCode.ChallengeExpired)
+function toSession(session: SessionResponse, now = Date.now()): Session {
+  return {
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token,
+    accessExpiresAt: now + session.expires_in * 1000,
+    refreshExpiresAt: now + session.refresh_expires_in * 1000,
+    user: toUser(session.user),
   }
-  return challenge
 }
 
-/** Step 1: e-mail and password. The same error for wrong e-mail or wrong password (no account discovery). */
+/** Step 1: e-mail and password. Wrong e-mail or password give the same error (no account discovery). */
 export async function login(credentials: Credentials): Promise<LoginChallenge> {
-  await wait()
-  const isValid =
-    credentials.email.trim().toLowerCase() === DEMO_ACCOUNT.email && credentials.password === DEMO_ACCOUNT.password
-  if (!isValid) throw new AuthError(AuthErrorCode.InvalidCredentials)
+  const response = await http<LoginChallengeResponse>('/login', { method: 'POST', body: credentials, auth: false })
+  return {
+    challengeId: response.data.challenge_id,
+    preferredChannel: response.data.preferred_channel,
+    destinations: Object.fromEntries(response.data.destinations.map((item) => [item.channel, item.masked])),
+  }
+}
 
-  const challengeId = randomHex(16)
-  challenges.set(challengeId, {
-    expiresAt: Date.now() + CHALLENGE_TTL_MS,
-    code: null,
-    codeExpiresAt: 0,
-    resendAvailableAt: 0,
-    attemptsLeft: MAX_CODE_ATTEMPTS,
+/** Step 2: sends a new code by the chosen channel (the API enforces the resend wait). */
+export async function sendCode(challengeId: string, channel: TwoFactorChannel): Promise<CodeDelivery> {
+  const response = await http<CodeDeliveryResponse>('/two-factor/send', {
+    method: 'POST',
+    body: { challenge_id: challengeId, channel },
+    auth: false,
   })
   return {
-    challengeId,
-    destinations: maskedDestinations(),
-    // Mock of the account profile on the server: read from the barber's saved settings.
-    preferredChannel: loadSettings().security.defaultTwoFactorChannel,
+    channel: response.data.channel,
+    sentTo: response.data.masked_destination,
+    expiresAt: Date.parse(response.data.expires_at),
+    resendAvailableAt: Date.parse(response.data.resend_available_at),
   }
 }
 
-function maskedDestinations(): Record<TwoFactorChannel, string> {
-  return {
-    [TwoFactorChannel.WhatsApp]: maskPhone(DEMO_ACCOUNT.phone),
-    [TwoFactorChannel.Email]: maskEmail(DEMO_ACCOUNT.email),
-  }
-}
-
-/** Masked 2FA destinations of the signed-in account (shown in Settings > Segurança). */
-export async function getTwoFactorDestinations(): Promise<Record<TwoFactorChannel, string>> {
-  return maskedDestinations()
-}
-
-/** Step 2: send a new code by the chosen channel. Respects the resend wait. */
-export async function sendCode(challengeId: string, channel: TwoFactorChannel): Promise<CodeDelivery> {
-  await wait()
-  const challenge = findChallenge(challengeId)
-  const now = Date.now()
-  if (challenge.code && now < challenge.resendAvailableAt) throw new AuthError(AuthErrorCode.ResendTooSoon)
-  challenge.code = randomCode()
-  challenge.codeExpiresAt = now + CODE_TTL_MS
-  challenge.resendAvailableAt = now + RESEND_DELAY_MS
-  challenge.attemptsLeft = MAX_CODE_ATTEMPTS
-  return {
-    channel,
-    sentTo: channel === TwoFactorChannel.WhatsApp ? maskPhone(DEMO_ACCOUNT.phone) : maskEmail(DEMO_ACCOUNT.email),
-    expiresAt: challenge.codeExpiresAt,
-    resendAvailableAt: challenge.resendAvailableAt,
-    devCode: import.meta.env.DEV ? challenge.code : null,
-  }
-}
-
-/** Step 3: check the code. Returns the session on success. */
+/** Step 3: checks the code and opens the session. */
 export async function verifyCode(challengeId: string, code: string): Promise<Session> {
-  await wait()
-  const challenge = findChallenge(challengeId)
-  if (!challenge.code || Date.now() > challenge.codeExpiresAt) throw new AuthError(AuthErrorCode.CodeExpired)
-
-  if (code !== challenge.code) {
-    challenge.attemptsLeft -= 1
-    if (challenge.attemptsLeft <= 0) {
-      challenges.delete(challengeId)
-      throw new AuthError(AuthErrorCode.TooManyAttempts)
-    }
-    throw new AuthError(AuthErrorCode.InvalidCode, challenge.attemptsLeft)
-  }
-
-  challenges.delete(challengeId)
-  return issueSession()
+  const response = await http<SessionResponse>('/two-factor/verify', {
+    method: 'POST',
+    body: { challenge_id: challengeId, code },
+    auth: false,
+  })
+  return toSession(response.data)
 }
 
 /** Rotates the refresh token: the old one stops working once used. */
 export async function refreshSession(refreshToken: string): Promise<Session> {
-  await wait()
-  const tokens = readRefreshTokens()
-  const expiresAt = tokens[refreshToken]
-  delete tokens[refreshToken]
-  writeRefreshTokens(tokens)
-  if (!expiresAt || expiresAt < Date.now()) throw new AuthError(AuthErrorCode.SessionExpired)
-  return issueSession()
+  const response = await http<SessionResponse>('/token/refresh', {
+    method: 'POST',
+    body: { refresh_token: refreshToken },
+    auth: false,
+  })
+  return toSession(response.data)
 }
 
 export async function logout(refreshToken: string): Promise<void> {
-  const tokens = readRefreshTokens()
-  delete tokens[refreshToken]
-  writeRefreshTokens(tokens)
+  await http<void>('/logout', { method: 'POST', body: { refresh_token: refreshToken } })
+}
+
+export async function fetchMe(): Promise<SessionUser> {
+  const response = await http<UserResponse>('/me')
+  return toUser(response.data)
+}
+
+/** Default 2FA channel (Settings > Segurança); null = ask every time. */
+export async function updateTwoFactorChannel(channel: TwoFactorChannel | null): Promise<SessionUser> {
+  const response = await http<UserResponse>('/me/two-factor-channel', { method: 'PATCH', body: { channel } })
+  return toUser(response.data)
 }

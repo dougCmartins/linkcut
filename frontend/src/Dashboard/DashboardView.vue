@@ -15,7 +15,7 @@ import { useDashboardStore } from './dashboard.store'
 import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from './financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
 import { useSettingsStore } from '@/Settings/settings.store'
-import { useAuthStore } from '@/Auth/auth.store'
+import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
 

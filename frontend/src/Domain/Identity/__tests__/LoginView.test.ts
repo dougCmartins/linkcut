@@ -1,12 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import LoginView from '../LoginView.vue'
 import { useAuthStore } from '../auth.store'
-import { DEMO_ACCOUNT } from '../auth.api'
-import { TwoFactorChannel } from '../auth.model'
 import { renderWithPlugins } from '@/utils/testRender'
-import { saveSection } from '@/Settings/settings.api'
-import { SettingsSection } from '@/Settings/settings.model'
+import { installFakeIdentityApi, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
+
+const EMAIL = 'rafael@linkcut.app'
 
 async function renderLogin(path = '/entrar?redirect=/painel/configuracoes') {
   const rendered = renderWithPlugins(LoginView)
@@ -32,13 +31,18 @@ describe('LoginView', () => {
     localStorage.clear()
   })
 
-  it('goes straight to the code when a default channel is saved', async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('goes straight to the code when the account has a default channel', async () => {
     // Arrange
-    saveSection(SettingsSection.Security, { defaultTwoFactorChannel: TwoFactorChannel.Email })
+    installFakeIdentityApi({ preferredChannel: 'email' })
     await renderLogin()
 
     // Act
-    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+    await submitCredentials(EMAIL, PASSWORD)
 
     // Assert
     expect(await screen.findByText(/Enviamos um código por e-mail/)).toBeTruthy()
@@ -47,25 +51,26 @@ describe('LoginView', () => {
 
   it('still lets the barber switch channel after a default send', async () => {
     // Arrange
-    saveSection(SettingsSection.Security, { defaultTwoFactorChannel: TwoFactorChannel.Email })
+    installFakeIdentityApi({ preferredChannel: 'email' })
     await renderLogin()
-    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+    await submitCredentials(EMAIL, PASSWORD)
     await screen.findByText(/Enviamos um código por e-mail/)
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: 'Usar outro canal' }))
 
     // Assert
-    expect(screen.getByRole('button', { name: /WhatsApp/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /SMS/ })).toBeTruthy()
     expect(screen.getByRole('button', { name: /E-mail/ })).toBeTruthy()
   })
 
   it('asks for the channel when there is no default', async () => {
     // Arrange
+    installFakeIdentityApi()
     await renderLogin()
 
     // Act
-    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+    await submitCredentials(EMAIL, PASSWORD)
 
     // Assert
     expect(await screen.findByText('Confirme que é você')).toBeTruthy()
@@ -73,6 +78,7 @@ describe('LoginView', () => {
 
   it('validates the fields before calling the server', async () => {
     // Arrange
+    const { calls } = installFakeIdentityApi()
     await renderLogin()
 
     // Act
@@ -81,48 +87,61 @@ describe('LoginView', () => {
     // Assert
     expect(screen.getByText('Informe um e-mail válido.')).toBeTruthy()
     expect(screen.getByText('A senha tem pelo menos 8 caracteres.')).toBeTruthy()
-    expect(useAuthStore().challenge).toBeNull()
+    expect(calls).toHaveLength(0)
   })
 
   it('shows a generic error for wrong credentials', async () => {
     // Arrange
+    installFakeIdentityApi()
     await renderLogin()
 
     // Act
-    await submitCredentials(DEMO_ACCOUNT.email, 'wrong-password')
+    await submitCredentials(EMAIL, 'wrong-password')
 
     // Assert
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('E-mail ou senha incorretos'))
   })
 
-  it('signs in with the 2FA code and goes back to the requested page', async () => {
+  it('shows a clear message when the server cannot be reached', async () => {
     // Arrange
-    const { router } = await renderLogin()
-    const auth = useAuthStore()
-    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    await renderLogin()
 
     // Act
-    await fireEvent.click(await screen.findByRole('button', { name: /WhatsApp/ }))
-    expect(await screen.findByText(/Enviamos um código pelo WhatsApp/)).toBeTruthy()
-    await pasteCode(auth.delivery?.devCode ?? '')
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    await router.isReady()
+    await submitCredentials(EMAIL, PASSWORD)
 
     // Assert
-    expect(auth.session?.user.email).toBe(DEMO_ACCOUNT.email)
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Sem conexão com o servidor'))
+  })
+
+  it('signs in with the SMS code and goes back to the requested page', async () => {
+    // Arrange
+    installFakeIdentityApi()
+    const { router } = await renderLogin()
+    const auth = useAuthStore()
+    await submitCredentials(EMAIL, PASSWORD)
+
+    // Act
+    await fireEvent.click(await screen.findByRole('button', { name: /SMS/ }))
+    expect(await screen.findByText(/Enviamos um código por SMS para \+55/)).toBeTruthy()
+    await pasteCode(RIGHT_CODE)
+
+    // Assert
     await waitForPath(router, '/painel/configuracoes')
+    expect(auth.session?.user.email).toBe(EMAIL)
+    expect(auth.session?.user.tenantId).toBe(3)
   })
 
   it('tells how many attempts are left after a wrong code', async () => {
     // Arrange
+    installFakeIdentityApi()
     await renderLogin()
     const auth = useAuthStore()
-    await submitCredentials(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password)
+    await submitCredentials(EMAIL, PASSWORD)
     await fireEvent.click(await screen.findByRole('button', { name: /E-mail/ }))
-    const wrong = auth.delivery?.devCode === '000000' ? '111111' : '000000'
 
     // Act
-    await pasteCode(wrong)
+    await pasteCode('000000')
 
     // Assert
     expect(await screen.findByText('Código incorreto. Você tem mais 4 tentativa(s).')).toBeTruthy()

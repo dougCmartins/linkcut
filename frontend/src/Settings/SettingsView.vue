@@ -42,12 +42,19 @@ const tabs = computed<TabItem[]>(() =>
   Object.values(SettingsTab).map((tab) => ({
     id: tab,
     label: t(`settings.tabs.${tab}`),
-    hasBadge: store.isDirty(TAB_SECTIONS[tab]),
+    hasBadge: isTabDirty(tab),
   })),
 )
 
-const isActiveDirty = computed(() => store.isDirty(activeSection.value))
-const canSave = computed(() => Object.keys(store.sectionErrors(activeSection.value)).length === 0)
+function isTabDirty(tab: SettingsTab): boolean {
+  const section = TAB_SECTIONS[tab]
+  return section ? store.isDirty(section) : false
+}
+
+const isActiveDirty = computed(() => isTabDirty(activeTab.value))
+const canSave = computed(() =>
+  activeSection.value ? Object.keys(store.sectionErrors(activeSection.value)).length === 0 : false,
+)
 
 const statusMessage = ref('')
 let statusTimer: ReturnType<typeof setTimeout> | undefined
@@ -59,6 +66,7 @@ function showStatus(message: string): void {
 }
 
 function save(): void {
+  if (!activeSection.value) return
   const result = store.save(activeSection.value)
   if (result === SaveResult.Saved) showStatus(t('settings.saved'))
   if (result === SaveResult.SessionOnly) showStatus(t('settings.savedSessionOnly'))
@@ -111,7 +119,7 @@ onBeforeUnmount(() => {
       <component :is="TAB_COMPONENTS[activeTab]" />
     </section>
 
-    <SaveBar v-if="isActiveDirty" :can-save="canSave" @save="save" @discard="store.discard(activeSection)" />
+    <SaveBar v-if="isActiveDirty" :can-save="canSave" @save="save" @discard="activeSection && store.discard(activeSection)" />
 
     <p
       aria-live="polite"
