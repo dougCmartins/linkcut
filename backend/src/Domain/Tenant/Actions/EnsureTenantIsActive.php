@@ -28,6 +28,7 @@ final class EnsureTenantIsActive
             name: $tenant->name,
             slug: $tenant->slug,
             active: $tenant->active,
+            timezone: $tenant->timezone,
         );
     }
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Prepares the Laravel app and then runs the container command
-# (artisan serve for "backend", queue:work for "queue", pulse:check for "pulse").
+# (artisan serve for "backend", queue:work for "queue", pulse:check for "pulse", schedule:work for "scheduler").
 set -eu
 
 cd /var/www/html
@@ -54,6 +54,11 @@ if [ "${RUN_SETUP:-true}" = "true" ]; then
   done
 
   php artisan migrate --force
+
+  # Uploaded images are served from storage/app/public.
+  if [ ! -e public/storage ]; then
+    php artisan storage:link --ansi
+  fi
 
   # Personal access client used to issue the access tokens after 2FA (idempotent).
   php artisan passport:ensure-personal-client

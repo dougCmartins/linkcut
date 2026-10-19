@@ -6,6 +6,7 @@ use App\Http\Middleware\AssignRequestContext;
 use Domain\Tenant\Exceptions\TenantMismatchException;
 use Domain\Tenant\Exceptions\TenantNotResolvedException;
 use Domain\Tenant\Middleware\ResolveTenant;
+use Domain\Tenant\Middleware\ResolveTenantFromSlug;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +15,7 @@ use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -43,7 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [AssignRequestContext::class]);
-        $middleware->alias(['tenant' => ResolveTenant::class]);
+        $middleware->alias(['tenant' => ResolveTenant::class, 'tenant.slug' => ResolveTenantFromSlug::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) use ($envelope, $isApi): void {
         // Expected domain errors (wrong code, expired session…) are answers, not incidents: keep them out
@@ -66,10 +68,22 @@ return Application::configure(basePath: dirname(__DIR__))
             if (! $isApi($request)) {
                 return null;
             }
-            // Each field gets the name of the rule that failed ("required", "email"…), translated by the SPA.
+            // Each field gets the snake_case name of the rule that failed ("required", "after_or_equal"…), translated by the SPA.
+            // Rule objects: Laravel's (Enum…) use their class name, ours fail with their own code ("phone").
             $errors = collect($exception->validator->failed())
-                ->map(fn (array $rules): array => [mb_strtolower((string) array_key_first($rules))])
+                ->map(function (array $rules, string $field) use ($exception): array {
+                    $rule = (string) array_key_first($rules);
+                    if (class_exists($rule) && ! str_starts_with($rule, 'Illuminate\\')) {
+                        return [(string) $exception->errors()[$field][0]];
+                    }
+
+                    return [Str::snake(class_basename($rule))];
+                })
                 ->all();
+            // Rules checked inside an Action (ValidationException::withMessages) carry the rule name as message.
+            if (empty($errors)) {
+                $errors = collect($exception->errors())->map(fn (array $messages): array => [(string) $messages[0]])->all();
+            }
 
             return $envelope($request, $exception->getMessage(), 'VALIDATION_FAILED', 422, $errors);
         });

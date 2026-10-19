@@ -59,6 +59,9 @@ final class AppServiceProvider extends ServiceProvider
             Limit::perMinute(30)->by($request->ip()),
         ]);
         RateLimiter::for('refresh', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
+        // Public pages by slug (bio link, portfolio, booking options) and image uploads.
+        RateLimiter::for('public', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
+        RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 
     /** The SMS "log" driver writes codes to a file: never allowed in production. */
