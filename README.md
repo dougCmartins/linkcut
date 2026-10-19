@@ -3,13 +3,18 @@ Interface do meu SaaS para barbeiros
 
 ## Telas
 
-Painel do barbeiro no celular (390 px), com dados de exemplo.
+Telas no celular (390 px), com dados de exemplo.
 
 <table>
  <tr>
     <td align="center"><img src="docs/screenshots/dark-bio.png" width="240" alt="Painel para rede social"><br><sub>Painel para rede social</sub></td>
     <td align="center"><img src="docs/screenshots/dark-booking.png" width="240" alt="Agenda Publica"><br><sub>Agenda Publica</sub></td>
     <td align="center"><img src="docs/screenshots/08-public-portfolio.png" width="240" alt="Portifólio Publico"><br><sub>Portifólio Publico</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/link-da-bio.png" width="240" alt="Link da Bio"><br><sub>Link da Bio</sub></td>
+    <td align="center"><img src="docs/screenshots/agendamento.png" width="240" alt="Agendamento"><br><sub>Agendamento</sub></td>
+    <td align="center"><img src="docs/screenshots/painel-tema-claro.png" width="240" alt="Painel no tema claro"><br><sub>Painel no tema claro</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="docs/screenshots/painel-agenda.png" width="240" alt="Painel e agenda de hoje"><br><sub>Painel e agenda de hoje</sub></td>
