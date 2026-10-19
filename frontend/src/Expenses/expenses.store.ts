@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { ExpenseBreakdown, ExpenseList, FixedExpense, FixedExpenseInput, OneOffExpense, OneOffExpenseInput } from './expenses.model'
-import { addFixedExpense, addOneOffExpense, fetchExpenses, removeExpense, restoreExpense } from './expenses.api'
+import { addFixedExpense, addOneOffExpense, fetchExpenses, removeExpense, restoreExpense, updateExpense } from './expenses.api'
 import { fetchMonthToDateFinances } from '@/Dashboard/dashboard.api'
 import { toIsoDate } from '@/utils/date'
 
@@ -51,6 +51,16 @@ export const useExpensesStore = defineStore('expenses', () => {
     await refreshBreakdown(now)
   }
 
+  /** Saves the edited values of an existing expense (same id). */
+  async function update(expense: Expense, now = new Date()): Promise<void> {
+    await updateExpense(expense, now)
+    expenses.value = {
+      fixed: expenses.value.fixed.map((item) => (item.id === expense.id && 'dueDay' in expense ? expense : item)),
+      oneOff: expenses.value.oneOff.map((item) => (item.id === expense.id && 'date' in expense ? expense : item)),
+    }
+    await refreshBreakdown(now)
+  }
+
   /** Removes and returns the expense, so it can be restored (undo). */
   async function remove(id: string, now = new Date()): Promise<Expense | null> {
     const removed = [...expenses.value.fixed, ...expenses.value.oneOff].find((expense) => expense.id === id) ?? null
@@ -71,5 +81,5 @@ export const useExpensesStore = defineStore('expenses', () => {
     await refreshBreakdown(now)
   }
 
-  return { expenses, breakdown, isLoading, hasFailed, fixedByDueDay, oneOffOfMonth, load, addFixed, addOneOff, remove, restore }
+  return { expenses, breakdown, isLoading, hasFailed, fixedByDueDay, oneOffOfMonth, load, addFixed, addOneOff, update, remove, restore }
 })

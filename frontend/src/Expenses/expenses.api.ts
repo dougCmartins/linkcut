@@ -31,6 +31,16 @@ export async function addOneOffExpense(input: OneOffExpenseInput, now = new Date
   return expense
 }
 
+/** Replaces an expense (same id) with its edited values. */
+export async function updateExpense(expense: FixedExpense | OneOffExpense, now = new Date()): Promise<void> {
+  await wait()
+  const current = mockReadExpenses(now)
+  mockWriteExpenses({
+    fixed: current.fixed.map((item) => (item.id === expense.id && 'dueDay' in expense ? expense : item)),
+    oneOff: current.oneOff.map((item) => (item.id === expense.id && 'date' in expense ? expense : item)),
+  })
+}
+
 /** Removes a fixed or one-off expense by id. */
 export async function removeExpense(id: string, now = new Date()): Promise<void> {
   await wait()
