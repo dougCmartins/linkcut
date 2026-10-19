@@ -93,6 +93,24 @@ describe('validateSchedule', () => {
     expect(errors).toEqual({})
   })
 
+  it('accepts a service without cost and rejects a cost equal to or above the price', () => {
+    // Arrange
+    const { schedule } = createDefaultSettings()
+    schedule.services = [
+      { id: 'a', name: 'Corte', durationMinutes: 45, priceInCents: 5000 },
+      { id: 'b', name: 'Barba', durationMinutes: 30, priceInCents: 4000, costInCents: 4000 },
+      { id: 'c', name: 'Pezinho', durationMinutes: 15, priceInCents: 2000, costInCents: -1 },
+    ]
+
+    // Act
+    const errors = validateSchedule(schedule)
+
+    // Assert
+    expect(errors['services.0.costInCents']).toBeUndefined()
+    expect(errors['services.1.costInCents']).toEqual({ key: 'serviceCost' })
+    expect(errors['services.2.costInCents']).toEqual({ key: 'serviceCost' })
+  })
+
   it('requires at least one service', () => {
     // Arrange
     const { schedule } = createDefaultSettings()

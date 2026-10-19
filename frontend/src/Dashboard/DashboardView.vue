@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { capitalize, formatLongDate, formatMonthName, toIsoDate } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import MetricCard from './MetricCard.vue'
 import PendingRequestCard from './PendingRequestCard.vue'
 import TodayAgendaCard from './TodayAgendaCard.vue'
+import MarginExplanation from './MarginExplanation.vue'
+import InfoTooltip from '@/components/ui/InfoTooltip.vue'
+import UndoToast from '@/components/ui/UndoToast.vue'
+import { useUndoWindow } from '@/composables/useUndoWindow'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { useDashboardStore } from './dashboard.store'
-import { HEALTHY_MARGIN_PERCENT } from './financialSummary'
+import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from './financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
 import { useSettingsStore } from '@/Settings/settings.store'
 import { useAuthStore } from '@/Auth/auth.store'
@@ -38,9 +42,8 @@ const periodTitle = t('dashboard.periodOf', { month: formatMonthName(today) })
 
 const summary = computed(() => dashboardStore.summary)
 const revenueLabel = computed(() => (summary.value ? formatBRL(summary.value.revenueInCents) : PLACEHOLDER))
-const marginLabel = computed(() =>
-  summary.value ? `${summary.value.marginPercent.toFixed(1).replace('.', ',')}%` : PLACEHOLDER,
-)
+const marginLabel = computed(() => (summary.value ? formatMarginPercent(summary.value.marginPercent) : PLACEHOLDER))
+const expensesLabel = computed(() => (summary.value ? formatBRL(summary.value.expensesInCents) : PLACEHOLDER))
 const marginBadge = computed(() => {
   if (!summary.value) return undefined
   return summary.value.isBelowHealthyMargin
@@ -51,28 +54,19 @@ const marginBadge = computed(() => {
 onMounted(() => dashboardStore.loadMonthToDate(today))
 
 // "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
-const UNDO_WINDOW_MS = 5000
 const busyRequestId = ref<string | null>(null)
-const lastCompleted = ref<{ id: string; priceInCents: number } | null>(null)
-let undoTimer: ReturnType<typeof setTimeout> | undefined
+const lastCompleted = useUndoWindow<{ id: string; priceInCents: number }>()
 
 const agenda = computed(() => bookingStore.todayAgenda)
 const completedCount = computed(
   () => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length,
 )
 
-function hideUndo(): void {
-  clearTimeout(undoTimer)
-  lastCompleted.value = null
-}
-
 async function complete(requestId: string): Promise<void> {
   busyRequestId.value = requestId
   try {
     const request = await bookingStore.completeRequest(requestId)
-    hideUndo()
-    lastCompleted.value = { id: request.id, priceInCents: request.completedPriceInCents ?? 0 }
-    undoTimer = setTimeout(hideUndo, UNDO_WINDOW_MS)
+    lastCompleted.offer({ id: request.id, priceInCents: request.completedPriceInCents ?? 0 })
     await dashboardStore.loadMonthToDate(new Date())
   } finally {
     busyRequestId.value = null
@@ -80,14 +74,12 @@ async function complete(requestId: string): Promise<void> {
 }
 
 async function undo(): Promise<void> {
-  if (!lastCompleted.value) return
-  const { id } = lastCompleted.value
-  hideUndo()
-  await bookingStore.undoCompletion(id)
+  const completed = lastCompleted.take()
+  if (!completed) return
+  await bookingStore.undoCompletion(completed.id)
   await dashboardStore.loadMonthToDate(new Date())
 }
 
-onBeforeUnmount(() => clearTimeout(undoTimer))
 </script>
 
 <template>
@@ -148,13 +140,34 @@ onBeforeUnmount(() => clearTimeout(undoTimer))
         >
           <MetricCard tone="accent" :label="t('dashboard.revenue')" :value="revenueLabel" :hint="t('dashboard.seeHistory')" />
         </RouterLink>
+        <RouterLink
+          to="/painel/despesas"
+          class="rounded-card transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          :aria-label="t('dashboard.expensesLink', { value: expensesLabel })"
+        >
+          <MetricCard class="h-full" :label="t('dashboard.expenses')" :value="expensesLabel" />
+        </RouterLink>
         <MetricCard :label="t('dashboard.profit')" :value="summary ? formatBRL(summary.profitInCents) : PLACEHOLDER" />
         <MetricCard
+          class="col-span-2"
           :label="t('dashboard.margin')"
           :value="marginLabel"
           :badge="marginBadge"
           :tone="summary?.isBelowHealthyMargin ? 'danger' : 'success'"
-        />
+        >
+          <template #info>
+            <InfoTooltip :label="t('dashboard.marginInfo.label')">
+              <MarginExplanation
+                v-if="summary && dashboardStore.finances"
+                :revenue-in-cents="summary.revenueInCents"
+                :expenses="dashboardStore.finances.expenses"
+                :profit-in-cents="summary.profitInCents"
+                :margin-percent="summary.marginPercent"
+              />
+              <p v-else>{{ t('dashboard.marginInfo.formula') }}</p>
+            </InfoTooltip>
+          </template>
+        </MetricCard>
       </div>
     </section>
 
@@ -205,21 +218,12 @@ onBeforeUnmount(() => clearTimeout(undoTimer))
         {{ t('dashboard.pendingEmpty') }}
       </p>
     </section>
-    <div
-      v-if="lastCompleted"
-      class="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
-      role="status"
-      aria-live="polite"
-    >
-      <div class="mx-auto flex max-w-md items-center gap-3 rounded-card bg-ink py-3 pr-3 pl-4 text-page shadow-float">
-        <p class="min-w-0 flex-1 text-sm font-semibold">
-          {{ t('dashboard.agenda.completedToast', { value: formatBRL(lastCompleted.priceInCents) }) }}
-        </p>
-        <button type="button" class="shrink-0 rounded-full px-3 py-2 text-sm font-extrabold text-accent hover:bg-page/10" @click="undo">
-          {{ t('dashboard.agenda.undo') }}
-        </button>
-      </div>
-    </div>
+    <UndoToast
+      v-if="lastCompleted.pending.value"
+      :message="t('dashboard.agenda.completedToast', { value: formatBRL(lastCompleted.pending.value.priceInCents) })"
+      :action-label="t('dashboard.agenda.undo')"
+      @action="undo"
+    />
   </main>
 </template>
 

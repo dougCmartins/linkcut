@@ -64,8 +64,8 @@ export function createDefaultSettings(): AppSettings {
     },
     schedule: {
       services: [
-        { id: 'haircut', name: 'Corte', durationMinutes: 45, priceInCents: 5000 },
-        { id: 'beard', name: 'Barba', durationMinutes: 30, priceInCents: 4000 },
+        { id: 'haircut', name: 'Corte', durationMinutes: 45, priceInCents: 5000, costInCents: 600 },
+        { id: 'beard', name: 'Barba', durationMinutes: 30, priceInCents: 4000, costInCents: 400 },
       ],
       weeklyHours: defaultWeeklyHours(),
       slotIntervalMinutes: 30,

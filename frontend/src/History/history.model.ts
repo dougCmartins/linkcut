@@ -9,6 +9,8 @@ export interface CompletedService {
   serviceName: string
   /** Price charged at the time (kept even if the service price changes later). */
   priceInCents: number
+  /** Cost per procedure at the time (material, products). Missing = no cost registered. */
+  costInCents?: number
 }
 
 /** Inclusive range of local dates, "YYYY-MM-DD". */
@@ -34,9 +36,4 @@ export interface HistorySummary {
   totalInCents: number
   count: number
   averageTicketInCents: number
-}
-
-export interface MonthFinances {
-  revenueInCents: number
-  expensesInCents: number
 }

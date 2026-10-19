@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, within } from '@testing-library/vue'
 import DashboardView from '../DashboardView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
-import { fetchMonthToDateFinances } from '@/History/history.api'
+import { fetchMonthToDateFinances } from '@/Dashboard/dashboard.api'
 import { formatBRL } from '@/utils/currency'
 import { useBookingStore } from '@/Booking/booking.store'
 
@@ -81,5 +81,39 @@ describe('DashboardView', () => {
     await screen.findByRole('link', { name: revenueLink(revenueBefore) })
     expect(bookingStore.requests.find((item) => item.id === request.id)?.status).toBe('confirmed')
     expect(screen.getByText('0 de 1 concluídos')).toBeTruthy()
+  })
+
+  it('the margin tooltip explains the calculation with the month numbers', async () => {
+    // Arrange
+    const { revenueInCents, expenses } = await fetchMonthToDateFinances(new Date())
+    const profit = revenueInCents - expenses.totalInCents
+    const margin = `${((profit / revenueInCents) * 100).toFixed(1).replace('.', ',')}%`
+    renderWithPlugins(DashboardView)
+    const button = await screen.findByRole('button', { name: 'Como a margem é calculada' })
+    await screen.findByText(margin)
+
+    // Act
+    await fireEvent.click(button)
+
+    // Assert
+    const tooltip = screen.getByRole('tooltip')
+    const text = tooltip.textContent!.replace(/\s/g, ' ')
+    expect(text).toContain('Margem = Lucro ÷ Faturamento × 100')
+    expect(text).toContain(`${formatBRL(profit)} ÷ ${formatBRL(revenueInCents)} × 100 = ${margin}`.replace(/\s/g, ' '))
+    expect(text).toContain(`Custos dos atendimentos${formatBRL(expenses.serviceCostsInCents)}`.replace(/\s/g, ' '))
+    expect(text).toContain('Acima de 25% é saudável')
+  })
+
+  it('links the expenses card to the expenses screen', async () => {
+    // Arrange
+    const { expenses } = await fetchMonthToDateFinances(new Date())
+
+    // Act
+    renderWithPlugins(DashboardView)
+
+    // Assert
+    const expectedLabel = `Despesas do mês até hoje: ${formatBRL(expenses.totalInCents)}. Ver e cadastrar despesas`
+    const link = await screen.findByRole('link', { name: (name) => name === expectedLabel })
+    expect(link.getAttribute('href')).toBe('/painel/despesas')
   })
 })

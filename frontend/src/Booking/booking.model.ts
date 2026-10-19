@@ -5,6 +5,8 @@ export interface Service {
   name: string
   durationMinutes: number
   priceInCents: number
+  /** Fixed cost per procedure (material, products), private to the barber. Missing = no cost. */
+  costInCents?: number
 }
 
 export interface BookingRequest {

@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { computeFinancialSummary } from './financialSummary'
-import { fetchMonthToDateFinances } from '@/History/history.api'
-import type { MonthFinances } from '@/History/history.model'
+import { computeFinancialSummary, type MonthFinances } from './financialSummary'
+import { fetchMonthToDateFinances } from './dashboard.api'
 
 /** Dashboard numbers: always the current month, from day 1 until now (not customizable). */
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -10,7 +9,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const isLoading = ref(false)
 
   const summary = computed(() =>
-    finances.value ? computeFinancialSummary(finances.value.revenueInCents, finances.value.expensesInCents) : null,
+    finances.value ? computeFinancialSummary(finances.value.revenueInCents, finances.value.expenses.totalInCents) : null,
   )
 
   async function loadMonthToDate(now = new Date()): Promise<void> {

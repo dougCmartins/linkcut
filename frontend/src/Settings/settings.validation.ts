@@ -115,6 +115,11 @@ export function validateSchedule(schedule: ScheduleSettings): ValidationErrors {
       `services.${index}.priceInCents`,
       Number.isFinite(price) && price > 0 && price <= maxPriceInCents ? null : { key: 'price' },
     )
+    const cost = service.costInCents ?? 0
+    add(
+      `services.${index}.costInCents`,
+      Number.isInteger(cost) && cost >= 0 && (cost === 0 || cost < price) ? null : { key: 'serviceCost' },
+    )
   })
   schedule.weeklyHours.forEach((day, index) => {
     const isOrdered = toMinutes(day.opensAt) < toMinutes(day.closesAt)

@@ -76,7 +76,7 @@ export const useBookingStore = defineStore('booking', () => {
 
   /**
    * "Concluir atendimento": only a confirmed appointment of today can be concluded.
-   * Marks it completed and sends its value to the history (revenue).
+   * Marks it completed and sends its price and cost (snapshot) to the history.
    */
   async function completeRequest(requestId: string, now = new Date()): Promise<BookingRequest> {
     const request = findRequest(requestId)
@@ -92,6 +92,7 @@ export const useBookingStore = defineStore('booking', () => {
       clientName: request.clientName,
       serviceName: service?.name ?? '',
       priceInCents,
+      costInCents: service?.costInCents ?? 0,
     })
     request.status = AppointmentStatus.Completed
     request.completedPriceInCents = priceInCents
