@@ -4,7 +4,9 @@ import SettingsView from '../SettingsView.vue'
 import { useSettingsStore } from '../settings.store'
 import { renderWithPlugins } from '@/utils/testRender'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
-import { installFakeIdentityApi } from '@/Domain/Identity/__tests__/fakeIdentityApi'
+import { identityRoutes } from '@/Domain/Identity/__tests__/fakeIdentityApi'
+import { envelope, installFakeApi } from '@/utils/testFetch'
+import { installFakeSettingsApi } from './fakeSettingsApi'
 
 function signedInSession() {
   const now = Date.now()
@@ -25,9 +27,11 @@ async function renderSettings(path = '/painel/configuracoes') {
 }
 
 describe('SettingsView', () => {
+  let api: ReturnType<typeof installFakeSettingsApi>
+
   beforeEach(() => {
-    localStorage.clear()
     sessionStorage.clear()
+    api = installFakeSettingsApi(undefined, identityRoutes())
   })
 
   afterEach(() => {
@@ -81,8 +85,9 @@ describe('SettingsView', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
 
     // Assert
+    expect(await screen.findByText('Alterações salvas!')).toBeTruthy()
     expect(store.profile.name).toBe('Diego Souza')
-    expect(screen.getByText('Alterações salvas!')).toBeTruthy()
+    expect(api.current.profile.name).toBe('Diego Souza')
     expect(screen.queryByRole('button', { name: 'Salvar' })).toBeNull()
   })
 
@@ -124,6 +129,7 @@ describe('SettingsView', () => {
     await fireEvent.click(await screen.findByRole('radio', { name: 'Quadrado' }))
     const previewShape = screen.getByTestId('phone-preview').dataset.buttonShape
     await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+    await screen.findByText('Alterações salvas!')
 
     // Assert
     expect(previewShape).toBe('square')
@@ -132,7 +138,7 @@ describe('SettingsView', () => {
 
   it('saves the default 2FA channel on the server right away (Segurança tab)', async () => {
     // Arrange
-    const { calls } = installFakeIdentityApi()
+    const { calls } = api
     await renderSettings('/painel/configuracoes?aba=seguranca')
     const auth = useAuthStore()
     auth.session = signedInSession()
@@ -160,10 +166,40 @@ describe('SettingsView', () => {
     const previewButtons = [...screen.getByTestId('preview-buttons').children]
     const savedBefore = store.theme.buttonStyle
     await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+    await screen.findByText('Alterações salvas!')
 
     // Assert
     expect(previewButtons.every((button) => button.classList.contains('button-border'))).toBe(true)
     expect(savedBefore).toBe('elevated')
     expect(store.theme.buttonStyle).toBe('outline')
+  })
+
+  it('shows the API error and keeps the changes when saving fails', async () => {
+    // Arrange
+    await renderSettings()
+    await fireEvent.update(await screen.findByLabelText('Nome'), 'Diego Souza')
+    installFakeApi({ 'PUT /settings/profile': () => envelope('IMAGE_NOT_FOUND', 422) })
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    // Assert
+    expect(await screen.findByText('Uma das imagens não está mais disponível. Envie de novo.')).toBeTruthy()
+    expect((screen.getByLabelText('Nome') as HTMLInputElement).value).toBe('Diego Souza')
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeTruthy()
+  })
+
+  it('offers a retry when the settings cannot be loaded', async () => {
+    // Arrange
+    installFakeApi({ 'GET /settings': () => envelope('SERVER_ERROR', 500) })
+    await renderSettings()
+    expect(await screen.findByText('Não foi possível carregar suas configurações.')).toBeTruthy()
+    api = installFakeSettingsApi()
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    // Assert
+    expect(await screen.findByRole('tab', { name: 'Link', selected: true })).toBeTruthy()
   })
 })

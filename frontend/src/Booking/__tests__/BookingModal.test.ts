@@ -1,22 +1,22 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import BookingModal from '../BookingModal.vue'
 import { useBookingStore } from '../booking.store'
 import { renderWithPlugins } from '@/utils/testRender'
 import { AppointmentStatus } from '@/types/appointmentStatus'
-import { createDefaultSettings } from '@/Settings/settings.defaults'
-import { saveSection } from '@/Settings/settings.api'
-import { SettingsSection, type ScheduleSettings } from '@/Settings/settings.model'
+import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
+import type { ScheduleSettings } from '@/Domain/Settings/settings.model'
+import { createTestSettings } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 
-function saveSchedule(change: (schedule: ScheduleSettings) => void): void {
-  const { schedule } = createDefaultSettings()
-  change(schedule)
-  saveSection(SettingsSection.Schedule, schedule)
+/** Renders the modal for a barbershop whose public booking options went through `change`. */
+function renderModal(change: (schedule: ScheduleSettings) => void = () => {}) {
+  return renderWithPlugins(BookingModal, {}, () => {
+    const { schedule } = createTestSettings()
+    schedule.services = schedule.services.map(({ costInCents: _cost, ...service }) => service)
+    change(schedule)
+    usePublicPageStore().bookingOptions = schedule
+  })
 }
-
-beforeEach(() => {
-  localStorage.clear()
-})
 
 async function fillValidBooking(): Promise<void> {
   await fireEvent.click(screen.getByRole('radio', { name: /Corte/ }))
@@ -36,7 +36,7 @@ async function fillValidBooking(): Promise<void> {
 describe('BookingModal', () => {
   it('keeps the submit button disabled until the form is complete', async () => {
     // Arrange
-    renderWithPlugins(BookingModal)
+    renderModal()
     const submit = screen.getByRole('button', { name: 'Solicitar Agendamento' })
 
     // Act
@@ -48,7 +48,7 @@ describe('BookingModal', () => {
 
   it('sends a pending request and shows the confirmation message', async () => {
     // Arrange
-    renderWithPlugins(BookingModal)
+    renderModal()
     const store = useBookingStore()
     const pendingBefore = store.pendingRequests.length
     await fillValidBooking()
@@ -66,7 +66,7 @@ describe('BookingModal', () => {
 
   it('emits close when Escape is pressed', async () => {
     // Arrange
-    const { emitted } = renderWithPlugins(BookingModal)
+    const { emitted } = renderModal()
 
     // Act
     await fireEvent.keyDown(window, { key: 'Escape' })
@@ -76,15 +76,15 @@ describe('BookingModal', () => {
   })
 })
 
-describe('BookingModal with the barber settings', () => {
+describe('BookingModal with the booking options of the barbershop', () => {
   it('shows the vacation message instead of the form when the agenda is locked', () => {
     // Arrange
-    saveSchedule((schedule) => {
+    const change = (schedule: ScheduleSettings) => {
       schedule.vacation = { ...schedule.vacation, isEnabled: true, message: 'De volta dia 10!' }
-    })
+    }
 
     // Act
-    renderWithPlugins(BookingModal)
+    renderModal(change)
 
     // Assert
     expect(screen.getByText('Agenda fechada')).toBeTruthy()
@@ -94,12 +94,12 @@ describe('BookingModal with the barber settings', () => {
 
   it('lists the services configured by the barber', () => {
     // Arrange
-    saveSchedule((schedule) => {
-      schedule.services = [{ id: 'kids', name: 'Corte infantil', durationMinutes: 30, priceInCents: 3500 }]
-    })
+    const change = (schedule: ScheduleSettings) => {
+      schedule.services = [{ id: '9', name: 'Corte infantil', durationMinutes: 30, priceInCents: 3500 }]
+    }
 
     // Act
-    renderWithPlugins(BookingModal)
+    renderModal(change)
 
     // Assert
     expect(screen.getByRole('radio', { name: /Corte infantil/ })).toBeTruthy()
@@ -108,12 +108,12 @@ describe('BookingModal with the barber settings', () => {
 
   it('disables the days the barber closed', () => {
     // Arrange
-    saveSchedule((schedule) => {
+    const change = (schedule: ScheduleSettings) => {
       schedule.weeklyHours = schedule.weeklyHours.map((day) => ({ ...day, isOpen: false }))
-    })
+    }
 
     // Act
-    renderWithPlugins(BookingModal)
+    renderModal(change)
 
     // Assert
     const days = screen.getAllByRole('radio').filter((element) => element.getAttribute('aria-label'))

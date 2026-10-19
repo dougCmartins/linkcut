@@ -9,7 +9,7 @@ import LinkPreview from './LinkPreview.vue'
 import PhoneFrame from './PhoneFrame.vue'
 import SettingsCard from './SettingsCard.vue'
 import { useSettingsStore } from './settings.store'
-import { SettingsSection } from './settings.model'
+import { SettingsSection, imageUrl } from './settings.model'
 import { TEXT_LIMITS } from './settings.validation'
 import { useImageUpload } from './useImageUpload'
 import { useSectionErrors } from './useSectionErrors'
@@ -20,8 +20,8 @@ const { errorFor } = useSectionErrors(SettingsSection.Profile)
 const { upload, isBusy, failedField } = useImageUpload()
 
 const profile = computed(() => store.drafts.profile)
-const avatarUrl = computed(() => store.resolveImage(profile.value.avatar))
-const backgroundUrl = computed(() => store.resolveImage(profile.value.background))
+const avatarUrl = computed(() => imageUrl(profile.value.avatar))
+const backgroundUrl = computed(() => imageUrl(profile.value.background))
 </script>
 
 <template>
@@ -33,7 +33,7 @@ const backgroundUrl = computed(() => store.resolveImage(profile.value.background
           :src="avatarUrl"
           shape="circle"
           :is-busy="isBusy('avatar')"
-          @select="upload('avatar', $event, (source) => (profile.avatar = source))"
+          @select="upload('avatar', $event, (image) => (profile.avatar = image))"
           @remove="profile.avatar = null"
         />
         <TextField v-model="profile.name" :label="t('settings.link.name')" :maxlength="TEXT_LIMITS.name.max" :error="errorFor('name')" autocomplete="name" />
@@ -52,7 +52,7 @@ const backgroundUrl = computed(() => store.resolveImage(profile.value.background
           :label="t('settings.link.background')"
           :src="backgroundUrl"
           :is-busy="isBusy('background')"
-          @select="upload('background', $event, (source) => (profile.background = source))"
+          @select="upload('background', $event, (image) => (profile.background = image))"
           @remove="profile.background = null"
         />
       </SettingsCard>

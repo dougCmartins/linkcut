@@ -8,7 +8,7 @@ import PhoneFrame from './PhoneFrame.vue'
 import PortfolioPreview from './PortfolioPreview.vue'
 import SettingsCard from './SettingsCard.vue'
 import { useSettingsStore } from './settings.store'
-import { MAX_PORTFOLIO_PHOTOS, SettingsSection } from './settings.model'
+import { MAX_PORTFOLIO_PHOTOS, SettingsSection, imageUrl } from './settings.model'
 import { TEXT_LIMITS } from './settings.validation'
 import { useImageUpload } from './useImageUpload'
 import { useSectionErrors } from './useSectionErrors'
@@ -19,21 +19,23 @@ const { errorFor } = useSectionErrors(SettingsSection.Portfolio)
 const { upload, isBusy, failedField } = useImageUpload()
 
 const portfolio = computed(() => store.drafts.portfolio)
-const coverUrl = computed(() => store.resolveImage(portfolio.value.cover))
-const photoUrls = computed(() => portfolio.value.photos.map((photo) => store.resolveImage(photo.src)))
+const coverUrl = computed(() => imageUrl(portfolio.value.cover))
+const photoUrls = computed(() => portfolio.value.photos.map((photo) => photo.url))
 const canAddPhoto = computed(() => portfolio.value.photos.length < MAX_PORTFOLIO_PHOTOS)
 
 function addPhoto(file: File): void {
-  void upload('newPhoto', file, (source) => {
+  void upload('newPhoto', file, (image) => {
     if (!canAddPhoto.value) return
-    portfolio.value.photos.push({ id: `photo-${Date.now()}`, src: source, alt: '' })
+    portfolio.value.photos.push({ imageId: image.id, url: image.url, alt: '' })
   })
 }
 
 function replacePhoto(index: number, file: File): void {
-  void upload(`photo-${index}`, file, (source) => {
+  void upload(`photo-${index}`, file, (image) => {
     const photo = portfolio.value.photos[index]
-    if (photo) photo.src = source
+    if (!photo) return
+    photo.imageId = image.id
+    photo.url = image.url
   })
 }
 
@@ -50,7 +52,7 @@ function removePhoto(index: number): void {
           :label="t('settings.portfolio.cover')"
           :src="coverUrl"
           :is-busy="isBusy('cover')"
-          @select="upload('cover', $event, (source) => (portfolio.cover = source))"
+          @select="upload('cover', $event, (image) => (portfolio.cover = image))"
           @remove="portfolio.cover = null"
         />
       </SettingsCard>
@@ -89,7 +91,7 @@ function removePhoto(index: number): void {
         :description="t('settings.portfolio.photosCount', { count: portfolio.photos.length, max: MAX_PORTFOLIO_PHOTOS })"
       >
         <ul class="grid gap-5 sm:grid-cols-2">
-          <li v-for="(photo, index) in portfolio.photos" :key="photo.id" class="grid gap-3">
+          <li v-for="(photo, index) in portfolio.photos" :key="photo.imageId" class="grid gap-3">
             <ImageUploader
               :label="t('settings.portfolio.photo', { number: index + 1 })"
               :src="photoUrls[index] ?? ''"

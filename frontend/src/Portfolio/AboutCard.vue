@@ -3,9 +3,9 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import HighlightChips from './HighlightChips.vue'
-import { splitParagraphs, type PortfolioSettings } from '@/Settings/settings.model'
+import { splitParagraphs, type PublicPortfolio } from '@/Domain/Settings/settings.model'
 
-const props = defineProps<{ name: string; portfolio: PortfolioSettings }>()
+const props = defineProps<{ name: string; portfolio: Pick<PublicPortfolio, 'quote' | 'story' | 'highlights'> }>()
 const { t } = useI18n()
 
 const paragraphs = computed(() => splitParagraphs(props.portfolio.story))

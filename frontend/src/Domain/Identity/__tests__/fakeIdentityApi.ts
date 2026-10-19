@@ -1,4 +1,4 @@
-import { envelope, installFakeApi, type FakeCall } from '@/utils/testFetch'
+import { envelope, installFakeApi, type FakeCall, type FakeHandler } from '@/utils/testFetch'
 
 /** A fake Identity API with the same contract as the backend (snake_case, error envelope). */
 export const RIGHT_CODE = '123456'
@@ -25,9 +25,9 @@ export function sessionBody(accessToken = 'access-1', refreshToken = 'refresh-1'
   }
 }
 
-export function installFakeIdentityApi(options: { preferredChannel?: string | null } = {}) {
+export function identityRoutes(options: { preferredChannel?: string | null } = {}): Record<string, FakeHandler> {
   let attemptsLeft = 5
-  return installFakeApi({
+  return {
     'POST /login': (call: FakeCall) =>
       call.body?.password === PASSWORD
         ? {
@@ -60,5 +60,9 @@ export function installFakeIdentityApi(options: { preferredChannel?: string | nu
     'POST /logout': () => ({ status: 204 }),
     'GET /me': () => ({ status: 200, body: USER }),
     'PATCH /me/two-factor-channel': (call: FakeCall) => ({ status: 200, body: { ...USER, two_factor_channel: call.body?.channel ?? null } }),
-  })
+  }
+}
+
+export function installFakeIdentityApi(options: { preferredChannel?: string | null } = {}) {
+  return installFakeApi(identityRoutes(options))
 }

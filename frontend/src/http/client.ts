@@ -14,6 +14,7 @@ export interface HttpResponse<T> {
 
 export interface HttpOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
+  /** JSON body, or FormData for file uploads (the browser sets the multipart header). */
   body?: unknown
   /** Sends the access token and refreshes it once on 401. Default: true. */
   auth?: boolean
@@ -44,7 +45,8 @@ function newRequestId(): string {
 
 async function send<T>(path: string, options: HttpOptions): Promise<HttpResponse<T>> {
   const headers: Record<string, string> = { Accept: 'application/json', 'X-Request-Id': newRequestId() }
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+  const isForm = options.body instanceof FormData
+  if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   const token = options.auth === false ? null : authHandlers?.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
@@ -53,7 +55,7 @@ async function send<T>(path: string, options: HttpOptions): Promise<HttpResponse
     response = await fetch(`${baseUrl()}${path}`, {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.body === undefined || isForm ? (options.body as FormData | undefined) : JSON.stringify(options.body),
     })
   } catch {
     throw ApiError.network()

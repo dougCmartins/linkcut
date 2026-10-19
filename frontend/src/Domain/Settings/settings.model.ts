@@ -24,7 +24,7 @@ export const SettingsTab = {
 
 export type SettingsTab = (typeof SettingsTab)[keyof typeof SettingsTab]
 
-/** Tabs saved with the save bar (local settings). Segurança saves on the server right away. */
+/** Tabs saved with the save bar. Segurança saves right away. */
 export const TAB_SECTIONS: Partial<Record<SettingsTab, SettingsSection>> = {
   [SettingsTab.Link]: SettingsSection.Profile,
   [SettingsTab.Portfolio]: SettingsSection.Portfolio,
@@ -34,8 +34,6 @@ export const TAB_SECTIONS: Partial<Record<SettingsTab, SettingsSection>> = {
 
 export const SaveResult = {
   Saved: 'saved',
-  /** Saved for this visit only: the browser refused to store it. */
-  SessionOnly: 'sessionOnly',
   Invalid: 'invalid',
 } as const
 
@@ -45,11 +43,16 @@ export const MAX_PORTFOLIO_PHOTOS = 4
 export const SLOT_INTERVAL_OPTIONS = [15, 30, 45, 60] as const
 export const BOOKING_WINDOW_OPTIONS = [7, 14, 21, 30] as const
 
-/** Prefix for images uploaded by the barber (kept in IndexedDB); anything else is a plain URL. */
-export const STORED_IMAGE_PREFIX = 'stored:'
+/** Services not saved yet get a temporary id with this prefix; the API gives the real one. */
+export const NEW_SERVICE_ID_PREFIX = 'new-'
 
-/** An https URL, a stored upload ("stored:<id>") or nothing. */
-export type ImageSource = string | null
+/** An image uploaded to the API. */
+export interface ImageRef {
+  id: number
+  url: string
+}
+
+export type ImageSource = ImageRef | null
 
 export interface SocialLink {
   network: SocialNetwork
@@ -73,8 +76,8 @@ export interface Highlight {
 }
 
 export interface PortfolioPhoto {
-  id: string
-  src: string
+  imageId: number
+  url: string
   alt: string
 }
 
@@ -127,12 +130,34 @@ export interface AppSettings {
   theme: ThemeSettings
 }
 
-export function isStoredImage(source: ImageSource): source is string {
-  return typeof source === 'string' && source.startsWith(STORED_IMAGE_PREFIX)
+/** What a visitor sees on /:slug and /:slug/portfolio (no ids, no private data). */
+export interface PublicProfile {
+  name: string
+  handle: string
+  bio: string
+  avatarUrl: string
+  backgroundUrl: string
+  whatsappNumber: string
+  whatsappMessage: string
+  socials: SocialLink[]
 }
 
-export function storedImageId(source: string): string {
-  return source.slice(STORED_IMAGE_PREFIX.length)
+export interface PublicPortfolio {
+  coverUrl: string
+  quote: string
+  story: string
+  highlights: Highlight[]
+  photos: { url: string; alt: string }[]
+}
+
+export interface PublicPage {
+  profile: PublicProfile
+  portfolio: PublicPortfolio
+  theme: ThemeSettings
+}
+
+export function imageUrl(source: ImageSource): string {
+  return source?.url ?? ''
 }
 
 export function splitParagraphs(text: string): string[] {

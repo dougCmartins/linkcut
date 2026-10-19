@@ -45,7 +45,7 @@ Domain/{X}/
   { "data": null, "message": "…", "code": "INVALID_CODE", "status_code": 422, "errors": {}, "request_id": "…" }
   ```
 
-  - `errors` lista, por campo, o nome da regra que falhou (`{"email": ["email"]}`). O frontend traduz.
+  - `errors` lista, por campo, o nome da regra que falhou, em snake_case (`{"email": ["email"], "vacation.ends_on": ["after_or_equal"]}`). Regras próprias usam o código com que falham (`WhatsappNumberRule` → `phone`). O frontend traduz.
   - Alguns erros trazem `data`. Por exemplo, `INVALID_CODE` traz `{ "attempts_left": 3 }`.
   - Erros de domínio são classes `final` que estendem `DomainException`, com `getErrorCode()` e `getHttpStatus()`.
 - Qualquer erro inesperado vira `SERVER_ERROR` 500, sem detalhes. Os detalhes vão para o log e o Sentry, ligados pelo `request_id`.
@@ -63,6 +63,8 @@ Todas as barbearias usam o mesmo banco MySQL. Toda tabela que pertence a uma bar
 | `Tenant/Models/Concerns/BelongsToTenant` | Trait dos models do tenant. Aplica o `TenantScope` (filtro automático) e preenche `tenant_id` ao criar. Recusa gravar linha de outro tenant (`TENANT_MISMATCH`). |
 | Fail-closed | Uma consulta num model do tenant **sem tenant resolvido** lança `TenantNotResolvedException`, em vez de devolver dados de todas as barbearias. |
 | Saídas explícitas | `Model::withoutTenantScope()` para a visão da plataforma (admin, métricas). `CurrentTenant::run($id, fn)` para jobs e comandos. |
+
+**Páginas públicas:** o middleware `tenant.slug` (`ResolveTenantFromSlug`) resolve o tenant pelo `{slug}` da URL, sem login. Slug desconhecido ou barbearia inativa respondem `TENANT_NOT_FOUND` 404. As rotas ficam em `/api/public/{slug}`, com o limite `throttle:public` (120/min por IP), e as Datas públicas nunca trazem campos privados, como o custo dos serviços.
 
 O `User` **não** usa o escopo, porque o login acontece antes de o tenant existir na requisição. Só Actions de Identity leem `users`, sempre pelo id ou pelo e-mail.
 

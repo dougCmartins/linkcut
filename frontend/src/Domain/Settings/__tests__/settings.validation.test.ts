@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createDefaultSettings } from '../settings.defaults'
+import { createTestSettings } from './fakeSettingsApi'
 import { validatePortfolio, validateProfile, validateSchedule, validateTheme } from '../settings.validation'
 
 describe('validateProfile', () => {
   it('accepts the default profile', () => {
     // Arrange
-    const { profile } = createDefaultSettings()
+    const { profile } = createTestSettings()
 
     // Act
     const errors = validateProfile(profile)
@@ -16,7 +16,7 @@ describe('validateProfile', () => {
 
   it('requires a name and a valid WhatsApp number', () => {
     // Arrange
-    const { profile } = createDefaultSettings()
+    const { profile } = createTestSettings()
     profile.name = '  '
     profile.whatsappNumber = '9999-8888'
 
@@ -30,7 +30,7 @@ describe('validateProfile', () => {
 
   it('only accepts https social links', () => {
     // Arrange
-    const { profile } = createDefaultSettings()
+    const { profile } = createTestSettings()
     profile.socials[0]!.url = 'http://instagram.com/rafa'
     profile.socials[1]!.url = ''
 
@@ -46,8 +46,8 @@ describe('validateProfile', () => {
 describe('validatePortfolio', () => {
   it('rejects more than 4 photos', () => {
     // Arrange
-    const { portfolio } = createDefaultSettings()
-    portfolio.photos.push({ id: 'extra', src: 'https://example.com/5.jpg', alt: 'Quinta foto' })
+    const { portfolio } = createTestSettings()
+    portfolio.photos = [5, 6, 7, 8, 9].map((imageId) => ({ imageId, url: `https://cdn.test/${imageId}.webp`, alt: 'Foto' }))
 
     // Act
     const errors = validatePortfolio(portfolio)
@@ -58,19 +58,19 @@ describe('validatePortfolio', () => {
 
   it('requires alt text on every photo', () => {
     // Arrange
-    const { portfolio } = createDefaultSettings()
-    portfolio.photos[2]!.alt = ''
+    const { portfolio } = createTestSettings()
+    portfolio.photos[0]!.alt = ''
 
     // Act
     const errors = validatePortfolio(portfolio)
 
     // Assert
-    expect(errors['photos.2.alt']?.key).toBe('altRequired')
+    expect(errors['photos.0.alt']?.key).toBe('altRequired')
   })
 
   it('limits the story length', () => {
     // Arrange
-    const { portfolio } = createDefaultSettings()
+    const { portfolio } = createTestSettings()
     portfolio.story = 'a'.repeat(1201)
 
     // Act
@@ -84,7 +84,7 @@ describe('validatePortfolio', () => {
 describe('validateSchedule', () => {
   it('accepts the default schedule', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
 
     // Act
     const errors = validateSchedule(schedule)
@@ -95,7 +95,7 @@ describe('validateSchedule', () => {
 
   it('accepts a service without cost and rejects a cost equal to or above the price', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
     schedule.services = [
       { id: 'a', name: 'Corte', durationMinutes: 45, priceInCents: 5000 },
       { id: 'b', name: 'Barba', durationMinutes: 30, priceInCents: 4000, costInCents: 4000 },
@@ -113,7 +113,7 @@ describe('validateSchedule', () => {
 
   it('requires at least one service', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
     schedule.services = []
 
     // Act
@@ -125,7 +125,7 @@ describe('validateSchedule', () => {
 
   it('rejects a duration that is not a multiple of 5 and a zero price', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
     schedule.services[0]!.durationMinutes = 42
     schedule.services[0]!.priceInCents = 0
 
@@ -139,7 +139,7 @@ describe('validateSchedule', () => {
 
   it('rejects an open day that closes before it opens', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
     schedule.weeklyHours[1] = { weekday: 1, isOpen: true, opensAt: '18:00', closesAt: '09:00' }
 
     // Act
@@ -151,7 +151,7 @@ describe('validateSchedule', () => {
 
   it('ignores the hours of a closed day', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
     schedule.weeklyHours[0] = { weekday: 0, isOpen: false, opensAt: '18:00', closesAt: '09:00' }
 
     // Act
@@ -163,7 +163,7 @@ describe('validateSchedule', () => {
 
   it('rejects a vacation that ends before it starts', () => {
     // Arrange
-    const { schedule } = createDefaultSettings()
+    const { schedule } = createTestSettings()
     schedule.vacation = { ...schedule.vacation, isEnabled: true, startsOn: '2026-12-20', endsOn: '2026-12-10' }
 
     // Act
@@ -177,7 +177,7 @@ describe('validateSchedule', () => {
 describe('validateTheme', () => {
   it('rejects a custom accent that is not a hex color', () => {
     // Arrange
-    const { theme } = createDefaultSettings()
+    const { theme } = createTestSettings()
     theme.customAccent = 'gold'
 
     // Act
@@ -189,7 +189,7 @@ describe('validateTheme', () => {
 
   it('rejects an unknown button shape', () => {
     // Arrange
-    const { theme } = createDefaultSettings()
+    const { theme } = createTestSettings()
     ;(theme as { buttonShape: string }).buttonShape = 'hexagon'
 
     // Act
@@ -201,7 +201,7 @@ describe('validateTheme', () => {
 
   it('rejects an unknown button style', () => {
     // Arrange
-    const { theme } = createDefaultSettings()
+    const { theme } = createTestSettings()
     ;(theme as { buttonStyle: string }).buttonStyle = 'neon'
 
     // Act

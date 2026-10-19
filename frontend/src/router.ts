@@ -11,20 +11,7 @@ declare module 'vue-router' {
 }
 
 export const routes: RouteRecordRaw[] = [
-  { path: '/', name: 'bio-link', component: () => import('@/BioLink/BioLinkView.vue'), meta: { isPublic: true } },
-  {
-    path: '/portfolio',
-    name: 'portfolio',
-    component: () => import('@/Portfolio/PortfolioView.vue'),
-    meta: { isPublic: true },
-  },
-  // Opens the booking modal on top of the bio link page.
-  {
-    path: '/agendar',
-    name: 'booking',
-    component: () => import('@/BioLink/BioLinkView.vue'),
-    meta: { isPublic: true, openBooking: true },
-  },
+  { path: '/', name: 'home', component: () => import('@/Home/HomeView.vue') },
   { path: '/entrar', name: 'login', component: () => import('@/Domain/Identity/LoginView.vue') },
   {
     path: '/painel',
@@ -47,8 +34,23 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/painel/configuracoes',
     name: 'settings',
-    component: () => import('@/Settings/SettingsView.vue'),
+    component: () => import('@/Domain/Settings/SettingsView.vue'),
     meta: { requiresAuth: true },
+  },
+  // Public pages of each barbershop, by slug. Kept after the fixed paths above.
+  { path: '/:slug', name: 'bio-link', component: () => import('@/BioLink/BioLinkView.vue'), meta: { isPublic: true } },
+  {
+    path: '/:slug/portfolio',
+    name: 'portfolio',
+    component: () => import('@/Portfolio/PortfolioView.vue'),
+    meta: { isPublic: true },
+  },
+  // Opens the booking modal on top of the bio link page.
+  {
+    path: '/:slug/agendar',
+    name: 'booking',
+    component: () => import('@/BioLink/BioLinkView.vue'),
+    meta: { isPublic: true, openBooking: true },
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

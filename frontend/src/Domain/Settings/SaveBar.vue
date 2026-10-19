@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
-defineProps<{ canSave: boolean }>()
+defineProps<{ canSave: boolean; isSaving?: boolean }>()
 const emit = defineEmits<{ save: []; discard: [] }>()
 const { t } = useI18n()
 </script>
@@ -16,7 +16,7 @@ const { t } = useI18n()
         {{ canSave ? t('settings.saveBar.unsaved') : t('settings.saveBar.fixErrors') }}
       </p>
       <BaseButton variant="ghost" @click="emit('discard')">{{ t('settings.saveBar.discard') }}</BaseButton>
-      <BaseButton variant="primary" elevated :disabled="!canSave" @click="emit('save')">
+      <BaseButton variant="primary" elevated :disabled="!canSave || isSaving" @click="emit('save')">
         {{ t('settings.saveBar.save') }}
       </BaseButton>
     </div>

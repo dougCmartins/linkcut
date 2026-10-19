@@ -11,6 +11,9 @@ import ScheduleSettingsTab from './ScheduleSettingsTab.vue'
 import SecuritySettingsTab from './SecuritySettingsTab.vue'
 import { useSettingsStore } from './settings.store'
 import { SaveResult, SettingsTab, TAB_SECTIONS } from './settings.model'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import { useApiErrors } from '@/composables/useApiErrors'
+import { LoadStatus } from '@/types/loadStatus'
 
 const STATUS_VISIBLE_MS = 2600
 const TAB_ID_PREFIX = 'settings'
@@ -27,6 +30,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useSettingsStore()
+const { messageKey } = useApiErrors()
 
 function isSettingsTab(value: unknown): value is SettingsTab {
   return Object.values(SettingsTab).includes(value as SettingsTab)
@@ -65,11 +69,18 @@ function showStatus(message: string): void {
   statusTimer = setTimeout(() => (statusMessage.value = ''), STATUS_VISIBLE_MS)
 }
 
-function save(): void {
-  if (!activeSection.value) return
-  const result = store.save(activeSection.value)
-  if (result === SaveResult.Saved) showStatus(t('settings.saved'))
-  if (result === SaveResult.SessionOnly) showStatus(t('settings.savedSessionOnly'))
+const isSaving = ref(false)
+
+async function save(): Promise<void> {
+  if (!activeSection.value || isSaving.value) return
+  isSaving.value = true
+  try {
+    if ((await store.save(activeSection.value)) === SaveResult.Saved) showStatus(t('settings.saved'))
+  } catch (caught) {
+    showStatus(t(`errors.api.${messageKey(caught)}`))
+  } finally {
+    isSaving.value = false
+  }
 }
 
 onBeforeRouteLeave(() => {
@@ -83,7 +94,10 @@ function warnBeforeUnload(event: BeforeUnloadEvent): void {
   if (store.hasUnsavedChanges) event.preventDefault()
 }
 
-onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload))
+onMounted(() => {
+  window.addEventListener('beforeunload', warnBeforeUnload)
+  void store.ensureLoaded()
+})
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', warnBeforeUnload)
   clearTimeout(statusTimer)
@@ -108,18 +122,34 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <BaseTabs v-model="activeTab" class="mt-6" :tabs="tabs" :id-prefix="TAB_ID_PREFIX" :label="t('settings.tabsLabel')" />
+    <p v-if="store.status === LoadStatus.Loading" class="mt-10 text-center text-sm text-muted" role="status">
+      {{ t('settings.loading') }}
+    </p>
+    <div v-else-if="store.status === LoadStatus.Failed" class="mt-10 grid justify-items-center gap-4 text-center" role="alert">
+      <p class="text-sm text-muted">{{ t('settings.loadFailed') }}</p>
+      <BaseButton variant="secondary" @click="store.ensureLoaded()">{{ t('settings.retry') }}</BaseButton>
+    </div>
 
-    <section
-      :id="`${TAB_ID_PREFIX}-panel-${activeTab}`"
-      role="tabpanel"
-      :aria-labelledby="`${TAB_ID_PREFIX}-tab-${activeTab}`"
-      class="mt-6"
-    >
-      <component :is="TAB_COMPONENTS[activeTab]" />
-    </section>
+    <template v-if="store.isLoaded">
+      <BaseTabs v-model="activeTab" class="mt-6" :tabs="tabs" :id-prefix="TAB_ID_PREFIX" :label="t('settings.tabsLabel')" />
 
-    <SaveBar v-if="isActiveDirty" :can-save="canSave" @save="save" @discard="activeSection && store.discard(activeSection)" />
+      <section
+        :id="`${TAB_ID_PREFIX}-panel-${activeTab}`"
+        role="tabpanel"
+        :aria-labelledby="`${TAB_ID_PREFIX}-tab-${activeTab}`"
+        class="mt-6"
+      >
+        <component :is="TAB_COMPONENTS[activeTab]" />
+      </section>
+
+      <SaveBar
+        v-if="isActiveDirty"
+        :can-save="canSave"
+        :is-saving="isSaving"
+        @save="save"
+        @discard="activeSection && store.discard(activeSection)"
+      />
+    </template>
 
     <p
       aria-live="polite"

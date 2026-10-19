@@ -1,4 +1,4 @@
-import type { ScheduleSettings, VacationLock } from '@/Settings/settings.model'
+import type { ScheduleSettings, VacationLock } from '@/Domain/Settings/settings.model'
 import { toIsoDate } from '@/utils/date'
 import { fromMinutes, toMinutes } from '@/utils/time'
 

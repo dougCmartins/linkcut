@@ -14,7 +14,9 @@ import { AppointmentStatus } from '@/types/appointmentStatus'
 import { useDashboardStore } from './dashboard.store'
 import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from './financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
-import { useSettingsStore } from '@/Settings/settings.store'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
+import { imageUrl } from '@/Domain/Settings/settings.model'
+import { fetchCurrentTenant } from '@/Domain/Tenant/tenant.api'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
@@ -33,7 +35,7 @@ async function logout(): Promise<void> {
 }
 
 const profile = computed(() => settingsStore.profile)
-const avatarUrl = computed(() => settingsStore.resolveImage(profile.value.avatar))
+const avatarUrl = computed(() => imageUrl(profile.value.avatar))
 const firstName = computed(() => profile.value.name.trim().split(' ')[0] ?? profile.value.name)
 const PLACEHOLDER = '—'
 const today = new Date()
@@ -51,7 +53,17 @@ const marginBadge = computed(() => {
     : t('dashboard.marginHealthy')
 })
 
-onMounted(() => dashboardStore.loadMonthToDate(today))
+// Public address of the barbershop, for the "Ver minha página" link (hidden if it cannot be read).
+const publicPath = ref<string | null>(null)
+
+onMounted(async () => {
+  void dashboardStore.loadMonthToDate(today)
+  try {
+    publicPath.value = `/${(await fetchCurrentTenant()).slug}`
+  } catch {
+    publicPath.value = null
+  }
+})
 
 // "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
 const busyRequestId = ref<string | null>(null)
@@ -91,7 +103,7 @@ async function undo(): Promise<void> {
           <time :datetime="toIsoDate(today)">{{ todayLabel }}</time>
         </p>
         <h1 class="truncate text-xl leading-tight">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
-        <RouterLink to="/" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
+        <RouterLink v-if="publicPath" :to="publicPath" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
       </div>
       <RouterLink
         to="/painel/configuracoes"

@@ -76,7 +76,9 @@ As regras não cobrem estes pontos, então ficam decididos aqui:
 
 ## 4. Etapas
 
-### Etapa 1 — Configurações + páginas públicas por slug
+### Etapa 1 — Configurações + páginas públicas por slug ✅
+
+> Feita. Além do previsto: `GET /api/tenant` (slug para o "Ver minha página"), comando `settings:prune-images` (diário, apaga imagens enviadas e não usadas há mais de 24 h) e o serviço `scheduler` no Docker.
 
 **Backend**
 - **Tenant:**

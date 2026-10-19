@@ -44,13 +44,14 @@ make test    # testes da API · make test-web: testes do SPA
 
 ## Frontend (Vue 3 + Tailwind)
 
-Telas mobile-first. O login usa a API real; as demais telas ainda usam dados mockados (`frontend/src/mocks/`) até a fase delas:
+Telas mobile-first. Login, Configurações e páginas públicas usam a API real. Histórico, Despesas e os pedidos de agendamento ainda usam dados simulados (`frontend/src/mocks/`) até a etapa deles ([plano](docs/plano-migracao-backend.md)):
 
 | Rota | Tela |
 |------|------|
-| `/` | Link da Bio (agregador) |
-| `/portfolio` | Portfólio / Sobre Mim |
-| `/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
+| `/` | Página do linkcut, com o acesso ao painel |
+| `/:slug` | Link da Bio de cada barbearia (ex.: `/rafael`) |
+| `/:slug/portfolio` | Portfólio / Sobre Mim |
+| `/:slug/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
 | `/entrar` | Login do barbeiro (e-mail + senha + código 2FA por WhatsApp ou e-mail) |
 | `/painel` 🔒 | Painel do Barbeiro (métricas com tooltip da margem, agenda de hoje e solicitações pendentes) |
 | `/painel/historico` 🔒 | Histórico de atendimentos: filtros semana/mês/ano/personalizado, 50/100/200 por página e exportação CSV ([requisitos](docs/requisitos-historico.md)) |
@@ -59,7 +60,7 @@ Telas mobile-first. O login usa a API real; as demais telas ainda usam dados moc
 
 🔒 = só com login. Em desenvolvimento, use a conta de demonstração `rafael@linkcut.app` / `linkcut123`. O código 2FA chega no Mailpit (e-mail) ou em `backend/storage/logs/sms.log` (SMS). Detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md).
 
-Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em [`docs/requisitos-configuracoes.md`](docs/requisitos-configuracoes.md)). Enquanto não há backend, os dados ficam no navegador (localStorage + IndexedDB para imagens), atrás de `frontend/src/Settings/settings.api.ts`.
+Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em [`docs/requisitos-configuracoes.md`](docs/requisitos-configuracoes.md)), salvas na API (`/api/settings`) e lidas pelo visitante em `/api/public/{slug}`, sem o custo dos serviços. As imagens são enviadas para a API, que as guarda em WebP (até 1600 px). O "Ver minha página" do painel leva ao endereço da barbearia (`/:slug`).
 
 As cores ficam em um único arquivo, `frontend/src/styles/core.css`: 6 paletas, cada uma com versão clara e escura, mais uma cor personalizada opcional. O visitante pode alternar claro/escuro nas páginas públicas pelo botão no canto superior direito.
 

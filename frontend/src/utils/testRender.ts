@@ -6,10 +6,18 @@ import { i18n } from '@/i18n'
 
 type RenderArgs = Parameters<typeof render>
 
-/** Renders a component with the app plugins (i18n, a fresh Pinia and an in-memory router). */
-export function renderWithPlugins(component: RenderArgs[0], options: NonNullable<RenderArgs[1]> = {}) {
+/**
+ * Renders a component with the app plugins (i18n, a fresh Pinia and an in-memory router).
+ * `before` runs with the fresh Pinia active, before mounting (e.g. to fill a store).
+ */
+export function renderWithPlugins(
+  component: RenderArgs[0],
+  options: NonNullable<RenderArgs[1]> = {},
+  before: () => void = () => {},
+) {
   const pinia = createPinia()
   setActivePinia(pinia)
+  before()
   const router = createRouter({ history: createMemoryHistory(), routes })
 
   const result = render(component, {

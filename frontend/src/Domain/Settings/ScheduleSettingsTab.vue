@@ -8,7 +8,7 @@ import SettingsCard from './SettingsCard.vue'
 import VacationLockCard from './VacationLockCard.vue'
 import WorkingHoursEditor from './WorkingHoursEditor.vue'
 import { useSettingsStore } from './settings.store'
-import { BOOKING_WINDOW_OPTIONS, SLOT_INTERVAL_OPTIONS, SettingsSection } from './settings.model'
+import { BOOKING_WINDOW_OPTIONS, NEW_SERVICE_ID_PREFIX, SLOT_INTERVAL_OPTIONS, SettingsSection } from './settings.model'
 import { useSectionErrors } from './useSectionErrors'
 import type { Service } from '@/Booking/booking.model'
 
@@ -47,7 +47,7 @@ function updateService(index: number, patch: Partial<Service>): void {
 function addService(): void {
   schedule.value.services = [
     ...schedule.value.services,
-    { id: `service-${Date.now()}`, name: '', durationMinutes: DEFAULT_NEW_SERVICE_DURATION, priceInCents: 0 },
+    { id: `${NEW_SERVICE_ID_PREFIX}${Date.now()}`, name: '', durationMinutes: DEFAULT_NEW_SERVICE_DURATION, priceInCents: 0 },
   ]
 }
 

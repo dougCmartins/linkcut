@@ -10,7 +10,8 @@ import BookingSuccess from './BookingSuccess.vue'
 import BookingVacationNotice from './BookingVacationNotice.vue'
 import { useBookingStore } from './booking.store'
 import { computeAvailableTimes, isOnVacation, isScheduleLocked } from './availability'
-import { useSettingsStore } from '@/Settings/settings.store'
+import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
+import { createEmptySettings } from '@/Domain/Settings/settings.defaults'
 import { formatDayMonth, fromIsoDate, nextDays, toIsoDate } from '@/utils/date'
 import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
 
@@ -19,16 +20,20 @@ const MIN_NAME_LENGTH = 2
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 const store = useBookingStore()
-const settingsStore = useSettingsStore()
+const publicPageStore = usePublicPageStore()
 const dialog = useTemplateRef<HTMLElement>('dialog')
 
 const now = new Date()
-const schedule = computed(() => settingsStore.schedule)
+// App.vue opens the modal only after the booking options loaded; the fallback just keeps the types simple.
+const schedule = computed(() => publicPageStore.bookingOptions ?? createEmptySettings().schedule)
+const services = computed(() => schedule.value.services)
+const findService = (serviceId: string) => services.value.find((service) => service.id === serviceId)
 const days = computed(() => nextDays(schedule.value.bookingWindowDays, now))
 const isLocked = computed(() => isScheduleLocked(days.value, schedule.value.vacation))
-const whatsappUrl = computed(() =>
-  buildWhatsappUrl(settingsStore.profile.whatsappNumber, settingsStore.profile.whatsappMessage),
-)
+const whatsappUrl = computed(() => {
+  const profile = publicPageStore.page?.profile
+  return profile ? buildWhatsappUrl(profile.whatsappNumber, profile.whatsappMessage) : ''
+})
 
 const form = reactive({
   serviceId: null as string | null,
@@ -41,8 +46,8 @@ const submittedSummary = ref<string | null>(null)
 
 /** Length used to find free times: the chosen service, or the shortest one before choosing. */
 const durationMinutes = computed(() => {
-  const selected = form.serviceId ? store.findService(form.serviceId) : undefined
-  return selected?.durationMinutes ?? Math.min(...store.services.map((service) => service.durationMinutes))
+  const selected = form.serviceId ? findService(form.serviceId) : undefined
+  return selected?.durationMinutes ?? Math.min(...services.value.map((service) => service.durationMinutes))
 })
 
 function timesOn(date: Date): string[] {
@@ -86,7 +91,7 @@ function submit(): void {
     clientWhatsapp: onlyDigits(form.clientWhatsapp),
   })
   submittedSummary.value = t('booking.summary', {
-    service: store.findService(request.serviceId)?.name ?? '',
+    service: findService(request.serviceId)?.name ?? '',
     date: formatDayMonth(fromIsoDate(request.date)),
     time: request.time,
   })
@@ -151,7 +156,7 @@ onBeforeUnmount(() => {
             <legend class="mb-3 text-sm font-bold">{{ t('booking.stepService') }}</legend>
             <div role="radiogroup" :aria-label="t('booking.stepService')" class="grid gap-3">
               <ServiceCard
-                v-for="service in store.services"
+                v-for="service in services"
                 :key="service.id"
                 :service="service"
                 :selected="service.id === form.serviceId"

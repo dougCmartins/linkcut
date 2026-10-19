@@ -57,7 +57,7 @@ describe('auth guard', () => {
     const router = createTestRouter()
 
     // Act
-    await router.push('/portfolio')
+    await router.push('/rafael/portfolio')
 
     // Assert
     expect(router.currentRoute.value.name).toBe('portfolio')

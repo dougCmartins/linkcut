@@ -11,7 +11,7 @@ import PalettePicker from './PalettePicker.vue'
 import PhoneFrame from './PhoneFrame.vue'
 import SettingsCard from './SettingsCard.vue'
 import { useSettingsStore } from './settings.store'
-import { SettingsSection } from './settings.model'
+import { SettingsSection, imageUrl } from './settings.model'
 import { useSectionErrors } from './useSectionErrors'
 import { ThemeMode } from '@/types/theme'
 import { cssColorToHex } from '@/utils/color'
@@ -86,8 +86,8 @@ watch(() => [theme.value.palette, theme.value.mode], readPaletteColors, { flush:
       <PhoneFrame :theme="theme">
         <LinkPreview
           :profile="profile"
-          :avatar-url="store.resolveImage(profile.avatar)"
-          :background-url="store.resolveImage(profile.background)"
+          :avatar-url="imageUrl(profile.avatar)"
+          :background-url="imageUrl(profile.background)"
         />
       </PhoneFrame>
     </div>
