@@ -1,8 +1,21 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import SettingsView from '../SettingsView.vue'
 import { useSettingsStore } from '../settings.store'
 import { renderWithPlugins } from '@/utils/testRender'
+import { useAuthStore } from '@/Domain/Identity/auth.store'
+import { installFakeIdentityApi } from '@/Domain/Identity/__tests__/fakeIdentityApi'
+
+function signedInSession() {
+  const now = Date.now()
+  return {
+    accessToken: 'access-1',
+    refreshToken: 'refresh-1',
+    accessExpiresAt: now + 60_000,
+    refreshExpiresAt: now + 120_000,
+    user: { id: 7, tenantId: 3, name: 'Rafael', email: 'rafael@linkcut.app', phoneMasked: '+55 •• •••••-7777', role: 'owner', twoFactorChannel: null },
+  }
+}
 
 async function renderSettings(path = '/painel/configuracoes') {
   const rendered = renderWithPlugins(SettingsView)
@@ -14,6 +27,12 @@ async function renderSettings(path = '/painel/configuracoes') {
 describe('SettingsView', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('opens on the Link tab and moves between tabs with the arrow keys', async () => {
@@ -111,20 +130,24 @@ describe('SettingsView', () => {
     expect(store.theme.buttonShape).toBe('square')
   })
 
-  it('saves the default 2FA channel in the Segurança tab', async () => {
+  it('saves the default 2FA channel on the server right away (Segurança tab)', async () => {
     // Arrange
+    const { calls } = installFakeIdentityApi()
     await renderSettings('/painel/configuracoes?aba=seguranca')
-    const store = useSettingsStore()
+    const auth = useAuthStore()
+    auth.session = signedInSession()
     expect(await screen.findByRole('tab', { name: 'Segurança', selected: true })).toBeTruthy()
     expect(screen.getByRole('radio', { name: /Perguntar sempre/ }).getAttribute('aria-checked')).toBe('true')
 
     // Act
-    await fireEvent.click(screen.getByRole('radio', { name: /WhatsApp/ }))
-    await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+    await fireEvent.click(screen.getByRole('radio', { name: /SMS/ }))
 
     // Assert
-    expect(store.security.defaultTwoFactorChannel).toBe('whatsapp')
-    expect(await screen.findByText('(11) •••••-8888')).toBeTruthy()
+    expect(await screen.findByText('Alterações salvas!')).toBeTruthy()
+    expect(calls.find((call) => call.method === 'PATCH')?.body).toEqual({ channel: 'sms' })
+    expect(auth.user?.twoFactorChannel).toBe('sms')
+    expect(screen.getByRole('radio', { name: /SMS/ }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.queryByRole('button', { name: 'Salvar' })).toBeNull()
   })
 
   it('previews and saves the button style', async () => {

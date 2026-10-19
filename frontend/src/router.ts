@@ -5,7 +5,7 @@ declare module 'vue-router' {
     /** Client-facing page: shows the visitor light/dark toggle. */
     isPublic?: boolean
     openBooking?: boolean
-    /** Barber-only page: needs a session (see Auth/auth.guard.ts). */
+    /** Barber-only page: needs a session (see Domain/Identity/auth.guard.ts). */
     requiresAuth?: boolean
   }
 }
@@ -25,7 +25,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/BioLink/BioLinkView.vue'),
     meta: { isPublic: true, openBooking: true },
   },
-  { path: '/entrar', name: 'login', component: () => import('@/Auth/LoginView.vue') },
+  { path: '/entrar', name: 'login', component: () => import('@/Domain/Identity/LoginView.vue') },
   {
     path: '/painel',
     name: 'dashboard',

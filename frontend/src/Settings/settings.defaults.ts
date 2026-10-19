@@ -78,6 +78,5 @@ export function createDefaultSettings(): AppSettings {
       },
     },
     theme: { ...DEFAULT_THEME },
-    security: { defaultTwoFactorChannel: null },
   }
 }

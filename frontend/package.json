@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sentry/vue": "^10.76.2",
     "pinia": "^4.1.0",
     "vue": "^3.5.44",
     "vue-i18n": "^11.4.15",

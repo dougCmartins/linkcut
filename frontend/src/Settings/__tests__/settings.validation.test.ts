@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createDefaultSettings } from '../settings.defaults'
-import { validatePortfolio, validateProfile, validateSchedule, validateSecurity, validateTheme } from '../settings.validation'
+import { validatePortfolio, validateProfile, validateSchedule, validateTheme } from '../settings.validation'
 
 describe('validateProfile', () => {
   it('accepts the default profile', () => {
@@ -171,30 +171,6 @@ describe('validateSchedule', () => {
 
     // Assert
     expect(errors['vacation.endsOn']?.key).toBe('vacationOrder')
-  })
-})
-
-describe('validateSecurity', () => {
-  it('accepts asking every time or a known channel', () => {
-    // Arrange
-    const choices = [null, 'whatsapp', 'email'] as const
-
-    // Act
-    const results = choices.map((channel) => validateSecurity({ defaultTwoFactorChannel: channel }))
-
-    // Assert
-    results.forEach((errors) => expect(errors).toEqual({}))
-  })
-
-  it('rejects an unknown channel', () => {
-    // Arrange
-    const security = { defaultTwoFactorChannel: 'sms' } as unknown as Parameters<typeof validateSecurity>[0]
-
-    // Act
-    const errors = validateSecurity(security)
-
-    // Assert
-    expect(errors.defaultTwoFactorChannel?.key).toBe('invalidOption')
   })
 })
 

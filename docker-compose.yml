@@ -1,13 +1,87 @@
+# Local stack: MySQL + API (Laravel) + queue worker + Pulse checker + Mailpit + SPA (Vite).
+# Ports differ from barber-saas, so both projects can run at the same time.
+x-backend: &backend
+  build: ./backend
+  environment: &backend-env
+    DB_CONNECTION: mysql
+    DB_HOST: mysql
+    DB_PORT: 3306
+    DB_DATABASE: linkcut
+    DB_USERNAME: linkcut
+    DB_PASSWORD: secret
+    MAIL_MAILER: smtp
+    MAIL_HOST: mailpit
+    MAIL_PORT: 1025
+    HOST_UID: ${HOST_UID:-0}
+    HOST_GID: ${HOST_GID:-0}
+  volumes:
+    - ./backend:/var/www/html
+  depends_on:
+    mysql:
+      condition: service_healthy
+
 services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: linkcut
+      MYSQL_USER: linkcut
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    <<: *backend
+    ports:
+      - "8087:8085"
+
+  # Sends the 2FA codes (queued notifications).
+  queue:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      RUN_SETUP: "false"
+    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=5"]
+    depends_on:
+      backend:
+        condition: service_started
+
+  # Feeds the "Servers" card of Laravel Pulse.
+  pulse:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      RUN_SETUP: "false"
+    command: ["php", "artisan", "pulse:check"]
+    depends_on:
+      backend:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+
   frontend:
-    image: node:22-alpine
-    working_dir: /app
-    command: sh -c "npm install && npm run dev"
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8087/api
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
 
 volumes:
+  mysql_data:
   frontend_node_modules:
