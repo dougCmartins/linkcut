@@ -8,7 +8,7 @@
 - Mostra **sempre o mês atual, do dia 1 até agora**. Não é personalizável.
 - Abaixo do título "Resumo de <mês>" aparece um selo pequeno **"Mês até hoje"**. A explicação completa, "Cálculo do mês até o momento", fica no tooltip e no texto para leitores de tela.
 - O cabeçalho mostra a **data do dia** (ex.: "Domingo, 18 de outubro").
-- O **Faturamento** é a soma dos atendimentos do mês até agora, a mesma conta do histórico. O **Lucro** e a **Margem** usam as despesas do mês até agora (simuladas: aluguel no dia 5 e produtos às segundas).
+- O **Faturamento** é a soma dos atendimentos do mês até agora, a mesma conta do histórico. O **Lucro** e a **Margem** usam as despesas do mês até agora: fixas já vencidas, avulsas e o custo de cada atendimento concluído (ver [requisitos de despesas](requisitos-despesas.md)).
 - O card de Faturamento é um link para o histórico.
 
 ## 2. Histórico
@@ -55,4 +55,3 @@ Enquanto o backend não existe, os atendimentos concluídos ficam no `localStora
 
 - `GET /history?from=&to=&page=&perPage=` paginado no servidor, com exportação gerada pelo servidor para períodos muito grandes.
 - `POST /appointments/{id}/complete` e `DELETE /appointments/{id}/complete` (desfazer) no lugar do registro local; o servidor grava o preço e valida status e data.
-- Despesas reais cadastradas pelo barbeiro (PRD, módulo 5) no lugar das simuladas.

@@ -20,9 +20,13 @@ const BADGE_CLASSES: Record<MetricTone, string> = {
     class="rounded-card p-4 ring-1 shadow-soft"
     :class="tone === 'accent' ? 'bg-accent text-on-accent ring-accent' : 'bg-surface ring-line'"
   >
-    <p class="text-xs font-semibold tracking-wide uppercase" :class="tone === 'accent' ? 'opacity-75' : 'text-muted'">
-      {{ label }}
-    </p>
+    <div class="-my-1.5 flex min-h-7 items-center gap-1">
+      <p class="text-xs font-semibold tracking-wide uppercase" :class="tone === 'accent' ? 'opacity-75' : 'text-muted'">
+        {{ label }}
+      </p>
+      <!-- Optional explanation next to the label (e.g. an InfoTooltip). -->
+      <slot name="info" />
+    </div>
     <div class="mt-2 flex items-end justify-between gap-3">
       <p class="font-display text-[22px] leading-none font-extrabold tracking-tight">{{ value }}</p>
       <span v-if="hint" class="flex shrink-0 items-center gap-1 text-xs font-bold opacity-80">

@@ -15,10 +15,10 @@ const OPENING = '09:00'
 const SLOT_MINUTES = 45
 
 const SERVICES = [
-  { name: 'Corte', priceInCents: 5000, weight: 45 },
-  { name: 'Barba', priceInCents: 4000, weight: 20 },
-  { name: 'Corte + Barba', priceInCents: 8000, weight: 25 },
-  { name: 'Pigmentação', priceInCents: 6550, weight: 10 },
+  { name: 'Corte', priceInCents: 5000, costInCents: 600, weight: 45 },
+  { name: 'Barba', priceInCents: 4000, costInCents: 400, weight: 20 },
+  { name: 'Corte + Barba', priceInCents: 8000, costInCents: 1000, weight: 25 },
+  { name: 'Pigmentação', priceInCents: 6550, costInCents: 1500, weight: 10 },
 ]
 
 const CLIENTS = [
@@ -27,11 +27,6 @@ const CLIENTS = [
   'Leonardo Dias', 'Rodrigo Pinto', 'Eduardo Freitas', 'Marcelo Teixeira', 'Henrique Castro', 'Daniel Moreira',
   'Igor Carvalho', 'Samuel Araújo', 'Renan Gomes', 'Otávio Melo', 'Murilo Cardoso', 'Arthur Ribeiro',
 ]
-
-/** Fixed costs of the month (mock): chair rent on day 5, products every Monday. */
-const RENT = { day: 5, amountInCents: 150_000 }
-const WEEKLY_PRODUCTS_IN_CENTS = 18_000
-const MONDAY = 1
 
 function hashString(text: string): number {
   let hash = 2166136261
@@ -87,6 +82,7 @@ function servicesOn(date: Date, now: Date): CompletedService[] {
         clientName: client,
         serviceName: service.name,
         priceInCents: service.priceInCents,
+        costInCents: service.costInCents,
       }
     })
     .filter((record) => !isToday || toMinutes(record.time) <= nowMinutes)
@@ -143,13 +139,4 @@ export function mockCompletedServices(now: Date): CompletedService[] {
   const recorded = readRecorded()
   const generated = generatedServices(now)
   return recorded.length ? [...recorded, ...generated].sort(newestFirst) : generated
-}
-
-/** Costs of the current month until `now`. */
-export function mockMonthToDateExpenses(now: Date): number {
-  let total = now.getDate() >= RENT.day ? RENT.amountInCents : 0
-  for (let day = 1; day <= now.getDate(); day++) {
-    if (new Date(now.getFullYear(), now.getMonth(), day).getDay() === MONDAY) total += WEEKLY_PRODUCTS_IN_CENTS
-  }
-  return total
 }

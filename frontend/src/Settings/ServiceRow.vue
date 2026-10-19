@@ -1,41 +1,47 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TextField from '@/components/ui/TextField.vue'
 import type { Service } from '@/Booking/booking.model'
 import { SERVICE_LIMITS, TEXT_LIMITS } from './settings.validation'
+import { formatBRL, formatMoneyInput, parseMoneyInput } from '@/utils/currency'
 
 const props = defineProps<{
   service: Service
   canRemove: boolean
-  errors: { name?: string; durationMinutes?: string; priceInCents?: string }
+  errors: { name?: string; durationMinutes?: string; priceInCents?: string; costInCents?: string }
 }>()
 const emit = defineEmits<{ update: [patch: Partial<Service>]; remove: [] }>()
 const { t } = useI18n()
 
-/** "50,00" or "50.5" -> 5050 cents. Invalid input -> 0 (shown as an error). */
-function parsePrice(text: string): number {
-  const value = Number(text.replace(/\s/g, '').replace(',', '.'))
-  return Number.isFinite(value) ? Math.round(value * 100) : 0
+/**
+ * Money field with local text, so typing "50," is not reformatted mid-edit.
+ * Invalid input becomes `fallback` cents (shown as an error by the validator).
+ */
+function useMoneyField(read: () => number | undefined, field: 'priceInCents' | 'costInCents', fallback: number) {
+  const text = ref(formatMoneyInput(read() ?? 0))
+  watch(read, (cents) => {
+    if ((parseMoneyInput(text.value) ?? 0) !== (cents ?? 0)) text.value = formatMoneyInput(cents ?? 0)
+  })
+  function onInput(value: string): void {
+    text.value = value
+    emit('update', { [field]: value.trim() ? (parseMoneyInput(value) ?? fallback) : 0 })
+  }
+  return { text, onInput }
 }
 
-function formatPrice(cents: number): string {
-  return cents > 0 ? (cents / 100).toFixed(2).replace('.', ',') : ''
-}
+const price = useMoneyField(() => props.service.priceInCents, 'priceInCents', 0)
+// -1 makes an unreadable cost fail validation instead of silently becoming zero.
+const cost = useMoneyField(() => props.service.costInCents, 'costInCents', -1)
 
-// Local text so typing "50," is not reformatted mid-edit.
-const priceText = ref(formatPrice(props.service.priceInCents))
-watch(
-  () => props.service.priceInCents,
-  (cents) => {
-    if (parsePrice(priceText.value) !== cents) priceText.value = formatPrice(cents)
-  },
-)
-
-function onPriceInput(text: string): void {
-  priceText.value = text
-  emit('update', { priceInCents: parsePrice(text) })
-}
+/** "Sobram R$ 44,00 (88%) por atendimento": what one appointment leaves after its cost. */
+const leftPerAppointment = computed(() => {
+  const { priceInCents, costInCents = 0 } = props.service
+  if (priceInCents <= 0 || costInCents <= 0 || costInCents >= priceInCents) return undefined
+  const left = priceInCents - costInCents
+  const percent = `${Math.round((left / priceInCents) * 100)}%`
+  return t('settings.schedule.serviceCostLeft', { value: formatBRL(left), percent })
+})
 </script>
 
 <template>
@@ -75,12 +81,22 @@ function onPriceInput(text: string): void {
       />
       <TextField
         inputmode="decimal"
-        :model-value="priceText"
+        :model-value="price.text.value"
         :label="t('settings.schedule.servicePrice')"
         placeholder="0,00"
         :error="errors.priceInCents"
-        @update:model-value="onPriceInput"
+        @update:model-value="price.onInput"
       />
     </div>
+    <TextField
+      class="mt-3"
+      inputmode="decimal"
+      :model-value="cost.text.value"
+      :label="t('settings.schedule.serviceCost')"
+      placeholder="0,00"
+      :error="errors.costInCents"
+      :hint="leftPerAppointment ?? t('settings.schedule.serviceCostHint')"
+      @update:model-value="cost.onInput"
+    />
   </div>
 </template>

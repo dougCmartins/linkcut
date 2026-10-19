@@ -39,6 +39,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/painel/despesas',
+    name: 'expenses',
+    component: () => import('@/Expenses/ExpensesView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/painel/configuracoes',
     name: 'settings',
     component: () => import('@/Settings/SettingsView.vue'),

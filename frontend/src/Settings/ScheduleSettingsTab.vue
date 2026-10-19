@@ -34,6 +34,7 @@ function serviceErrors(index: number) {
     name: errorFor(`services.${index}.name`),
     durationMinutes: errorFor(`services.${index}.durationMinutes`),
     priceInCents: errorFor(`services.${index}.priceInCents`),
+    costInCents: errorFor(`services.${index}.costInCents`),
   }
 }
 

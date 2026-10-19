@@ -102,7 +102,7 @@ describe('booking store', () => {
       expect(agendaIds).toEqual([early.id, late.id])
     })
 
-    it('marks it completed and sends the service price to the history', async () => {
+    it('marks it completed and sends the service price and cost to the history', async () => {
       // Arrange
       const store = useBookingStore()
       const request = confirmedToday(store)
@@ -121,6 +121,7 @@ describe('booking store', () => {
         clientName: 'João Silva',
         serviceName: 'Corte',
         priceInCents: 5000,
+        costInCents: 600,
       })
     })
 

@@ -1,8 +1,6 @@
-import type { CompletedService, DateRange, MonthFinances } from './history.model'
-import { monthToDate } from './historyPeriod'
+import type { CompletedService, DateRange } from './history.model'
 import {
   mockCompletedServices,
-  mockMonthToDateExpenses,
   mockRecordCompletedService,
   mockRemoveCompletedService,
 } from '@/mocks/history'
@@ -31,13 +29,4 @@ export async function recordCompletedService(record: CompletedService): Promise<
 export async function removeCompletedService(id: string): Promise<void> {
   await wait()
   mockRemoveCompletedService(id)
-}
-
-/** Revenue and expenses of the current month until now (what the dashboard shows). */
-export async function fetchMonthToDateFinances(now = new Date()): Promise<MonthFinances> {
-  const records = await fetchCompletedServices(monthToDate(now), now)
-  return {
-    revenueInCents: records.reduce((sum, record) => sum + record.priceInCents, 0),
-    expensesInCents: mockMonthToDateExpenses(now),
-  }
 }
