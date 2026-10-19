@@ -18,6 +18,9 @@ export const ApiErrorCode = {
   InvalidRefreshToken: 'INVALID_REFRESH_TOKEN',
   TenantInactive: 'TENANT_INACTIVE',
   TenantNotResolved: 'TENANT_NOT_RESOLVED',
+  TenantNotFound: 'TENANT_NOT_FOUND',
+  ImageNotFound: 'IMAGE_NOT_FOUND',
+  InvalidImage: 'INVALID_IMAGE',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

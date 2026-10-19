@@ -10,6 +10,8 @@ export interface FakeCall {
   path: string
   headers: Record<string, string>
   body: Record<string, unknown> | null
+  /** Multipart uploads. */
+  form: FormData | null
 }
 
 export type FakeHandler = (call: FakeCall) => { status: number; body?: unknown }
@@ -31,7 +33,8 @@ export function installFakeApi(routes: Record<string, FakeHandler>) {
         method: init.method ?? 'GET',
         path,
         headers: (init.headers ?? {}) as Record<string, string>,
-        body: init.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : null,
+        body: init.body && !(init.body instanceof FormData) ? (JSON.parse(String(init.body)) as Record<string, unknown>) : null,
+        form: init.body instanceof FormData ? init.body : null,
       }
       calls.push(call)
       const handler = routes[`${call.method} ${path}`]

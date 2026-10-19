@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Highlight } from '@/Settings/settings.model'
+import type { Highlight } from '@/Domain/Settings/settings.model'
 
 defineProps<{ highlights: Highlight[] }>()
 </script>

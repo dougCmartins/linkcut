@@ -1,52 +1,87 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import BioLinkView from '../BioLinkView.vue'
 import { useBookingStore } from '@/Booking/booking.store'
-import { useSettingsStore } from '@/Settings/settings.store'
-import { SettingsSection } from '@/Settings/settings.model'
+import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
+import { createTestSettings, installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
+import { ThemePalette } from '@/types/theme'
 import { renderWithPlugins } from '@/utils/testRender'
 
+async function renderBioLink(path = '/rafael') {
+  const rendered = renderWithPlugins(BioLinkView)
+  await rendered.router.push(path)
+  return rendered
+}
+
 describe('BioLinkView', () => {
-  beforeEach(() => {
-    localStorage.clear()
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
-  it('shows the barber name and the three main actions', () => {
-    // Arrange & Act
-    renderWithPlugins(BioLinkView)
+  it('shows the barbershop of the slug with the three main actions', async () => {
+    // Arrange
+    installFakeSettingsApi()
+
+    // Act
+    await renderBioLink()
 
     // Assert
-    expect(screen.getByRole('heading', { name: 'Rafael Costa' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Rafael Costa' })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Agendar Horário Agora/ })).toBeTruthy()
-    expect(screen.getByRole('link', { name: /Conheça Minha História/ }).getAttribute('href')).toBe('/portfolio')
+    expect(screen.getByRole('link', { name: /Conheça Minha História/ }).getAttribute('href')).toBe('/rafael/portfolio')
     expect(screen.getByRole('link', { name: /WhatsApp/ }).getAttribute('href')).toContain('https://wa.me/5511999998888')
   })
 
-  it('shows what the barber saved in the settings', async () => {
+  it('reads the public API without a session and loads the theme of the barbershop', async () => {
     // Arrange
-    const { rerender } = renderWithPlugins(BioLinkView)
-    const settings = useSettingsStore()
-    settings.drafts.profile.name = 'Diego Souza'
-    settings.drafts.profile.whatsappNumber = '(21) 98888-7777'
-    settings.drafts.profile.socials = settings.drafts.profile.socials.map((social) => ({ ...social, url: '' }))
+    const settings = createTestSettings()
+    settings.theme.palette = ThemePalette.Ocean
+    const { calls } = installFakeSettingsApi(settings)
 
     // Act
-    settings.save(SettingsSection.Profile)
-    await rerender({})
+    await renderBioLink()
+    await screen.findByRole('heading', { name: 'Rafael Costa' })
 
     // Assert
-    expect(screen.getByRole('heading', { name: 'Diego Souza' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: /WhatsApp/ }).getAttribute('href')).toContain('https://wa.me/5521988887777')
-    expect(screen.queryByRole('navigation', { name: 'Redes sociais' })).toBeNull()
+    expect(calls.map((call) => call.path)).toEqual(['/public/rafael', '/public/rafael/booking-options'])
+    expect(calls.every((call) => !call.headers.Authorization)).toBe(true)
+    expect(usePublicPageStore().theme.palette).toBe(ThemePalette.Ocean)
+    expect(usePublicPageStore().bookingOptions?.services[0]?.costInCents).toBeUndefined()
+  })
+
+  it('shows only the social networks that have a link', async () => {
+    // Arrange
+    installFakeSettingsApi()
+
+    // Act
+    await renderBioLink()
+
+    // Assert
+    const socials = await screen.findByRole('navigation', { name: 'Redes sociais' })
+    expect(socials.querySelectorAll('a')).toHaveLength(1)
+  })
+
+  it('says the page does not exist for an unknown slug', async () => {
+    // Arrange
+    installFakeSettingsApi()
+
+    // Act
+    await renderBioLink('/nao-existe')
+
+    // Assert
+    expect(await screen.findByRole('heading', { name: 'Página não encontrada' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Agendar Horário Agora/ })).toBeNull()
   })
 
   it('opens the booking modal from the main button', async () => {
     // Arrange
-    renderWithPlugins(BioLinkView)
+    installFakeSettingsApi()
+    await renderBioLink()
     const store = useBookingStore()
 
     // Act
-    await fireEvent.click(screen.getByRole('button', { name: /Agendar Horário Agora/ }))
+    await fireEvent.click(await screen.findByRole('button', { name: /Agendar Horário Agora/ }))
 
     // Assert
     expect(store.isModalOpen).toBe(true)

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { computeAvailableTimes, isScheduleLocked } from '../availability'
-import { createDefaultSettings } from '@/Settings/settings.defaults'
-import type { ScheduleSettings } from '@/Settings/settings.model'
+import { createTestSettings } from '@/Domain/Settings/__tests__/fakeSettingsApi'
+import type { ScheduleSettings } from '@/Domain/Settings/settings.model'
 import { nextDays } from '@/utils/date'
 
 const MONDAY = new Date(2026, 9, 19)
@@ -9,7 +9,7 @@ const SUNDAY = new Date(2026, 9, 18)
 const SOME_EARLIER_DAY = new Date(2026, 9, 1, 8, 0)
 
 function buildSchedule(overrides: Partial<ScheduleSettings> = {}): ScheduleSettings {
-  const { schedule } = createDefaultSettings()
+  const { schedule } = createTestSettings()
   schedule.weeklyHours[1] = { weekday: 1, isOpen: true, opensAt: '09:00', closesAt: '11:00' }
   return { ...schedule, slotIntervalMinutes: 30, ...overrides }
 }

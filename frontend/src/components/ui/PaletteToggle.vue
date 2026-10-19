@@ -2,15 +2,15 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVisitorMode } from '@/composables/useTheme'
-import { useSettingsStore } from '@/Settings/settings.store'
+import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { ThemeMode } from '@/types/theme'
 
 /** Light/dark switch for visitors of the public pages. The barber's mode is the default. */
 const { t } = useI18n()
-const settingsStore = useSettingsStore()
+const publicPageStore = usePublicPageStore()
 const { visitorMode, toggleVisitorMode } = useVisitorMode()
 
-const currentMode = computed(() => visitorMode.value ?? settingsStore.theme.mode)
+const currentMode = computed(() => visitorMode.value ?? publicPageStore.theme.mode)
 const isDark = computed(() => currentMode.value === ThemeMode.Dark)
 </script>
 

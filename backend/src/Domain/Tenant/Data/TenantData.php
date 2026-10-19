@@ -13,5 +13,6 @@ final class TenantData extends Data
         public readonly string $name,
         public readonly string $slug,
         public readonly bool $active,
+        public readonly string $timezone,
     ) {}
 }

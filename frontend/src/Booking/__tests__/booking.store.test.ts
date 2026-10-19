@@ -3,18 +3,35 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useBookingStore } from '../booking.store'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { fetchCompletedServices } from '@/History/history.api'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
+import { installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 
 const validInput = {
   clientName: 'João Silva',
   clientWhatsapp: '11912345678',
-  serviceId: 'haircut',
+  serviceId: '1',
   date: '2026-10-20',
   time: '10:00',
 }
 
 describe('booking store', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia())
+    installFakeSettingsApi()
+    await useSettingsStore().ensureLoaded()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('creates the simulated requests with the services of the barbershop', () => {
+    // Arrange & Act
+    const store = useBookingStore()
+
+    // Assert
+    expect(store.pendingRequests.map((request) => request.serviceId)).toEqual(['1', '2', '1'])
   })
 
   it('creates every new request as pending', () => {
@@ -28,17 +45,6 @@ describe('booking store', () => {
     // Assert
     expect(request.status).toBe(AppointmentStatus.Pending)
     expect(store.pendingRequests).toHaveLength(pendingBefore + 1)
-  })
-
-  it('rejects a request for an unknown service', () => {
-    // Arrange
-    const store = useBookingStore()
-
-    // Act
-    const submit = () => store.submitRequest({ ...validInput, serviceId: 'unknown' })
-
-    // Assert
-    expect(submit).toThrow('Unknown service')
   })
 
   it('confirms a request when the barber accepts it', () => {

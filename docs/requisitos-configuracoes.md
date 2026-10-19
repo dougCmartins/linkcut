@@ -94,7 +94,7 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 | RNF04 | Segurança | Nenhum `v-html` (o Vue escapa o texto, o que evita XSS). Links de redes sociais só com `https://`. WhatsApp guardado só com dígitos. Uploads validados por tipo e tamanho. |
 | RNF05 | Desempenho | A troca de tema não recarrega a página: só muda variáveis CSS. As imagens são redimensionadas no navegador antes de serem guardadas. As fotos da galeria carregam sob demanda (`loading="lazy"`). |
 | RNF06 | Manutenibilidade | Os tokens de cor ficam num único arquivo (`styles/core.css`) lido pelo Tailwind. Toda a persistência passa por `Settings/settings.api.ts` (para trocar pela API sem mexer nas telas). Validações são funções puras e testáveis. |
-| RNF07 | Persistência | Textos, agenda e tema no `localStorage`, com versão de schema e volta aos valores padrão se os dados estiverem corrompidos. Imagens no IndexedDB. Se o navegador bloquear o armazenamento, o app continua funcionando na sessão atual. |
+| RNF07 | Persistência | Tudo fica na API (`/api/settings`), por barbearia. Cada aba salva a seção inteira (`PUT`). Imagens vão por upload e ficam em WebP no servidor. Se salvar falhar, as alterações continuam na tela com a mensagem do erro. Uma barbearia nova recebe as configurações padrão no primeiro acesso. |
 | RNF08 | Qualidade | TypeScript estrito; testes Vitest no padrão AAA para validações, cálculo de horários, cores, store e componentes principais. |
 
 ## 5. Fora do escopo (próximas etapas)

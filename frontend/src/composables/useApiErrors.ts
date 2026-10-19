@@ -16,6 +16,8 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.InvalidRefreshToken]: 'sessionExpired',
   [ApiErrorCode.Unauthenticated]: 'sessionExpired',
   [ApiErrorCode.TenantInactive]: 'tenantInactive',
+  [ApiErrorCode.ImageNotFound]: 'imageNotFound',
+  [ApiErrorCode.InvalidImage]: 'invalidImage',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

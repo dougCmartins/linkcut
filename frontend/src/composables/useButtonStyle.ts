@@ -1,5 +1,5 @@
 import { computed, inject, provide, type ComputedRef, type InjectionKey } from 'vue'
-import { useSettingsStore } from '@/Settings/settings.store'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import type { ButtonStyle } from '@/types/theme'
 
 const BUTTON_STYLE_KEY: InjectionKey<ComputedRef<ButtonStyle>> = Symbol('buttonStyle')

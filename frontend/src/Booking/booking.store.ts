@@ -1,19 +1,33 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { BookingRequest, BookingRequestInput, Service } from './booking.model'
 import type { BookedSlot } from './availability'
 import { AppointmentStatus } from '@/types/appointmentStatus'
-import { initialRequests } from '@/mocks/barber'
-import { useSettingsStore } from '@/Settings/settings.store'
+import { createMockRequests } from '@/mocks/barber'
+import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { recordCompletedService, removeCompletedService } from '@/History/history.api'
 import { toIsoDate } from '@/utils/date'
 
 export const useBookingStore = defineStore('booking', () => {
   const settingsStore = useSettingsStore()
-  const requests = ref<BookingRequest[]>(initialRequests.map((request) => ({ ...request })))
+  const publicPageStore = usePublicPageStore()
+  const requests = ref<BookingRequest[]>([])
   const isModalOpen = ref(false)
 
-  const services = computed<Service[]>(() => settingsStore.schedule.services)
+  /** The barber's services (with cost) in the dashboard, the visited barbershop's on public pages. */
+  const services = computed<Service[]>(() =>
+    settingsStore.isLoaded ? settingsStore.schedule.services : (publicPageStore.bookingOptions?.services ?? []),
+  )
+
+  // Simulated requests until stage 3, created once the services are known.
+  watch(
+    services,
+    (list) => {
+      if (requests.value.length === 0 && list.length > 0) requests.value = createMockRequests(list.map((service) => service.id))
+    },
+    { immediate: true },
+  )
 
   const pendingRequests = computed(() =>
     requests.value.filter((request) => request.status === AppointmentStatus.Pending),
@@ -34,10 +48,8 @@ export const useBookingStore = defineStore('booking', () => {
       })),
   )
 
+  /** The modal only offers services of the visited barbershop. */
   function submitRequest(input: BookingRequestInput): BookingRequest {
-    if (!findService(input.serviceId)) {
-      throw new Error(`Unknown service: ${input.serviceId}`)
-    }
     const request: BookingRequest = {
       ...input,
       id: `req-${Date.now()}-${requests.value.length + 1}`,

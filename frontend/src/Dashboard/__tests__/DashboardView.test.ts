@@ -5,16 +5,30 @@ import { renderWithPlugins } from '@/utils/testRender'
 import { fetchMonthToDateFinances } from '@/Dashboard/dashboard.api'
 import { formatBRL } from '@/utils/currency'
 import { useBookingStore } from '@/Booking/booking.store'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
+import { installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 
 describe('DashboardView', () => {
   beforeEach(() => {
     localStorage.clear()
+    installFakeSettingsApi()
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 17, 18, 0))
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('links to the public page of the barbershop by its slug', async () => {
+    // Arrange & Act
+    renderWithPlugins(DashboardView)
+
+    // Assert
+    const link = await screen.findByRole('link', { name: /Ver minha página/ })
+    expect(link.getAttribute('href')).toBe('/rafael')
   })
 
   it("shows today's date and that the numbers are month to date", () => {
@@ -54,11 +68,12 @@ describe('DashboardView', () => {
     const revenueLink = (cents: number) => (name: string) =>
       name === `Faturamento do mês até hoje: ${formatBRL(cents)}. Ver histórico`
     renderWithPlugins(DashboardView)
+    await useSettingsStore().ensureLoaded()
     const bookingStore = useBookingStore()
     const request = bookingStore.submitRequest({
       clientName: 'Ana Souza',
       clientWhatsapp: '11912345678',
-      serviceId: 'haircut',
+      serviceId: '1',
       date: '2026-10-17',
       time: '09:00',
     })

@@ -6,27 +6,26 @@ import AboutCard from './AboutCard.vue'
 import WorkGallery from './WorkGallery.vue'
 import StickyBookingBar from './StickyBookingBar.vue'
 import { useBookingStore } from '@/Booking/booking.store'
-import { useSettingsStore } from '@/Settings/settings.store'
+import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
+import { usePublicPage } from '@/Domain/Settings/usePublicPage'
 
 const { t } = useI18n()
 const bookingStore = useBookingStore()
-const settingsStore = useSettingsStore()
+const publicPage = usePublicPage()
 
-const name = computed(() => settingsStore.profile.name)
-const portfolio = computed(() => settingsStore.portfolio)
-const coverUrl = computed(() => settingsStore.resolveImage(portfolio.value.cover))
-const photos = computed(() =>
-  portfolio.value.photos.map((photo) => ({ id: photo.id, url: settingsStore.resolveImage(photo.src), alt: photo.alt })),
-)
+const name = computed(() => publicPage.page?.profile.name ?? '')
+const portfolio = computed(() => publicPage.page?.portfolio)
+const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index) => ({ id: String(index), ...photo })))
 </script>
 
 <template>
-  <main class="pb-32">
+  <PublicPageStatus v-if="!portfolio" :status="publicPage.status" @retry="publicPage.reload()" />
+  <main v-else class="pb-32">
     <div class="relative h-80 overflow-hidden">
-      <SmartImage :src="coverUrl" :alt="t('portfolio.coverAlt', { name })" class="size-full object-cover" />
+      <SmartImage :src="portfolio.coverUrl" :alt="t('portfolio.coverAlt', { name })" class="size-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-page" aria-hidden="true" />
       <RouterLink
-        to="/"
+        :to="`/${publicPage.slug}`"
         :aria-label="t('portfolio.back')"
         class="absolute top-4 left-4 flex size-10 items-center justify-center rounded-full bg-surface/80 text-ink ring-1 ring-line shadow-soft backdrop-blur"
       >

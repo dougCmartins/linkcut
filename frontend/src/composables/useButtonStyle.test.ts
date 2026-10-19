@@ -3,8 +3,7 @@ import { render, screen } from '@testing-library/vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { computed, defineComponent, h } from 'vue'
 import { provideButtonStyle, useButtonStyle } from './useButtonStyle'
-import { useSettingsStore } from '@/Settings/settings.store'
-import { SettingsSection } from '@/Settings/settings.model'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { ButtonStyle } from '@/types/theme'
 
 const Reader = defineComponent({
@@ -16,15 +15,13 @@ const Reader = defineComponent({
 
 describe('useButtonStyle', () => {
   beforeEach(() => {
-    localStorage.clear()
     setActivePinia(createPinia())
   })
 
   it('uses the style the barber saved', () => {
     // Arrange
     const store = useSettingsStore()
-    store.drafts.theme.buttonStyle = ButtonStyle.Outline
-    store.save(SettingsSection.Theme)
+    store.saved.theme.buttonStyle = ButtonStyle.Outline
 
     // Act
     render(Reader)

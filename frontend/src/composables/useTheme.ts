@@ -1,5 +1,5 @@
 import { readonly, ref } from 'vue'
-import type { ThemeSettings } from '@/Settings/settings.model'
+import type { ThemeSettings } from '@/Domain/Settings/settings.model'
 import { ThemeMode, type ButtonShape, type ThemePalette } from '@/types/theme'
 import { darken, isHexColor, readableTextOn } from '@/utils/color'
 

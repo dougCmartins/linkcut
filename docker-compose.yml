@@ -1,4 +1,4 @@
-# Local stack: MySQL + API (Laravel) + queue worker + Pulse checker + Mailpit + SPA (Vite).
+# Local stack: MySQL + API (Laravel) + queue worker + scheduler + Pulse checker + Mailpit + SPA (Vite).
 # Ports differ from barber-saas, so both projects can run at the same time.
 x-backend: &backend
   build: ./backend
@@ -12,6 +12,7 @@ x-backend: &backend
     MAIL_MAILER: smtp
     MAIL_HOST: mailpit
     MAIL_PORT: 1025
+    APP_URL: http://localhost:8087
     HOST_UID: ${HOST_UID:-0}
     HOST_GID: ${HOST_GID:-0}
   volumes:
@@ -50,6 +51,17 @@ services:
       <<: *backend-env
       RUN_SETUP: "false"
     command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=5"]
+    depends_on:
+      backend:
+        condition: service_started
+
+  # Runs the scheduled commands (daily cleanup of unused images).
+  scheduler:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      RUN_SETUP: "false"
+    command: ["php", "artisan", "schedule:work"]
     depends_on:
       backend:
         condition: service_started

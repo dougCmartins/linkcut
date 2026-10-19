@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SocialIcon from './SocialIcon.vue'
-import type { SocialLink } from '@/Settings/settings.model'
+import type { SocialLink } from '@/Domain/Settings/settings.model'
 
 const MAX_LINKS = 3
 
