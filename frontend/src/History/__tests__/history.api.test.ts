@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest'
-import { fetchCompletedServices, fetchMonthToDateFinances } from '../history.api'
+import { beforeEach, describe, expect, it } from 'vitest'
+import {
+  fetchCompletedServices,
+  fetchMonthToDateFinances,
+  recordCompletedService,
+  removeCompletedService,
+} from '../history.api'
 import { buildHistoryCsv, historyFileName } from '../historyExport'
 
 const NOW = new Date(2026, 9, 17, 15, 0) // Saturday 17 Oct 2026, 15:00
@@ -74,5 +79,58 @@ describe('buildHistoryCsv', () => {
     // Assert
     expect(csv).toContain('Data;Hora;Cliente;Serviço;Valor (R$)\r\n17/10/2026;14:30;João Silva;Corte;65,50\r\n')
     expect(historyFileName({ from: '2026-10-01', to: '2026-10-17' })).toBe('historico-linkcut_2026-10-01_a_2026-10-17.csv')
+  })
+})
+
+describe('recordCompletedService / removeCompletedService (mock)', () => {
+  const record = {
+    id: 'req-77',
+    date: '2026-10-17',
+    time: '08:15',
+    clientName: 'Ana Souza',
+    serviceName: 'Corte',
+    priceInCents: 5000,
+  }
+  const monthRange = { from: '2026-10-01', to: '2026-10-17' }
+
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('a concluded appointment shows in the history and in the month revenue', async () => {
+    // Arrange
+    const revenueBefore = (await fetchMonthToDateFinances(NOW)).revenueInCents
+
+    // Act
+    await recordCompletedService(record)
+
+    // Assert
+    expect(await fetchCompletedServices(monthRange, NOW)).toContainEqual(record)
+    expect((await fetchMonthToDateFinances(NOW)).revenueInCents).toBe(revenueBefore + 5000)
+  })
+
+  it('counts the same appointment only once', async () => {
+    // Arrange
+    await recordCompletedService(record)
+
+    // Act
+    await recordCompletedService(record)
+
+    // Assert
+    const records = await fetchCompletedServices(monthRange, NOW)
+    expect(records.filter((item) => item.id === record.id)).toHaveLength(1)
+  })
+
+  it('removes a concluded appointment (undo)', async () => {
+    // Arrange
+    const revenueBefore = (await fetchMonthToDateFinances(NOW)).revenueInCents
+    await recordCompletedService(record)
+
+    // Act
+    await removeCompletedService(record.id)
+
+    // Assert
+    expect(await fetchCompletedServices(monthRange, NOW)).not.toContainEqual(record)
+    expect((await fetchMonthToDateFinances(NOW)).revenueInCents).toBe(revenueBefore)
   })
 })

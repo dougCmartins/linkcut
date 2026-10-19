@@ -39,8 +39,20 @@
 - **Acessibilidade:** filtros como `radiogroup`, datas em `<time datetime>`, paginação com aviso para leitor de tela.
 - Textos via i18n e testes AAA para períodos, resumo, paginação, CSV, API simulada, tela do histórico e painel.
 
-## 3. Próximas etapas (backend)
+## 3. Agenda de hoje e "Concluir atendimento" (PRD, módulo 4)
+
+| Código | Requisito |
+|---|---|
+| RF-A1 | O painel mostra a seção **"Agenda de hoje"**: os atendimentos de hoje já aceitos (confirmados ou concluídos), por horário, com o contador "X de Y concluídos". Sem nenhum, aparece uma mensagem explicando que é preciso aceitar uma solicitação. |
+| RF-A2 | Cada atendimento confirmado tem o botão **"Concluir atendimento"** (um clique). Ele muda o status para *concluído* e envia o atendimento ao histórico com data, hora, cliente, serviço e o **preço do serviço naquele momento**. |
+| RF-A3 | Logo depois, Faturamento, Lucro e Margem do painel são recalculados, e o atendimento aparece no histórico. |
+| RF-A4 | Um aviso "Atendimento concluído · R$ 50,00 no faturamento" fica 5 s na tela com o botão **Desfazer**, que volta o atendimento para confirmado e o retira do histórico (proteção contra toque por engano). |
+| RF-A5 | Só um atendimento **confirmado e de hoje** pode ser concluído; qualquer outro caso é recusado (falha rápida). O mesmo atendimento nunca conta duas vezes no faturamento (o id do registro é o id do agendamento). |
+
+Enquanto o backend não existe, os atendimentos concluídos ficam no `localStorage` (`linkcut.mockHistory.completed`) e são somados ao histórico simulado.
+
+## 4. Próximas etapas (backend)
 
 - `GET /history?from=&to=&page=&perPage=` paginado no servidor, com exportação gerada pelo servidor para períodos muito grandes.
-- Atendimentos concluídos pelo botão "Concluir atendimento" (PRD, módulo 4) alimentando o histórico.
+- `POST /appointments/{id}/complete` e `DELETE /appointments/{id}/complete` (desfazer) no lugar do registro local; o servidor grava o preço e valida status e data.
 - Despesas reais cadastradas pelo barbeiro (PRD, módulo 5) no lugar das simuladas.

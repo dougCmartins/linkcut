@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { capitalize, formatLongDate, formatMonthName, toIsoDate } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import MetricCard from './MetricCard.vue'
 import PendingRequestCard from './PendingRequestCard.vue'
+import TodayAgendaCard from './TodayAgendaCard.vue'
+import { AppointmentStatus } from '@/types/appointmentStatus'
 import { useDashboardStore } from './dashboard.store'
 import { HEALTHY_MARGIN_PERCENT } from './financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
@@ -47,6 +49,45 @@ const marginBadge = computed(() => {
 })
 
 onMounted(() => dashboardStore.loadMonthToDate(today))
+
+// "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
+const UNDO_WINDOW_MS = 5000
+const busyRequestId = ref<string | null>(null)
+const lastCompleted = ref<{ id: string; priceInCents: number } | null>(null)
+let undoTimer: ReturnType<typeof setTimeout> | undefined
+
+const agenda = computed(() => bookingStore.todayAgenda)
+const completedCount = computed(
+  () => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length,
+)
+
+function hideUndo(): void {
+  clearTimeout(undoTimer)
+  lastCompleted.value = null
+}
+
+async function complete(requestId: string): Promise<void> {
+  busyRequestId.value = requestId
+  try {
+    const request = await bookingStore.completeRequest(requestId)
+    hideUndo()
+    lastCompleted.value = { id: request.id, priceInCents: request.completedPriceInCents ?? 0 }
+    undoTimer = setTimeout(hideUndo, UNDO_WINDOW_MS)
+    await dashboardStore.loadMonthToDate(new Date())
+  } finally {
+    busyRequestId.value = null
+  }
+}
+
+async function undo(): Promise<void> {
+  if (!lastCompleted.value) return
+  const { id } = lastCompleted.value
+  hideUndo()
+  await bookingStore.undoCompletion(id)
+  await dashboardStore.loadMonthToDate(new Date())
+}
+
+onBeforeUnmount(() => clearTimeout(undoTimer))
 </script>
 
 <template>
@@ -117,6 +158,28 @@ onMounted(() => dashboardStore.loadMonthToDate(today))
       </div>
     </section>
 
+    <section class="mt-10" aria-labelledby="today-agenda-title">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="today-agenda-title" class="text-xl">{{ t('dashboard.agenda.title') }}</h2>
+        <span v-if="agenda.length" class="text-xs font-bold text-muted">
+          {{ t('dashboard.agenda.progress', { done: completedCount, total: agenda.length }) }}
+        </span>
+      </div>
+      <ul v-if="agenda.length" class="mt-4 grid gap-3">
+        <li v-for="request in agenda" :key="request.id">
+          <TodayAgendaCard
+            :request="request"
+            :service="bookingStore.findService(request.serviceId)"
+            :is-busy="busyRequestId === request.id"
+            @complete="complete"
+          />
+        </li>
+      </ul>
+      <p v-else class="mt-4 rounded-card bg-surface px-4 py-6 text-center text-sm text-muted ring-1 ring-line shadow-soft">
+        {{ t('dashboard.agenda.empty') }}
+      </p>
+    </section>
+
     <section class="mt-10">
       <div class="flex items-center justify-between">
         <h2 class="text-xl">{{ t('dashboard.pendingTitle') }}</h2>
@@ -142,6 +205,21 @@ onMounted(() => dashboardStore.loadMonthToDate(today))
         {{ t('dashboard.pendingEmpty') }}
       </p>
     </section>
+    <div
+      v-if="lastCompleted"
+      class="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="mx-auto flex max-w-md items-center gap-3 rounded-card bg-ink py-3 pr-3 pl-4 text-page shadow-float">
+        <p class="min-w-0 flex-1 text-sm font-semibold">
+          {{ t('dashboard.agenda.completedToast', { value: formatBRL(lastCompleted.priceInCents) }) }}
+        </p>
+        <button type="button" class="shrink-0 rounded-full px-3 py-2 text-sm font-extrabold text-accent hover:bg-page/10" @click="undo">
+          {{ t('dashboard.agenda.undo') }}
+        </button>
+      </div>
+    </div>
   </main>
 </template>
 

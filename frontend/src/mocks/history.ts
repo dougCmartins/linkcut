@@ -94,8 +94,7 @@ function servicesOn(date: Date, now: Date): CompletedService[] {
 
 let cache: { key: string; records: CompletedService[] } | null = null
 
-/** All finished appointments from ~2 years ago until `now`, newest first. */
-export function mockCompletedServices(now: Date): CompletedService[] {
+function generatedServices(now: Date): CompletedService[] {
   const key = `${toIsoDate(now)} ${now.getHours()}:${now.getMinutes()}`
   if (cache?.key === key) return cache.records
   const records: CompletedService[] = []
@@ -105,6 +104,45 @@ export function mockCompletedServices(now: Date): CompletedService[] {
   }
   cache = { key, records }
   return records
+}
+
+/* Appointments the barber concluded in the app ("Concluir atendimento"), kept in the browser. */
+const RECORDED_KEY = 'linkcut.mockHistory.completed'
+
+function readRecorded(): CompletedService[] {
+  try {
+    const raw = localStorage.getItem(RECORDED_KEY)
+    return raw ? (JSON.parse(raw) as CompletedService[]) : []
+  } catch {
+    return []
+  }
+}
+
+function writeRecorded(records: CompletedService[]): void {
+  try {
+    localStorage.setItem(RECORDED_KEY, JSON.stringify(records))
+  } catch {
+    // Storage blocked: the record lasts while the page is open.
+  }
+}
+
+/** Saves a concluded appointment. The id is the booking request id, so it never counts twice. */
+export function mockRecordCompletedService(record: CompletedService): void {
+  writeRecorded([...readRecorded().filter((item) => item.id !== record.id), record])
+}
+
+export function mockRemoveCompletedService(id: string): void {
+  writeRecorded(readRecorded().filter((item) => item.id !== id))
+}
+
+const newestFirst = (a: CompletedService, b: CompletedService) =>
+  `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`)
+
+/** All finished appointments from ~2 years ago until `now` (generated + concluded in the app), newest first. */
+export function mockCompletedServices(now: Date): CompletedService[] {
+  const recorded = readRecorded()
+  const generated = generatedServices(now)
+  return recorded.length ? [...recorded, ...generated].sort(newestFirst) : generated
 }
 
 /** Costs of the current month until `now`. */

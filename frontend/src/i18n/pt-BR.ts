@@ -65,6 +65,16 @@ export default {
     monthToDateInfo: 'Cálculo do mês até o momento',
     revenueLink: 'Faturamento do mês até hoje: {value}. Ver histórico',
     seeHistory: 'Histórico',
+    agenda: {
+      title: 'Agenda de hoje',
+      progress: '{done} de {total} concluídos',
+      empty: 'Nenhum atendimento confirmado para hoje. Aceite uma solicitação para ela aparecer aqui.',
+      complete: 'Concluir atendimento',
+      completeFor: 'Concluir atendimento de {client} às {time}',
+      completed: 'Concluído',
+      completedToast: 'Atendimento concluído · {value} no faturamento',
+      undo: 'Desfazer',
+    },
   },
   history: {
     title: 'Histórico',
