@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import SmartImage from '@/components/ui/SmartImage.vue'
-import type { PortfolioPhoto } from '@/mocks/barber'
 
-defineProps<{ photos: PortfolioPhoto[]; title: string; subtitle: string }>()
+export interface GalleryPhoto {
+  id: string
+  url: string
+  alt: string
+}
+
+defineProps<{ photos: GalleryPhoto[]; title: string; subtitle: string }>()
 </script>
 
 <template>
@@ -11,7 +16,7 @@ defineProps<{ photos: PortfolioPhoto[]; title: string; subtitle: string }>()
     <p class="mt-1 text-sm text-muted">{{ subtitle }}</p>
     <ul class="mt-4 grid grid-cols-2 gap-3 pb-5">
       <li
-        v-for="(photo, index) in photos.slice(0, 4)"
+        v-for="(photo, index) in photos"
         :key="photo.id"
         class="group overflow-hidden rounded-card bg-surface shadow-soft ring-1 ring-line"
         :class="index % 2 === 1 ? 'translate-y-5' : ''"

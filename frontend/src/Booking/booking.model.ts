@@ -17,6 +17,8 @@ export interface BookingRequest {
   /** Local time, "HH:mm". */
   time: string
   status: AppointmentStatus
+  /** Price charged when the appointment was concluded (snapshot). */
+  completedPriceInCents?: number
 }
 
 export interface BookingRequestInput {

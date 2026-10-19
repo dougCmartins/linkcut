@@ -10,9 +10,16 @@ Telas mobile-first com dados mockados (`frontend/src/mocks/barber.ts`):
 | `/` | Link da Bio (agregador) |
 | `/portfolio` | Portfólio / Sobre Mim |
 | `/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
-| `/painel` | Painel do Barbeiro (métricas + solicitações pendentes) |
+| `/entrar` | Login do barbeiro (e-mail + senha + código 2FA por WhatsApp ou e-mail) |
+| `/painel` 🔒 | Painel do Barbeiro (métricas + solicitações pendentes) |
+| `/painel/historico` 🔒 | Histórico de atendimentos: filtros semana/mês/ano/personalizado, 50/100/200 por página e exportação CSV ([requisitos](docs/requisitos-historico.md)) |
+| `/painel/configuracoes` 🔒 | Configurações: abas Link, Portfólio, Agenda, Aparência e Segurança (`?aba=`) |
 
-O botão no canto superior direito alterna entre as paletas **Escuro** (Dark Premium) e **Claro** (Light Minimal).
+🔒 = só com login. Em desenvolvimento, use a conta de teste `rafael@linkcut.app` / `linkcut123`; o código 2FA aparece na própria tela (detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md)).
+
+Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em [`docs/requisitos-configuracoes.md`](docs/requisitos-configuracoes.md)). Enquanto não há backend, os dados ficam no navegador (localStorage + IndexedDB para imagens), atrás de `frontend/src/Settings/settings.api.ts`.
+
+As cores ficam em um único arquivo, `frontend/src/styles/core.css`: 6 paletas, cada uma com versão clara e escura, mais uma cor personalizada opcional. O visitante pode alternar claro/escuro nas páginas públicas pelo botão no canto superior direito.
 
 ```bash
 make up         # sobe o frontend em http://localhost:5173 (Docker)

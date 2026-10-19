@@ -7,20 +7,29 @@ import DayPicker from './DayPicker.vue'
 import TimeSlotPicker from './TimeSlotPicker.vue'
 import BookingForm from './BookingForm.vue'
 import BookingSuccess from './BookingSuccess.vue'
+import BookingVacationNotice from './BookingVacationNotice.vue'
 import { useBookingStore } from './booking.store'
-import { availableTimes } from '@/mocks/barber'
-import { formatDayMonth, fromIsoDate, nextDays } from '@/utils/date'
-import { isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
+import { computeAvailableTimes, isOnVacation, isScheduleLocked } from './availability'
+import { useSettingsStore } from '@/Settings/settings.store'
+import { formatDayMonth, fromIsoDate, nextDays, toIsoDate } from '@/utils/date'
+import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
 
-const BOOKING_WINDOW_DAYS = 7
 const MIN_NAME_LENGTH = 2
 
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 const store = useBookingStore()
+const settingsStore = useSettingsStore()
 const dialog = useTemplateRef<HTMLElement>('dialog')
 
-const days = nextDays(BOOKING_WINDOW_DAYS)
+const now = new Date()
+const schedule = computed(() => settingsStore.schedule)
+const days = computed(() => nextDays(schedule.value.bookingWindowDays, now))
+const isLocked = computed(() => isScheduleLocked(days.value, schedule.value.vacation))
+const whatsappUrl = computed(() =>
+  buildWhatsappUrl(settingsStore.profile.whatsappNumber, settingsStore.profile.whatsappMessage),
+)
+
 const form = reactive({
   serviceId: null as string | null,
   date: null as string | null,
@@ -30,8 +39,28 @@ const form = reactive({
 })
 const submittedSummary = ref<string | null>(null)
 
-const times = computed(() => (form.date ? availableTimes(fromIsoDate(form.date)) : []))
-const timeEmptyText = computed(() => (form.date ? t('booking.noTimes') : t('booking.pickDayFirst')))
+/** Length used to find free times: the chosen service, or the shortest one before choosing. */
+const durationMinutes = computed(() => {
+  const selected = form.serviceId ? store.findService(form.serviceId) : undefined
+  return selected?.durationMinutes ?? Math.min(...store.services.map((service) => service.durationMinutes))
+})
+
+function timesOn(date: Date): string[] {
+  return computeAvailableTimes({
+    date,
+    schedule: schedule.value,
+    durationMinutes: durationMinutes.value,
+    booked: store.bookedSlots,
+    now,
+  })
+}
+
+const unavailableDates = computed(() => days.value.filter((day) => timesOn(day).length === 0).map(toIsoDate))
+const times = computed(() => (form.date ? timesOn(fromIsoDate(form.date)) : []))
+const timeEmptyText = computed(() => {
+  if (!form.date) return t('booking.pickDayFirst')
+  return isOnVacation(fromIsoDate(form.date), schedule.value.vacation) ? schedule.value.vacation.message : t('booking.noTimes')
+})
 
 const canSubmit = computed(
   () =>
@@ -42,11 +71,10 @@ const canSubmit = computed(
     isValidBrazilianPhone(form.clientWhatsapp),
 )
 
-// A time picked for one day may not exist on another.
-watch(
-  () => form.date,
-  () => (form.time = null),
-)
+// A time picked earlier may not fit after changing the day or the service.
+watch(times, (available) => {
+  if (form.time && !available.includes(form.time)) form.time = null
+})
 
 function submit(): void {
   if (!canSubmit.value || !form.serviceId || !form.date || !form.time) return
@@ -109,9 +137,17 @@ onBeforeUnmount(() => {
 
       <BookingSuccess v-if="submittedSummary" class="px-5 pb-8" :summary="submittedSummary" @done="emit('close')" />
 
+      <BookingVacationNotice
+        v-else-if="isLocked"
+        class="px-5 pb-8"
+        :message="schedule.vacation.message"
+        :whatsapp-url="whatsappUrl"
+        @close="emit('close')"
+      />
+
       <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="submit">
-        <div class="flex-1 space-y-7 overflow-y-auto px-5 pt-2 pb-6">
-          <fieldset>
+        <div class="flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6">
+          <fieldset class="min-w-0">
             <legend class="mb-3 text-sm font-bold">{{ t('booking.stepService') }}</legend>
             <div role="radiogroup" :aria-label="t('booking.stepService')" class="grid gap-3">
               <ServiceCard
@@ -124,12 +160,18 @@ onBeforeUnmount(() => {
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset class="min-w-0">
             <legend class="mb-1 text-sm font-bold">{{ t('booking.stepDay') }}</legend>
-            <DayPicker :days="days" :selected-date="form.date" :label="t('booking.stepDay')" @select="form.date = $event" />
+            <DayPicker
+              :days="days"
+              :unavailable-dates="unavailableDates"
+              :selected-date="form.date"
+              :label="t('booking.stepDay')"
+              @select="form.date = $event"
+            />
           </fieldset>
 
-          <fieldset>
+          <fieldset class="min-w-0">
             <legend class="mb-1 text-sm font-bold">{{ t('booking.stepTime') }}</legend>
             <TimeSlotPicker
               :times="times"
@@ -140,7 +182,7 @@ onBeforeUnmount(() => {
             />
           </fieldset>
 
-          <fieldset>
+          <fieldset class="min-w-0">
             <legend class="mb-2 text-sm font-bold">{{ t('booking.stepContact') }}</legend>
             <BookingForm v-model:client-name="form.clientName" v-model:client-whatsapp="form.clientWhatsapp" />
           </fieldset>
