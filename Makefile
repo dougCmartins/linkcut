@@ -1,27 +1,50 @@
-.PHONY: up down logs install dev test typecheck build
+COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo docker compose || echo docker-compose)
+HOST_UID := $(shell id -u)
+HOST_GID := $(shell id -g)
 
-FRONTEND = docker compose run --rm frontend
+export HOST_UID
+export HOST_GID
 
-up: ## Start the stack in the background
-	docker compose up -d
+.PHONY: up down logs migrate seed fresh test pint shell-api test-web typecheck build shell-web permissions
 
-down: ## Stop the stack
-	docker compose down
+up: permissions ## Build and start the whole stack (API :8087, SPA :5173, Mailpit :8025, Pulse :8087/pulse)
+	$(COMPOSE) up --build
+
+down:
+	$(COMPOSE) down
 
 logs:
-	docker compose logs -f frontend
+	$(COMPOSE) logs -f
 
-install:
-	$(FRONTEND) npm install
+migrate:
+	$(COMPOSE) exec backend php artisan migrate --force
 
-dev:
-	docker compose up frontend
+seed: ## Demo tenants and the demo login rafael@linkcut.app / linkcut123
+	$(COMPOSE) exec backend php artisan db:seed --force
+
+fresh:
+	$(COMPOSE) exec backend php artisan migrate:fresh --seed --force
 
 test:
-	$(FRONTEND) npm run test
+	$(COMPOSE) exec backend php artisan test
+
+pint:
+	$(COMPOSE) exec backend vendor/bin/pint
+
+shell-api:
+	$(COMPOSE) exec backend bash
+
+test-web:
+	$(COMPOSE) exec frontend npm run test
 
 typecheck:
-	$(FRONTEND) npm run typecheck
+	$(COMPOSE) exec frontend npm run typecheck
 
 build:
-	$(FRONTEND) npm run build
+	$(COMPOSE) exec frontend npm run build
+
+shell-web:
+	$(COMPOSE) exec frontend sh
+
+permissions:
+	$(COMPOSE) run --rm --no-deps --user root --entrypoint sh backend -c 'sh docker/fix-permissions.sh'
