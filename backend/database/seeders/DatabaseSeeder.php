@@ -33,6 +33,9 @@ final class DatabaseSeeder extends Seeder
                 'whatsapp_number' => '11988887777',
             ], ['instagram' => 'https://instagram.com/rafa.barber']);
             $this->settings($navalha, 'Navalha Norte', ['whatsapp_number' => '21977776666'], []);
+
+            // Only the demo account gets a history and expenses; Navalha Norte starts empty.
+            app(FinanceDemoSeeder::class)->forTenant($rafael);
         });
     }
 
