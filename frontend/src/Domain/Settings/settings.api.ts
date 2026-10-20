@@ -1,5 +1,4 @@
 import { http } from '@/http/client'
-import type { Service } from '@/Booking/booking.model'
 import type { SocialNetwork } from '@/types/socialNetwork'
 import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 import {
@@ -11,6 +10,7 @@ import {
   type ProfileSettings,
   type PublicPage,
   type ScheduleSettings,
+  type Service,
   type SettingsSection,
   type SocialLink,
   type ThemeSettings,

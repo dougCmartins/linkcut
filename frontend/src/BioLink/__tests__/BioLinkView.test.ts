@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import BioLinkView from '../BioLinkView.vue'
-import { useBookingStore } from '@/Booking/booking.store'
+import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { createTestSettings, installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 import { ThemePalette } from '@/types/theme'

@@ -2,16 +2,17 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import type { BookingRequest, Service } from '@/Booking/booking.model'
+import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { formatBRL } from '@/utils/currency'
 
-const props = defineProps<{ request: BookingRequest; service: Service | undefined; isBusy: boolean }>()
-const emit = defineEmits<{ complete: [requestId: string] }>()
+/** `priceInCents`: the service's current price (shown until it is concluded with its own). */
+const props = defineProps<{ request: BookingRequest; priceInCents: number | undefined; isBusy: boolean }>()
+const emit = defineEmits<{ complete: [requestId: number] }>()
 const { t } = useI18n()
 
 const isCompleted = computed(() => props.request.status === AppointmentStatus.Completed)
-const price = computed(() => formatBRL(props.request.completedPriceInCents ?? props.service?.priceInCents ?? 0))
+const price = computed(() => formatBRL(props.request.completedPriceInCents ?? props.priceInCents ?? 0))
 </script>
 
 <template>
@@ -28,7 +29,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       </span>
       <div class="min-w-0 flex-1">
         <h3 class="truncate text-base" :class="isCompleted ? 'text-muted' : ''">{{ request.clientName }}</h3>
-        <p class="truncate text-sm text-muted">{{ service?.name }}</p>
+        <p class="truncate text-sm text-muted">{{ request.serviceName }}</p>
       </div>
       <p class="shrink-0 font-display font-extrabold tabular-nums" :class="isCompleted ? 'text-success' : 'text-accent'">
         {{ price }}

@@ -10,10 +10,11 @@ import MarginExplanation from './MarginExplanation.vue'
 import InfoTooltip from '@/components/ui/InfoTooltip.vue'
 import UndoToast from '@/components/ui/UndoToast.vue'
 import { useUndoWindow } from '@/composables/useUndoWindow'
+import { useApiErrors } from '@/composables/useApiErrors'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { useMonthToDateStore } from '@/Domain/Finance/monthToDate.store'
 import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/financialSummary'
-import { useBookingStore } from '@/Booking/booking.store'
+import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { imageUrl } from '@/Domain/Settings/settings.model'
 import { fetchCurrentTenant } from '@/Domain/Tenant/tenant.api'
@@ -22,8 +23,9 @@ import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
 
 const { t } = useI18n()
+const { messageKey } = useApiErrors()
 const dashboardStore = useMonthToDateStore()
-const bookingStore = useBookingStore()
+const agendaStore = useAgendaStore()
 const settingsStore = useSettingsStore()
 
 const authStore = useAuthStore()
@@ -56,8 +58,12 @@ const marginBadge = computed(() => {
 // Public address of the barbershop, for the "Ver minha página" link (hidden if it cannot be read).
 const publicPath = ref<string | null>(null)
 
+/** Current price of a service of the barber (for requests not concluded yet). */
+const priceOf = (serviceId: string) => settingsStore.schedule.services.find((service) => service.id === serviceId)?.priceInCents
+
 onMounted(async () => {
   void dashboardStore.load()
+  void agendaStore.load()
   try {
     publicPath.value = `/${(await fetchCurrentTenant()).slug}`
   } catch {
@@ -66,30 +72,44 @@ onMounted(async () => {
 })
 
 // "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
-const busyRequestId = ref<string | null>(null)
-const lastCompleted = useUndoWindow<{ id: string; priceInCents: number }>()
+const busyRequestId = ref<number | null>(null)
+const lastCompleted = useUndoWindow<{ id: number; priceInCents: number }>()
+/** Message of the last agenda change the API refused. */
+const agendaError = ref('')
 
-const agenda = computed(() => bookingStore.todayAgenda)
+const agenda = computed(() => agendaStore.todayAgenda)
 const completedCount = computed(
   () => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length,
 )
 
-async function complete(requestId: string): Promise<void> {
-  busyRequestId.value = requestId
+/** Runs an agenda change on the API; a refusal (e.g. already answered elsewhere) is shown and the lists reload. */
+async function attempt(change: () => Promise<void>): Promise<void> {
+  agendaError.value = ''
   try {
-    const request = await bookingStore.completeRequest(requestId)
+    await change()
+  } catch (caught) {
+    agendaError.value = t(`errors.api.${messageKey(caught)}`)
+    await agendaStore.load()
+  }
+}
+
+async function complete(requestId: number): Promise<void> {
+  busyRequestId.value = requestId
+  await attempt(async () => {
+    const request = await agendaStore.complete(requestId)
     lastCompleted.offer({ id: request.id, priceInCents: request.completedPriceInCents ?? 0 })
     await dashboardStore.load()
-  } finally {
-    busyRequestId.value = null
-  }
+  })
+  busyRequestId.value = null
 }
 
 async function undo(): Promise<void> {
   const completed = lastCompleted.take()
   if (!completed) return
-  await bookingStore.undoCompletion(completed.id)
-  await dashboardStore.load()
+  await attempt(async () => {
+    await agendaStore.undoCompletion(completed.id)
+    await dashboardStore.load()
+  })
 }
 
 </script>
@@ -183,6 +203,10 @@ async function undo(): Promise<void> {
       </div>
     </section>
 
+    <p v-if="agendaError || agendaStore.hasFailed" class="mt-8 rounded-card bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/40" role="alert">
+      {{ agendaError || t('dashboard.agendaFailed') }}
+    </p>
+
     <section class="mt-10" aria-labelledby="today-agenda-title">
       <div class="flex items-center justify-between gap-3">
         <h2 id="today-agenda-title" class="text-xl">{{ t('dashboard.agenda.title') }}</h2>
@@ -194,7 +218,7 @@ async function undo(): Promise<void> {
         <li v-for="request in agenda" :key="request.id">
           <TodayAgendaCard
             :request="request"
-            :service="bookingStore.findService(request.serviceId)"
+            :price-in-cents="priceOf(request.serviceId)"
             :is-busy="busyRequestId === request.id"
             @complete="complete"
           />
@@ -209,22 +233,22 @@ async function undo(): Promise<void> {
       <div class="flex items-center justify-between">
         <h2 class="text-xl">{{ t('dashboard.pendingTitle') }}</h2>
         <span class="flex h-7 min-w-7 items-center justify-center rounded-full bg-accent px-2 text-xs font-extrabold text-on-accent">
-          {{ bookingStore.pendingRequests.length }}
+          {{ agendaStore.pendingRequests.length }}
         </span>
       </div>
 
       <TransitionGroup tag="ul" name="request" class="relative mt-4 grid gap-3">
-        <li v-for="request in bookingStore.pendingRequests" :key="request.id">
+        <li v-for="request in agendaStore.pendingRequests" :key="request.id">
           <PendingRequestCard
             :request="request"
-            :service="bookingStore.findService(request.serviceId)"
-            @accept="bookingStore.acceptRequest"
-            @reject="bookingStore.rejectRequest"
+            :price-in-cents="priceOf(request.serviceId)"
+            @accept="attempt(() => agendaStore.accept($event))"
+            @reject="attempt(() => agendaStore.reject($event))"
           />
         </li>
       </TransitionGroup>
       <p
-        v-if="bookingStore.pendingRequests.length === 0"
+        v-if="agendaStore.pendingRequests.length === 0"
         class="mt-4 rounded-card bg-surface px-4 py-6 text-center text-sm text-muted ring-1 ring-line shadow-soft"
       >
         {{ t('dashboard.pendingEmpty') }}
