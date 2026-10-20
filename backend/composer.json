@@ -10,10 +10,12 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "ext-gmp": "*",
         "laravel/framework": "^11.31",
         "laravel/passport": "^13",
         "laravel/pulse": "^1.8",
         "laravel/tinker": "^2.9",
+        "minishlink/web-push": "^11.0",
         "sentry/sentry-laravel": "^4.29",
         "spatie/laravel-data": "^4"
     },

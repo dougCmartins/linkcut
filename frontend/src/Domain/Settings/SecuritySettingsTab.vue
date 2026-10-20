@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SettingsCard from './SettingsCard.vue'
+import PushSwitch from '@/Domain/Notification/PushSwitch.vue'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { TwoFactorChannel } from '@/types/twoFactorChannel'
 import { useApiErrors } from '@/composables/useApiErrors'
@@ -104,6 +105,10 @@ onMounted(() => {
         {{ status.message }}
       </p>
       <p class="text-xs text-muted">{{ t('settings.security.switchHint') }}</p>
+    </SettingsCard>
+
+    <SettingsCard :title="t('settings.security.pushTitle')" :description="t('settings.security.pushDescription')">
+      <PushSwitch />
     </SettingsCard>
   </div>
 </template>

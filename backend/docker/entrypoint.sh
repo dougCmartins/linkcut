@@ -55,6 +55,9 @@ if [ "${RUN_SETUP:-true}" = "true" ]; then
 
   php artisan migrate --force
 
+  # Push notification keys (VAPID), written to .env once.
+  php artisan notifications:vapid-keys
+
   # Uploaded images are served from storage/app/public.
   if [ ! -e public/storage ]; then
     php artisan storage:link --ansi
