@@ -58,6 +58,7 @@ async function fillValidBooking(): Promise<void> {
   await fireEvent.click(await screen.findByRole('radio', { name: '11:00' }))
   await fireEvent.update(screen.getByLabelText('Nome'), 'João Silva')
   await fireEvent.update(screen.getByLabelText('WhatsApp'), '(11) 91234-5678')
+  await fireEvent.update(screen.getByLabelText('E-mail'), 'joao@example.com')
 }
 
 describe('BookingModal', () => {
@@ -105,6 +106,7 @@ describe('BookingModal', () => {
     expect(calls.at(-1)?.body).toEqual({
       client_name: 'João Silva',
       client_whatsapp: '11912345678',
+      client_email: 'joao@example.com',
       service_id: 1,
       date: '2026-10-20',
       time: '11:00',
@@ -112,6 +114,31 @@ describe('BookingModal', () => {
       client_longitude: null,
     })
     expect(requests.at(-1)?.status).toBe('pending')
+  })
+
+  it('after booking, invites the client to complete the sign-up with the e-mail filled in', async () => {
+    // Arrange
+    renderModal()
+    await fillValidBooking()
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+
+    // Assert
+    const card = await screen.findByRole('link', { name: /Finalize seu cadastro/ })
+    expect(card.getAttribute('href')).toBe('/conta/finalizar?email=joao@example.com')
+  })
+
+  it('keeps the submit button disabled while the e-mail is invalid', async () => {
+    // Arrange
+    renderModal()
+    await fillValidBooking()
+
+    // Act
+    await fireEvent.update(screen.getByLabelText('E-mail'), 'joao@')
+
+    // Assert
+    expect((screen.getByRole('button', { name: 'Solicitar Agendamento' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('when the time was just taken, says so and shows the times still free', async () => {

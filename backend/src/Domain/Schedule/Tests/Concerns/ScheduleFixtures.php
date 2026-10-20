@@ -63,9 +63,10 @@ trait ScheduleFixtures
         return app(CurrentTenant::class)->run($owner->tenant_id, fn () => Service::query()->where('name', $name)->value('id'));
     }
 
-    protected function bookingRequest(User $owner, string $date, string $startsAt, BookingStatus $status = BookingStatus::Pending, string $service = 'Corte'): BookingRequest
+    /** @param array<string, mixed> $attributes e.g. client_id, client_email */
+    protected function bookingRequest(User $owner, string $date, string $startsAt, BookingStatus $status = BookingStatus::Pending, string $service = 'Corte', array $attributes = []): BookingRequest
     {
-        return app(CurrentTenant::class)->run($owner->tenant_id, function () use ($owner, $date, $startsAt, $status, $service): BookingRequest {
+        return app(CurrentTenant::class)->run($owner->tenant_id, function () use ($owner, $date, $startsAt, $status, $service, $attributes): BookingRequest {
             $duration = $service === 'Corte' ? 45 : 30;
 
             return BookingRequest::query()->create([
@@ -78,6 +79,7 @@ trait ScheduleFixtures
                 'starts_at' => $startsAt,
                 'ends_at' => CarbonImmutable::createFromFormat('H:i', $startsAt)->addMinutes($duration)->format('H:i'),
                 'status' => $status,
+                ...$attributes,
             ]);
         });
     }

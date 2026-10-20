@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
-defineProps<{ clientName: string; clientWhatsapp: string }>()
+defineProps<{ clientName: string; clientWhatsapp: string; clientEmail: string }>()
 const emit = defineEmits<{
   'update:clientName': [value: string]
   'update:clientWhatsapp': [value: string]
+  'update:clientEmail': [value: string]
 }>()
 const { t } = useI18n()
 
@@ -37,5 +38,18 @@ const inputClass =
         @input="emit('update:clientWhatsapp', ($event.target as HTMLInputElement).value)"
       />
     </label>
+    <label class="block">
+      <span class="pl-2 text-xs font-semibold text-muted">{{ t('booking.emailLabel') }}</span>
+      <input
+        :value="clientEmail"
+        type="email"
+        inputmode="email"
+        autocomplete="email"
+        :placeholder="t('booking.emailPlaceholder')"
+        :class="inputClass"
+        @input="emit('update:clientEmail', ($event.target as HTMLInputElement).value)"
+      />
+    </label>
+    <p class="-mt-1.5 pl-2 text-xs text-muted">{{ t('booking.emailHint') }}</p>
   </div>
 </template>

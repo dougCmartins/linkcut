@@ -61,4 +61,29 @@ describe('TodayAgendaCard', () => {
     expect(screen.getByText(/R\$\s45,00/)).toBeTruthy()
     expect(screen.queryByRole('button')).toBeNull()
   })
+
+  it('opens WhatsApp with the reminder ready for the client', () => {
+    // Arrange & Act
+    renderWithPlugins(TodayAgendaCard, {
+      props: { request, priceInCents: 5000, isBusy: false, barbershopName: 'Rafael Costa', barbershopAddress: 'Rua Augusta, 1500' },
+    })
+
+    // Assert
+    const link = screen.getByRole('link', { name: 'Lembrar Lucas Andrade no WhatsApp' })
+    const url = new URL(link.getAttribute('href') ?? '')
+    expect(url.origin + url.pathname).toBe('https://wa.me/5511988887777')
+    expect(url.searchParams.get('text')).toBe(
+      'Oi, Lucas! Passando para lembrar do seu horário hoje às 14:30 na Rafael Costa. Endereço: Rua Augusta, 1500',
+    )
+  })
+
+  it('has no reminder once concluded', () => {
+    // Arrange & Act
+    renderWithPlugins(TodayAgendaCard, {
+      props: { request: { ...request, status: AppointmentStatus.Completed }, priceInCents: 5000, isBusy: false },
+    })
+
+    // Assert
+    expect(screen.queryByRole('link', { name: /no WhatsApp/ })).toBeNull()
+  })
 })

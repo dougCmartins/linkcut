@@ -2,7 +2,8 @@
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
-defineProps<{ summary: string }>()
+/** `registerEmail`: shows the "Finalizar cadastro" card (the client is not signed in to the client area). */
+defineProps<{ summary: string; registerEmail?: string | null }>()
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
 </script>
@@ -17,7 +18,16 @@ const { t } = useI18n()
     <h3 class="mt-6 text-2xl">{{ t('booking.successTitle') }}</h3>
     <p class="mt-2 text-muted">{{ t('booking.successText') }}</p>
     <p class="mt-5 rounded-full bg-raised px-4 py-2 text-sm font-semibold ring-1 ring-line">{{ summary }}</p>
-    <BaseButton class="mt-8" variant="secondary" elevated block @click="emit('done')">
+    <RouterLink
+      v-if="registerEmail"
+      :to="{ name: 'client-register', query: { email: registerEmail } }"
+      class="mt-6 block w-full rounded-card bg-accent/10 p-4 text-left ring-1 ring-accent/40"
+    >
+      <span class="block font-bold">{{ t('booking.registerTitle') }}</span>
+      <span class="mt-1 block text-sm text-muted">{{ t('booking.registerText') }}</span>
+      <span class="mt-2 block text-sm font-bold text-accent">{{ t('booking.registerAction') }} →</span>
+    </RouterLink>
+    <BaseButton class="mt-6" variant="secondary" elevated block @click="emit('done')">
       {{ t('booking.successDone') }}
     </BaseButton>
   </div>

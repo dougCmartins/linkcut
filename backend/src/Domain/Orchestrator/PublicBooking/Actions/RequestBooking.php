@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace Domain\Orchestrator\PublicBooking\Actions;
 
 use Carbon\CarbonImmutable;
+use Domain\Client\Actions\FindOrCreateClient;
+use Domain\Client\Data\ClientContactData;
+use Domain\Client\Data\ClientData;
+use Domain\Client\Support\ClientLinks;
 use Domain\Notification\Actions\NotifyTenant;
 use Domain\Notification\Data\PushMessageData;
 use Domain\Notification\Data\TenantPushData;
+use Domain\Notification\Enums\BookingEmailKind;
+use Domain\Orchestrator\ClientEmails\Support\BookingEmails;
 use Domain\Orchestrator\PublicBooking\Data\AvailabilityQueryData;
 use Domain\Orchestrator\PublicBooking\Data\AvailableDayData;
 use Domain\Orchestrator\PublicBooking\Data\BookingConfirmationData;
@@ -28,7 +34,8 @@ use Domain\Tenant\Context\CurrentTenant;
  * A client asks for a time on the public page. The barbershop must have an address (the client saw where it is);
  * the time must be one of the free times now (hours, window, vacation, taken times); then Schedule saves it as
  * pending, checking again under a lock. When the client shared the location, only the distance is kept.
- * Then the barber gets a push notification (queued).
+ * The booking belongs to a client account found (or created, without password) by e-mail. Then the barber gets
+ * a push and the client the "request received" e-mail, with "Finalizar cadastro" while they have no password.
  */
 final class RequestBooking
 {
@@ -39,6 +46,8 @@ final class RequestBooking
         private readonly ShowProfileSettings $showProfile,
         private readonly NotifyTenant $notifyTenant,
         private readonly CurrentTenant $currentTenant,
+        private readonly FindOrCreateClient $findOrCreateClient,
+        private readonly BookingEmails $emails,
     ) {}
 
     public function handle(BookingRequestInputData $data): BookingConfirmationData
@@ -54,6 +63,11 @@ final class RequestBooking
         /** @var PublicServiceData $service */
         $service = collect($this->showBookingOptions->handle()->services->all())
             ->first(fn (PublicServiceData $item): bool => $item->id === $data->service_id);
+        $client = $this->findOrCreateClient->handle(new ClientContactData(
+            name: trim($data->client_name),
+            email: $data->client_email,
+            phone: self::digits($data->client_whatsapp),
+        ));
         $request = $this->createBookingRequest->handle(new NewBookingRequestData(
             client_name: trim($data->client_name),
             client_whatsapp: self::digits($data->client_whatsapp),
@@ -62,10 +76,13 @@ final class RequestBooking
             duration_minutes: $service->duration_minutes,
             date: $data->date,
             starts_at: $data->time,
+            client_email: $client->email,
+            client_id: $client->id,
             client_distance_meters: self::distance($data, $address),
         ));
 
         $this->notifyBarber($request);
+        $this->emails->send($request, BookingEmailKind::Received, registrationUrl: self::registrationUrl($client));
 
         return new BookingConfirmationData(
             id: $request->id,
@@ -93,6 +110,11 @@ final class RequestBooking
                 tag: "booking-request-{$request->id}",
             ),
         ));
+    }
+
+    private static function registrationUrl(ClientData $client): ?string
+    {
+        return $client->has_account ? null : ClientLinks::registration($client->email);
     }
 
     /** Meters between the client and the barbershop, when both points are known. */

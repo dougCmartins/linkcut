@@ -6,6 +6,7 @@ import { envelope, installFakeApi } from '@/utils/testFetch'
 describe('http client', () => {
   afterEach(() => {
     setHttpAuthHandlers(null)
+    setHttpAuthHandlers(null, 'client')
     vi.unstubAllGlobals()
     vi.unstubAllEnvs()
   })
@@ -22,6 +23,28 @@ describe('http client', () => {
     expect(response.data).toEqual({ id: 1 })
     expect(calls[0]?.headers).toMatchObject({ Accept: 'application/json', Authorization: 'Bearer token-1' })
     expect(calls[0]?.headers['X-Request-Id']).toBeTruthy()
+  })
+
+  it('keeps the client session apart: auth "client" sends the client token and refreshes it', async () => {
+    // Arrange
+    let clientToken = 'client-old'
+    const { calls } = installFakeApi({
+      'GET /client/appointments': (call) =>
+        call.headers.Authorization === 'Bearer client-new' ? { status: 200, body: [] } : envelope('UNAUTHENTICATED', 401),
+    })
+    const barberRefresh = vi.fn()
+    setHttpAuthHandlers({ accessToken: () => 'barber-token', refresh: barberRefresh, onSessionExpired: vi.fn() })
+    setHttpAuthHandlers(
+      { accessToken: () => clientToken, refresh: vi.fn(async () => ((clientToken = 'client-new'), true)), onSessionExpired: vi.fn() },
+      'client',
+    )
+
+    // Act
+    await http('/client/appointments', { auth: 'client' })
+
+    // Assert
+    expect(calls.map((call) => call.headers.Authorization)).toEqual(['Bearer client-old', 'Bearer client-new'])
+    expect(barberRefresh).not.toHaveBeenCalled()
   })
 
   it('throws the error envelope as an ApiError', async () => {

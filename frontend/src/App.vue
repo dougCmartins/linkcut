@@ -47,6 +47,14 @@ watch(
   { immediate: true },
 )
 
+// The booking modal belongs to the public pages: leaving them (e.g. "Finalizar cadastro") closes it.
+watch(
+  () => route.meta.isPublic,
+  (isPublic) => {
+    if (!isPublic) bookingStore.closeModal()
+  },
+)
+
 function closeBooking(): void {
   bookingStore.closeModal()
   // Leave the /:slug/agendar deep link so the modal does not reopen.

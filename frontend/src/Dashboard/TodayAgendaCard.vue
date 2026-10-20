@@ -6,9 +6,20 @@ import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { formatDistance } from '@/utils/address'
 import { formatBRL } from '@/utils/currency'
+import { buildWhatsappUrl } from '@/utils/phone'
 
 /** `priceInCents`: the service's current price (shown until it is concluded with its own). */
-const props = defineProps<{ request: BookingRequest; priceInCents: number | undefined; isBusy: boolean }>()
+const props = withDefaults(
+  defineProps<{
+    request: BookingRequest
+    priceInCents: number | undefined
+    isBusy: boolean
+    /** For the "Lembrar no WhatsApp" message. */
+    barbershopName?: string
+    barbershopAddress?: string
+  }>(),
+  { barbershopName: '', barbershopAddress: '' },
+)
 const emit = defineEmits<{ complete: [requestId: number] }>()
 const { t } = useI18n()
 
@@ -18,6 +29,14 @@ const distance = computed(() =>
     ? t('dashboard.distanceUnknown')
     : t('dashboard.distance', { distance: formatDistance(props.request.clientDistanceMeters) }),
 )
+/** One tap: WhatsApp opens with the reminder ready (sent by the barber; no paid API). */
+const remindUrl = computed(() => {
+  const { clientName, time } = props.request
+  const firstName = clientName.trim().split(' ')[0]
+  const greeting = t('dashboard.agenda.remindMessage', { client: firstName, time, barbershop: props.barbershopName })
+  const address = props.barbershopAddress ? ` ${t('dashboard.agenda.remindAddress', { address: props.barbershopAddress })}` : ''
+  return buildWhatsappUrl(props.request.clientWhatsapp, `${greeting}${address}`)
+})
 const price = computed(() => formatBRL(props.request.completedPriceInCents ?? props.priceInCents ?? 0))
 </script>
 
@@ -64,5 +83,15 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       </svg>
       {{ t('dashboard.agenda.complete') }}
     </BaseButton>
+    <a
+      v-if="!isCompleted"
+      :href="remindUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="mt-2 flex h-11 items-center justify-center gap-2 rounded-full bg-raised text-sm font-bold ring-1 ring-line"
+      :aria-label="t('dashboard.agenda.remindFor', { client: request.clientName })"
+    >
+      {{ t('dashboard.agenda.remind') }}
+    </a>
   </article>
 </template>

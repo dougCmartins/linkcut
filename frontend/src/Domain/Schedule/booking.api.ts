@@ -52,6 +52,7 @@ export async function createBookingRequest(slug: string, input: BookingRequestIn
       body: {
         client_name: input.clientName,
         client_whatsapp: input.clientWhatsapp,
+        client_email: input.clientEmail,
         service_id: Number(input.serviceId),
         date: input.date,
         time: input.time,
