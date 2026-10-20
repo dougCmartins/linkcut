@@ -2,6 +2,12 @@
 
 return [
 
+    // Address → point on the map (Settings\Support\AddressGeocoder). Policy: identify the app, max 1 request/s.
+    'nominatim' => [
+        'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org'),
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'linkcut/1.0 (https://github.com/dougCmartins/linkcut)'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

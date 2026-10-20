@@ -22,6 +22,27 @@ trait SettingsPayloads
                 ['network' => 'instagram', 'url' => 'https://instagram.com/rafa'],
                 ['network' => 'tiktok', 'url' => null],
             ],
+            'address' => $this->addressPayload(),
+        ], $overrides);
+    }
+
+    /**
+     * A full address. With coordinates (as from "Estou na barbearia") by default, so no lookup happens.
+     *
+     * @return array<string, mixed>
+     */
+    protected function addressPayload(array $overrides = []): array
+    {
+        return array_replace([
+            'zip_code' => '01304001',
+            'street' => 'Rua Augusta',
+            'number' => '1500',
+            'complement' => null,
+            'district' => 'Consolação',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'latitude' => -23.5578,
+            'longitude' => -46.6609,
         ], $overrides);
     }
 

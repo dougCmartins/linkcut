@@ -22,5 +22,7 @@ final class ProfileSettingsData extends Data
         public readonly string $whatsapp_message,
         #[DataCollectionOf(SocialLinkData::class)]
         public readonly DataCollection $socials,
+        /** Null until the barber fills it in (required to receive bookings). */
+        public readonly ?AddressData $address,
     ) {}
 }

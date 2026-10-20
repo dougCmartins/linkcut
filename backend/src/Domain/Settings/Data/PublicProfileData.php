@@ -22,5 +22,7 @@ final class PublicProfileData extends Data
         public readonly string $whatsapp_message,
         #[DataCollectionOf(SocialLinkData::class)]
         public readonly DataCollection $socials,
+        /** Where the barbershop is (a business address is public). Null = it can't receive bookings yet. */
+        public readonly ?AddressData $address,
     ) {}
 }

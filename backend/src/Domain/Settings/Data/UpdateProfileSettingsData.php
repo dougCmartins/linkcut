@@ -27,6 +27,8 @@ final class UpdateProfileSettingsData extends Data
         public readonly string $whatsapp_number,
         #[DataCollectionOf(SocialLinkData::class), Max(10)]
         public readonly DataCollection $socials,
+        #[Required]
+        public readonly AddressInputData $address,
         #[Nullable, StringType, Max(30)]
         public readonly ?string $handle = null,
         #[Nullable, StringType, Max(160)]

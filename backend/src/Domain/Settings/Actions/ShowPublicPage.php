@@ -47,6 +47,7 @@ final class ShowPublicPage
                 whatsapp_number: $profile->whatsapp_number,
                 whatsapp_message: $profile->whatsapp_message,
                 socials: new DataCollection(SocialLinkData::class, $socials),
+                address: $profile->address,
             ),
             portfolio: new PublicPortfolioData(
                 cover_url: $portfolio->cover?->url,
