@@ -109,12 +109,14 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
       const input = body as {
         client_name: string
         client_whatsapp: string
+        client_email: string
         service_id: number
         date: string
         time: string
         client_latitude: number | null
         client_longitude: number | null
       }
+      if (!/^\S+@\S+\.\S+$/.test(input.client_email ?? '')) return envelope('VALIDATION_FAILED', 422)
       if (blocking().some((row) => row.date === input.date && row.starts_at === input.time)) return envelope('SLOT_UNAVAILABLE', 409)
       const row = requestRow({
         id: nextId++,

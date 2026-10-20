@@ -27,6 +27,8 @@ export interface BookingRequest {
 export interface BookingRequestInput {
   clientName: string
   clientWhatsapp: string
+  /** Gets the answer and the reminder; also the client's account (client area). */
+  clientEmail: string
   serviceId: string
   date: string
   time: string

@@ -16,8 +16,11 @@ export interface HttpOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   /** JSON body, or FormData for file uploads (the browser sets the multipart header). */
   body?: unknown
-  /** Sends the access token and refreshes it once on 401. Default: true. */
-  auth?: boolean
+  /**
+   * Sends the access token and refreshes it once on 401. Default: true (the barber's session).
+   * "client" uses the client-area session instead; false sends no token.
+   */
+  auth?: boolean | AuthRealm
   /** "blob" for file downloads (e.g. CSV). Errors are still read as the JSON envelope. Default: "json". */
   responseType?: 'json' | 'blob'
 }
@@ -31,10 +34,18 @@ export interface HttpAuthHandlers {
   onSessionExpired: () => void
 }
 
-let authHandlers: HttpAuthHandlers | null = null
+/** Two independent sessions: the barber's (panel) and the client's (client area). */
+export type AuthRealm = 'barber' | 'client'
 
-export function setHttpAuthHandlers(handlers: HttpAuthHandlers | null): void {
-  authHandlers = handlers
+const authHandlers: Record<AuthRealm, HttpAuthHandlers | null> = { barber: null, client: null }
+
+export function setHttpAuthHandlers(handlers: HttpAuthHandlers | null, realm: AuthRealm = 'barber'): void {
+  authHandlers[realm] = handlers
+}
+
+function handlersFor(options: HttpOptions): HttpAuthHandlers | null {
+  if (options.auth === false) return null
+  return authHandlers[options.auth === 'client' ? 'client' : 'barber']
 }
 
 const baseUrl = () => (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
@@ -49,7 +60,7 @@ async function send<T>(path: string, options: HttpOptions): Promise<HttpResponse
   const headers: Record<string, string> = { Accept: 'application/json', 'X-Request-Id': newRequestId() }
   const isForm = options.body instanceof FormData
   if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
-  const token = options.auth === false ? null : authHandlers?.accessToken()
+  const token = handlersFor(options)?.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
   let response: Response
@@ -78,10 +89,10 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
   try {
     return await send<T>(path, options)
   } catch (caught) {
-    const canRefresh = options.auth !== false && authHandlers && caught instanceof ApiError && caught.status === 401
-    if (!canRefresh) throw caught
-    if (await authHandlers!.refresh()) return send<T>(path, options)
-    authHandlers!.onSessionExpired()
+    const handlers = handlersFor(options)
+    if (!handlers || !(caught instanceof ApiError) || caught.status !== 401) throw caught
+    if (await handlers.refresh()) return send<T>(path, options)
+    handlers.onSessionExpired()
     throw caught
   }
 }

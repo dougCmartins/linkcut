@@ -20,6 +20,8 @@ import { distanceInMeters, formatAddress, formatDistance, mapsUrl } from '@/util
 import { ApiErrorCode } from '@/types/apiErrorCode'
 import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
+import { credentialsSchema } from '@/Domain/Identity/auth.schemas'
+import { useClientStore } from '@/Domain/Client/client.store'
 
 const MIN_NAME_LENGTH = 2
 
@@ -27,6 +29,7 @@ const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 const { hasErrorCode, messageKey } = useApiErrors()
 const publicPageStore = usePublicPageStore()
+const clientStore = useClientStore()
 const dialog = useTemplateRef<HTMLElement>('dialog')
 
 // App.vue opens the modal only after the booking options loaded; the fallback just keeps the types simple.
@@ -69,9 +72,14 @@ const form = reactive({
   serviceId: null as string | null,
   date: null as string | null,
   time: null as string | null,
-  clientName: '',
-  clientWhatsapp: '',
+  // A signed-in client (client area) books without typing their data again.
+  clientName: clientStore.client?.name ?? '',
+  clientWhatsapp: clientStore.client?.phone ?? '',
+  clientEmail: clientStore.client?.email ?? '',
 })
+const isValidEmail = (value: string) => credentialsSchema.shape.email.safeParse(value).success
+/** After booking, the e-mail for the "Finalizar cadastro" card (none when already signed in). */
+const registerEmail = ref<string | null>(null)
 const submittedSummary = ref<string | null>(null)
 const isSubmitting = ref(false)
 const submitError = ref('')
@@ -113,6 +121,7 @@ const canSubmit = computed(
     form.time !== null &&
     form.clientName.trim().length >= MIN_NAME_LENGTH &&
     isValidBrazilianPhone(form.clientWhatsapp) &&
+    isValidEmail(form.clientEmail) &&
     !isSubmitting.value,
 )
 
@@ -135,8 +144,10 @@ async function submit(): Promise<void> {
       time: form.time,
       clientName: form.clientName.trim(),
       clientWhatsapp: onlyDigits(form.clientWhatsapp),
+      clientEmail: form.clientEmail.trim(),
       clientLocation: geolocation.point.value,
     })
+    registerEmail.value = clientStore.isSignedIn ? null : form.clientEmail.trim()
     submittedSummary.value = t('booking.summary', {
       service: confirmation.serviceName || (findService(form.serviceId)?.name ?? ''),
       date: formatDayMonth(fromIsoDate(confirmation.date)),
@@ -200,7 +211,7 @@ onBeforeUnmount(() => {
         </button>
       </header>
 
-      <BookingSuccess v-if="submittedSummary" class="px-5 pb-8" :summary="submittedSummary" @done="emit('close')" />
+      <BookingSuccess v-if="submittedSummary" class="px-5 pb-8" :summary="submittedSummary" :register-email="registerEmail" @done="emit('close')" />
 
       <BookingVacationNotice
         v-else-if="!barbershopAddress"
@@ -285,7 +296,11 @@ onBeforeUnmount(() => {
 
           <fieldset class="min-w-0">
             <legend class="mb-2 text-sm font-bold">{{ t('booking.stepContact') }}</legend>
-            <BookingForm v-model:client-name="form.clientName" v-model:client-whatsapp="form.clientWhatsapp" />
+            <BookingForm
+              v-model:client-name="form.clientName"
+              v-model:client-whatsapp="form.clientWhatsapp"
+              v-model:client-email="form.clientEmail"
+            />
           </fieldset>
         </div>
 

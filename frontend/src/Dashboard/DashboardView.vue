@@ -23,6 +23,7 @@ import { usePushStore } from '@/Domain/Notification/push.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
+import { formatAddress } from '@/utils/address'
 
 const { t } = useI18n()
 const { messageKey } = useApiErrors()
@@ -45,6 +46,8 @@ async function logout(): Promise<void> {
 const profile = computed(() => settingsStore.profile)
 /** Without an address the public agenda refuses bookings, so the barber is told right away. */
 const isMissingAddress = computed(() => settingsStore.isLoaded && !hasAddress(profile.value.address))
+/** Goes in the "Lembrar no WhatsApp" message. */
+const shopAddress = computed(() => (hasAddress(profile.value.address) ? formatAddress(profile.value.address) : ''))
 const avatarUrl = computed(() => imageUrl(profile.value.avatar))
 const firstName = computed(() => profile.value.name.trim().split(' ')[0] ?? profile.value.name)
 const PLACEHOLDER = '—'
@@ -239,6 +242,8 @@ async function undo(): Promise<void> {
             :request="request"
             :price-in-cents="priceOf(request.serviceId)"
             :is-busy="busyRequestId === request.id"
+            :barbershop-name="profile.name"
+            :barbershop-address="shopAddress"
             @complete="complete"
           />
         </li>

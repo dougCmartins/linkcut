@@ -7,6 +7,8 @@ declare module 'vue-router' {
     openBooking?: boolean
     /** Barber-only page: needs a session (see Domain/Identity/auth.guard.ts). */
     requiresAuth?: boolean
+    /** Client-area page: needs the client's session (see Domain/Client/client.guard.ts). */
+    requiresClient?: boolean
   }
 }
 
@@ -36,6 +38,20 @@ export const routes: RouteRecordRaw[] = [
     name: 'settings',
     component: () => import('@/Domain/Settings/SettingsView.vue'),
     meta: { requiresAuth: true },
+  },
+  // Client area (one account for every barbershop where the client booked).
+  {
+    path: '/conta',
+    name: 'client-appointments',
+    component: () => import('@/Domain/Client/ClientAppointmentsView.vue'),
+    meta: { requiresClient: true },
+  },
+  { path: '/conta/entrar', name: 'client-login', component: () => import('@/Domain/Client/ClientLoginView.vue') },
+  { path: '/conta/finalizar', name: 'client-register', component: () => import('@/Domain/Client/ClientRegisterView.vue') },
+  {
+    path: '/conta/lembretes-desativados',
+    name: 'client-opt-out',
+    component: () => import('@/Domain/Client/ClientOptOutView.vue'),
   },
   // Public pages of each barbershop, by slug. Kept after the fixed paths above.
   { path: '/:slug', name: 'bio-link', component: () => import('@/BioLink/BioLinkView.vue'), meta: { isPublic: true } },
