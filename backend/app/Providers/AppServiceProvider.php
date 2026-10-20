@@ -8,6 +8,8 @@ use App\Livewire\Pulse\TenantUsage;
 use App\Observability\AddTenantToContext;
 use App\Sms\LogSmsSender;
 use App\Sms\SmsSender;
+use Domain\Notification\Support\PushSender;
+use Domain\Notification\Support\WebPushSender;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Events\TenantResolved;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -33,6 +35,7 @@ final class AppServiceProvider extends ServiceProvider
             'log' => new LogSmsSender,
             default => throw new RuntimeException('Unknown SMS driver: '.config('sms.driver')),
         });
+        $this->app->bind(PushSender::class, WebPushSender::class);
     }
 
     public function boot(): void

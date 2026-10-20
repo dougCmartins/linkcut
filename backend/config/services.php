@@ -2,6 +2,13 @@
 
 return [
 
+    // Push notifications (Web Push, VAPID). Keys: php artisan notifications:vapid-keys
+    'webpush' => [
+        'public_key' => env('VAPID_PUBLIC_KEY', ''),
+        'private_key' => env('VAPID_PRIVATE_KEY', ''),
+        'subject' => env('VAPID_SUBJECT', 'https://github.com/dougCmartins/linkcut'),
+    ],
+
     // Address → point on the map (Settings\Support\AddressGeocoder). Policy: identify the app, max 1 request/s.
     'nominatim' => [
         'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org'),
