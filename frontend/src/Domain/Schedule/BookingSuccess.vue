@@ -22,7 +22,6 @@ const { t } = useI18n()
       v-if="registerEmail"
       :to="{ name: 'client-register', query: { email: registerEmail } }"
       class="mt-6 block w-full rounded-card bg-accent/10 p-4 text-left ring-1 ring-accent/40"
-      @click="emit('done')"
     >
       <span class="block font-bold">{{ t('booking.registerTitle') }}</span>
       <span class="mt-1 block text-sm text-muted">{{ t('booking.registerText') }}</span>
