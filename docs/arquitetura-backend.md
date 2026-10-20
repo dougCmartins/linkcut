@@ -24,6 +24,7 @@ backend/
 │   ├── Settings/             Perfil, portfólio, tema, serviços, horários, imagens e páginas públicas
 │   ├── Finance/              Histórico (faturamento), despesas e resumo do mês
 │   ├── Schedule/             Pedidos de agendamento e seus status
+│   ├── Notification/         Avisos ao barbeiro (push por aparelho; e-mail depois)
 │   └── Orchestrator/         Fluxos que cruzam domínios: SignIn, PublicBooking, CompleteAppointment
 └── database/                 migrations, factories, seeders
 ```

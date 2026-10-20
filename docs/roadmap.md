@@ -8,9 +8,9 @@ O que o barbeiro precisa para usar a plataforma sozinho no dia a dia.
 
 | Etapa | O quê | Observação |
 |---|---|---|
-| 4 | **Aviso de novo pedido por push** | O barbeiro recebe uma notificação no celular ou no computador quando um cliente agenda. |
-| 5 | **Provedor de SMS** | Código de login no celular. Se o SMS sair caro, o código vai por push ou e-mail. |
-| 6 | **Onboarding** | O barbeiro cria a conta e a barbearia sozinho, sem depender do seeder. |
+| 4 ✅ | **Aviso de novo pedido por push** | Web Push padrão (VAPID): sem conta externa e sem custo. No iPhone, pelo app na Tela de Início. [Requisitos](requisitos-notificacoes.md). |
+| 5 | **Provedor de SMS** | Decidido: o código de login vai **por e-mail por padrão** (custo zero). O SMS fica integrado a um provedor real, mas **desligado por configuração** até haver receita. A tela só oferece SMS quando estiver ligado. |
+| 6 | **Onboarding** | Decidido: **cadastro aberto** em `/cadastrar`, com o e-mail confirmado por código. Depois, um passo a passo cria a barbearia: nome, link (`/:slug`), WhatsApp, endereço e serviços. Prepara o teste grátis do billing. |
 
 ## Fase B: negócio (depois da fundação)
 
