@@ -141,7 +141,9 @@ As regras não cobrem estes pontos, então ficam decididos aqui:
 - as imagens sobrevivem a um reload;
 - o tenant B não lê nem grava as configurações do A.
 
-### Etapa 2 — Financeiro
+### Etapa 2 — Financeiro ✅
+
+> Feita. Além do previsto: `TenantClock` (hoje no fuso da barbearia) e o erro `EXPENSE_NOT_FOUND` 404. O restore responde com a despesa de volta.
 
 **Backend (Finance)**
 - **Tabelas:**

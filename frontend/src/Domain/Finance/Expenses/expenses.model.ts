@@ -1,6 +1,6 @@
 /** A cost that repeats every month (chair rent, internet, DAS/MEI). */
 export interface FixedExpense {
-  id: string
+  id: number
   name: string
   amountInCents: number
   /** Day of the month it is paid (1–31). In shorter months it falls on the last day. */
@@ -9,7 +9,7 @@ export interface FixedExpense {
 
 /** A cost paid once (supplies, a new clipper). */
 export interface OneOffExpense {
-  id: string
+  id: number
   description: string
   amountInCents: number
   /** Local date "YYYY-MM-DD". */

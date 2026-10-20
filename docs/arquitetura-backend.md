@@ -66,6 +66,10 @@ Todas as barbearias usam o mesmo banco MySQL. Toda tabela que pertence a uma bar
 
 **Páginas públicas:** o middleware `tenant.slug` (`ResolveTenantFromSlug`) resolve o tenant pelo `{slug}` da URL, sem login. Slug desconhecido ou barbearia inativa respondem `TENANT_NOT_FOUND` 404. As rotas ficam em `/api/public/{slug}`, com o limite `throttle:public` (120/min por IP), e as Datas públicas nunca trazem campos privados, como o custo dos serviços.
 
+**Fuso da barbearia:** datas e horas são gravadas no fuso do tenant (`tenants.timezone`). Para "hoje" e "mês até hoje", use `Tenant/Context/TenantClock` (`today()`, `now()`), nunca `now()` puro, que está em UTC.
+
+**Downloads:** uma Action pode devolver `StreamedResponse` quando o resultado é um arquivo (ex.: o CSV do histórico). É gerado linha a linha (`lazy()`), sem carregar tudo na memória.
+
 O `User` **não** usa o escopo, porque o login acontece antes de o tenant existir na requisição. Só Actions de Identity leem `users`, sempre pelo id ou pelo e-mail.
 
 Os erros de isolamento (`TENANT_NOT_RESOLVED`, `TENANT_MISMATCH`) indicam bug ou ataque. Por isso sempre vão para o Sentry e para o log `security`. Os demais erros de domínio (código errado, sessão expirada…) são respostas esperadas e não poluem o Sentry.

@@ -6,7 +6,6 @@ import { AppointmentStatus } from '@/types/appointmentStatus'
 import { createMockRequests } from '@/mocks/barber'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
-import { recordCompletedService, removeCompletedService } from '@/History/history.api'
 import { toIsoDate } from '@/utils/date'
 
 export const useBookingStore = defineStore('booking', () => {
@@ -88,34 +87,23 @@ export const useBookingStore = defineStore('booking', () => {
 
   /**
    * "Concluir atendimento": only a confirmed appointment of today can be concluded.
-   * Marks it completed and sends its price and cost (snapshot) to the history.
+   * Simulated until stage 3: it does not reach the history (revenue) on the API yet.
    */
   async function completeRequest(requestId: string, now = new Date()): Promise<BookingRequest> {
     const request = findRequest(requestId)
     if (request.status !== AppointmentStatus.Confirmed || request.date !== toIsoDate(now)) {
       throw new Error(`Booking request ${requestId} cannot be concluded`)
     }
-    const service = findService(request.serviceId)
-    const priceInCents = service?.priceInCents ?? 0
-    await recordCompletedService({
-      id: request.id,
-      date: request.date,
-      time: request.time,
-      clientName: request.clientName,
-      serviceName: service?.name ?? '',
-      priceInCents,
-      costInCents: service?.costInCents ?? 0,
-    })
+    const priceInCents = findService(request.serviceId)?.priceInCents ?? 0
     request.status = AppointmentStatus.Completed
     request.completedPriceInCents = priceInCents
     return request
   }
 
-  /** Undo a conclusion made by mistake: back to confirmed and out of the history. */
+  /** Undo a conclusion made by mistake: back to confirmed. */
   async function undoCompletion(requestId: string): Promise<void> {
     const request = findRequest(requestId)
     if (request.status !== AppointmentStatus.Completed) return
-    await removeCompletedService(request.id)
     request.status = AppointmentStatus.Confirmed
     delete request.completedPriceInCents
   }

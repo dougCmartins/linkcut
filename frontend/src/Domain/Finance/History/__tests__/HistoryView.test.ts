@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import HistoryView from '../HistoryView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
-import * as csv from '@/utils/csv'
+import * as download from '@/utils/download'
+import { installFakeFinanceApi } from '../../__tests__/fakeFinanceApi'
 
 async function renderHistory() {
   const rendered = renderWithPlugins(HistoryView)
@@ -10,19 +11,18 @@ async function renderHistory() {
   return rendered
 }
 
-function countLabel(): string {
-  return screen.getByText(/^\d+–\d+ de \d+$/).textContent ?? ''
-}
-
 describe('HistoryView', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 17, 18, 0)) // Saturday 17 Oct 2026, end of the day
+    installFakeFinanceApi()
   })
 
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('opens on the current month with its total and the day groups', async () => {
@@ -45,7 +45,7 @@ describe('HistoryView', () => {
     await fireEvent.click(screen.getByRole('radio', { name: '100' }))
 
     // Assert
-    expect(countLabel()).toMatch(/^1–100 de \d+$/)
+    expect(await screen.findByText(/^1–100 de \d+$/)).toBeTruthy()
   })
 
   it('moves to the next page', async () => {
@@ -58,7 +58,7 @@ describe('HistoryView', () => {
     await fireEvent.click(screen.getByRole('button', { name: /Próxima/ }))
 
     // Assert
-    expect(countLabel()).toMatch(/^51–100 de \d+$/)
+    expect(await screen.findByText(/^51–100 de \d+$/)).toBeTruthy()
     expect(screen.getByText(/Página 2 de \d+/)).toBeTruthy()
   })
 
@@ -76,9 +76,19 @@ describe('HistoryView', () => {
     expect(screen.getByText('Ajuste as datas para ver o histórico.')).toBeTruthy()
   })
 
+  it('shows the totals of the whole period from the API, not of the page', async () => {
+    // Arrange & Act
+    await renderHistory()
+
+    // Assert: 17 days × 3 appointments (R$ 170,00 per day)
+    expect(screen.getByText(/^1–50 de 51$/)).toBeTruthy()
+    expect(screen.getByText(/R\$\s2\.890,00/)).toBeTruthy()
+    expect(screen.getByText('51')).toBeTruthy()
+  })
+
   it('exports every record of the period as CSV', async () => {
     // Arrange
-    const download = vi.spyOn(csv, 'downloadTextFile').mockImplementation(() => undefined)
+    const save = vi.spyOn(download, 'downloadBlob').mockImplementation(() => undefined)
     await renderHistory()
     await fireEvent.click(screen.getByRole('radio', { name: 'Ano' }))
     const total = Number((await screen.findByText(/^1–50 de \d+$/)).textContent?.split(' de ')[1])
@@ -87,8 +97,9 @@ describe('HistoryView', () => {
     await fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }))
 
     // Assert
-    const [fileName, content] = download.mock.calls[0] ?? []
+    await vi.waitFor(() => expect(save).toHaveBeenCalled())
+    const [fileName, content] = save.mock.calls[0] ?? []
     expect(fileName).toBe('historico-linkcut_2026-01-01_a_2026-10-17.csv')
-    expect((content ?? '').trim().split('\r\n')).toHaveLength(total + 1)
+    expect((await content!.text()).trim().split('\r\n')).toHaveLength(total + 1)
   })
 })

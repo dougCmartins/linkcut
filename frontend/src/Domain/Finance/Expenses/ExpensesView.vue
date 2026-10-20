@@ -5,35 +5,52 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import UndoToast from '@/components/ui/UndoToast.vue'
 import ExpenseForm from './ExpenseForm.vue'
 import ExpenseItem from './ExpenseItem.vue'
-import { useExpensesStore, type Expense } from './expenses.store'
+import { isFixed, useExpensesStore, type Expense } from './expenses.store'
 import type { FixedExpense, FixedExpenseInput, OneOffExpense, OneOffExpenseInput } from './expenses.model'
 import { dueDayInMonth, isDue } from './expenseCalculation'
+import { useApiErrors } from '@/composables/useApiErrors'
 import { useUndoWindow } from '@/composables/useUndoWindow'
 import { formatBRL } from '@/utils/currency'
 import { formatDayMonth, formatMonthName, fromIsoDate, toIsoDate } from '@/utils/date'
 
 const { t } = useI18n()
 const store = useExpensesStore()
+const { messageKey } = useApiErrors()
 const today = new Date()
 const todayIso = toIsoDate(today)
 const monthName = formatMonthName(today)
 
-/** Only one form open at a time: "add fixed", "add one-off" or the id of the expense being edited. */
+/** Only one form open at a time: "add fixed", "add one-off" or the expense being edited. */
 const openForm = ref<'fixed' | 'oneOff' | null>(null)
-const editingId = ref<string | null>(null)
+/** Fixed and one-off expenses have separate ids, so the key carries the kind ("fixed-3"). */
+const editingKey = ref<string | null>(null)
+const editKey = (expense: Expense) => `${isFixed(expense) ? 'fixed' : 'oneOff'}-${expense.id}`
+/** Message of the last change the API refused. */
+const actionError = ref('')
 
 function startAdd(kind: 'fixed' | 'oneOff'): void {
-  editingId.value = null
+  editingKey.value = null
   openForm.value = kind
 }
 
-function startEdit(id: string): void {
+function startEdit(expense: Expense): void {
   openForm.value = null
-  editingId.value = id
+  editingKey.value = editKey(expense)
+}
+
+/** Runs a change on the API; on failure the form stays open and the error is shown. */
+async function attempt(change: () => Promise<void>): Promise<boolean> {
+  actionError.value = ''
+  try {
+    await change()
+    return true
+  } catch (caught) {
+    actionError.value = t(`errors.api.${messageKey(caught)}`)
+    return false
+  }
 }
 const undo = useUndoWindow<Expense>()
 
-const oneOffOfMonth = computed(() => store.oneOffOfMonth(today))
 const breakdownRows = computed(() => {
   const breakdown = store.breakdown
   if (!breakdown) return []
@@ -51,42 +68,37 @@ function fixedDetail(expense: FixedExpense): string {
 }
 
 async function saveFixed(input: FixedExpenseInput): Promise<void> {
-  await store.addFixed(input, today)
-  openForm.value = null
+  if (await attempt(() => store.addFixed(input))) openForm.value = null
 }
 
 async function saveOneOff(input: OneOffExpenseInput): Promise<void> {
-  await store.addOneOff(input, today)
-  openForm.value = null
+  if (await attempt(() => store.addOneOff(input))) openForm.value = null
 }
 
 async function saveEditedFixed(expense: FixedExpense, input: FixedExpenseInput): Promise<void> {
-  await store.update({ ...expense, ...input }, today)
-  editingId.value = null
+  if (await attempt(() => store.updateFixed(expense.id, input))) editingKey.value = null
 }
 
 async function saveEditedOneOff(expense: OneOffExpense, input: OneOffExpenseInput): Promise<void> {
-  await store.update({ ...expense, ...input }, today)
-  editingId.value = null
+  if (await attempt(() => store.updateOneOff(expense.id, input))) editingKey.value = null
 }
 
-async function remove(id: string): Promise<void> {
-  const removed = await store.remove(id, today)
-  if (removed) undo.offer(removed)
+async function remove(expense: Expense): Promise<void> {
+  if (await attempt(() => store.remove(expense).then(() => undefined))) undo.offer(expense)
 }
 
 async function undoRemove(): Promise<void> {
   const expense = undo.take()
-  if (expense) await store.restore(expense, today)
+  if (expense) await attempt(() => store.restore(expense))
 }
 
 const removedName = computed(() => {
   const expense = undo.pending.value
   if (!expense) return ''
-  return 'dueDay' in expense ? expense.name : expense.description
+  return isFixed(expense) ? expense.name : expense.description
 })
 
-onMounted(() => store.load(today))
+onMounted(() => store.load())
 </script>
 
 <template>
@@ -109,6 +121,10 @@ onMounted(() => store.load(today))
 
     <p v-if="store.hasFailed" class="mt-6 rounded-card bg-danger/10 px-4 py-6 text-center text-sm text-danger ring-1 ring-danger/40" role="alert">
       {{ t('expenses.loadFailed') }}
+    </p>
+
+    <p v-if="actionError" class="mt-6 rounded-card bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/40" role="alert">
+      {{ actionError }}
     </p>
 
     <section class="mt-6 rounded-card bg-surface p-4 ring-1 ring-line shadow-soft" aria-labelledby="expenses-total" :aria-busy="store.isLoading">
@@ -135,13 +151,13 @@ onMounted(() => store.load(today))
         <ul v-if="store.fixedByDueDay.length" class="divide-y divide-line">
           <li v-for="expense in store.fixedByDueDay" :key="expense.id">
             <ExpenseForm
-              v-if="editingId === expense.id"
+              v-if="editingKey === editKey(expense)"
               class="my-3"
               kind="fixed"
               :today="todayIso"
               :initial="{ name: expense.name, amountInCents: expense.amountInCents, dueDay: expense.dueDay }"
               @submit-fixed="saveEditedFixed(expense, $event)"
-              @cancel="editingId = null"
+              @cancel="editingKey = null"
             />
             <ExpenseItem
               v-else
@@ -149,8 +165,8 @@ onMounted(() => store.load(today))
               :detail="fixedDetail(expense)"
               :amount-in-cents="expense.amountInCents"
               :is-counted="isDue(expense, today)"
-              @edit="startEdit(expense.id)"
-              @remove="remove(expense.id)"
+              @edit="startEdit(expense)"
+              @remove="remove(expense)"
             />
           </li>
         </ul>
@@ -173,16 +189,16 @@ onMounted(() => store.load(today))
       <h2 id="oneoff-title" class="text-xl">{{ t('expenses.oneOffTitle', { month: monthName }) }}</h2>
       <p class="mt-1 text-sm text-muted">{{ t('expenses.oneOffDescription') }}</p>
       <div class="mt-4 rounded-card bg-surface px-4 ring-1 ring-line shadow-soft">
-        <ul v-if="oneOffOfMonth.length" class="divide-y divide-line">
-          <li v-for="expense in oneOffOfMonth" :key="expense.id">
+        <ul v-if="store.oneOffOfMonth.length" class="divide-y divide-line">
+          <li v-for="expense in store.oneOffOfMonth" :key="expense.id">
             <ExpenseForm
-              v-if="editingId === expense.id"
+              v-if="editingKey === editKey(expense)"
               class="my-3"
               kind="oneOff"
               :today="todayIso"
               :initial="{ description: expense.description, amountInCents: expense.amountInCents, date: expense.date }"
               @submit-one-off="saveEditedOneOff(expense, $event)"
-              @cancel="editingId = null"
+              @cancel="editingKey = null"
             />
             <ExpenseItem
               v-else
@@ -190,8 +206,8 @@ onMounted(() => store.load(today))
               :detail="formatDayMonth(fromIsoDate(expense.date))"
               :amount-in-cents="expense.amountInCents"
               :is-counted="true"
-              @edit="startEdit(expense.id)"
-              @remove="remove(expense.id)"
+              @edit="startEdit(expense)"
+              @remove="remove(expense)"
             />
           </li>
         </ul>

@@ -1,4 +1,4 @@
-import type { ExpenseBreakdown } from '@/Expenses/expenses.model'
+import type { ExpenseBreakdown } from './Expenses/expenses.model'
 
 /** Revenue and expenses of the current month until now (what the dashboard shows). */
 export interface MonthFinances {

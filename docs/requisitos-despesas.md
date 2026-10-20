@@ -59,9 +59,14 @@ O ícone "i" ao lado de **Margem** explica a conta com os números do barbeiro:
 - `role="tooltip"` ligado ao botão por `aria-describedby`;
 - o painel se ajusta para ficar dentro da tela (margem de 16 px).
 
-## 5. Próximas etapas (backend)
+## 5. API (Etapa 2)
 
-- `GET/POST/PUT/DELETE /expenses` no lugar do `localStorage`, e `GET /finances/month-to-date` com o resumo pronto.
-- O custo do serviço é dado **privado** do barbeiro: a API pública de serviços (página de agendamento) não pode devolvê-lo.
+- `GET /api/finance/expenses`: todas as fixas (por dia de vencimento) e as avulsas do mês atual.
+- Fixas e avulsas: `POST /api/finance/{fixed|one-off}-expenses`, `PUT …/{id}`, `DELETE …/{id}` (remoção reversível) e `POST …/{id}/restore` (o "Desfazer").
+- `GET /api/finance/month-to-date`: faturamento e quebra das despesas, do dia 1 até hoje, no fuso da barbearia.
+- Uma avulsa não pode ter data depois de hoje no fuso da barbearia (`before_or_equal`).
+- O custo do serviço é dado **privado** do barbeiro: a API pública (página de agendamento) não o devolve.
+
+## 6. Próximas etapas
 - Taxa da maquininha (%) por forma de pagamento.
 - Histórico de valores das fixas: hoje, editar o valor de uma fixa muda também o mês atual (não há vigência por mês).

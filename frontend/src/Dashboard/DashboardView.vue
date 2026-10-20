@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { capitalize, formatLongDate, formatMonthName, toIsoDate } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
-import MetricCard from './MetricCard.vue'
+import MetricCard from '@/components/ui/MetricCard.vue'
 import PendingRequestCard from './PendingRequestCard.vue'
 import TodayAgendaCard from './TodayAgendaCard.vue'
 import MarginExplanation from './MarginExplanation.vue'
@@ -11,8 +11,8 @@ import InfoTooltip from '@/components/ui/InfoTooltip.vue'
 import UndoToast from '@/components/ui/UndoToast.vue'
 import { useUndoWindow } from '@/composables/useUndoWindow'
 import { AppointmentStatus } from '@/types/appointmentStatus'
-import { useDashboardStore } from './dashboard.store'
-import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from './financialSummary'
+import { useMonthToDateStore } from '@/Domain/Finance/monthToDate.store'
+import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/financialSummary'
 import { useBookingStore } from '@/Booking/booking.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { imageUrl } from '@/Domain/Settings/settings.model'
@@ -22,7 +22,7 @@ import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
 
 const { t } = useI18n()
-const dashboardStore = useDashboardStore()
+const dashboardStore = useMonthToDateStore()
 const bookingStore = useBookingStore()
 const settingsStore = useSettingsStore()
 
@@ -57,7 +57,7 @@ const marginBadge = computed(() => {
 const publicPath = ref<string | null>(null)
 
 onMounted(async () => {
-  void dashboardStore.loadMonthToDate(today)
+  void dashboardStore.load()
   try {
     publicPath.value = `/${(await fetchCurrentTenant()).slug}`
   } catch {
@@ -79,7 +79,7 @@ async function complete(requestId: string): Promise<void> {
   try {
     const request = await bookingStore.completeRequest(requestId)
     lastCompleted.offer({ id: request.id, priceInCents: request.completedPriceInCents ?? 0 })
-    await dashboardStore.loadMonthToDate(new Date())
+    await dashboardStore.load()
   } finally {
     busyRequestId.value = null
   }
@@ -89,7 +89,7 @@ async function undo(): Promise<void> {
   const completed = lastCompleted.take()
   if (!completed) return
   await bookingStore.undoCompletion(completed.id)
-  await dashboardStore.loadMonthToDate(new Date())
+  await dashboardStore.load()
 }
 
 </script>

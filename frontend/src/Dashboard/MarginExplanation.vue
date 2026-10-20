@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ExpenseBreakdown } from '@/Expenses/expenses.model'
-import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from './financialSummary'
+import type { ExpenseBreakdown } from '@/Domain/Finance/Expenses/expenses.model'
+import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/financialSummary'
 import { formatBRL } from '@/utils/currency'
 
 /** Content of the margin tooltip: the formula with the barber's own numbers. */

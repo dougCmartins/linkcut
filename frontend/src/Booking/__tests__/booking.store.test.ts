@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useBookingStore } from '../booking.store'
 import { AppointmentStatus } from '@/types/appointmentStatus'
-import { fetchCompletedServices } from '@/History/history.api'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 
@@ -74,10 +73,8 @@ describe('booking store', () => {
 
   describe('concluding an appointment (today agenda)', () => {
     const NOW = new Date(2026, 9, 20, 18, 0)
-    const todayRange = { from: '2026-10-20', to: '2026-10-20' }
 
     beforeEach(() => {
-      localStorage.clear()
       vi.useFakeTimers({ toFake: ['Date'] })
       vi.setSystemTime(NOW)
     })
@@ -108,7 +105,7 @@ describe('booking store', () => {
       expect(agendaIds).toEqual([early.id, late.id])
     })
 
-    it('marks it completed and sends the service price and cost to the history', async () => {
+    it('marks it completed with the price of the service', async () => {
       // Arrange
       const store = useBookingStore()
       const request = confirmedToday(store)
@@ -119,16 +116,6 @@ describe('booking store', () => {
       // Assert
       expect(completed.status).toBe(AppointmentStatus.Completed)
       expect(completed.completedPriceInCents).toBe(5000)
-      const records = await fetchCompletedServices(todayRange, NOW)
-      expect(records).toContainEqual({
-        id: request.id,
-        date: '2026-10-20',
-        time: '10:00',
-        clientName: 'João Silva',
-        serviceName: 'Corte',
-        priceInCents: 5000,
-        costInCents: 600,
-      })
     })
 
     it('refuses to conclude a pending request or one from another day', async () => {
@@ -145,10 +132,9 @@ describe('booking store', () => {
       // Assert
       await expect(completePending).rejects.toThrow('cannot be concluded')
       await expect(completeTomorrow).rejects.toThrow('cannot be concluded')
-      expect(await fetchCompletedServices(todayRange, NOW)).not.toContainEqual(expect.objectContaining({ id: pending.id }))
     })
 
-    it('undo puts it back to confirmed and takes it out of the history', async () => {
+    it('undo puts it back to confirmed', async () => {
       // Arrange
       const store = useBookingStore()
       const request = confirmedToday(store)
@@ -161,7 +147,6 @@ describe('booking store', () => {
       const stored = store.requests.find((item) => item.id === request.id)
       expect(stored?.status).toBe(AppointmentStatus.Confirmed)
       expect(stored?.completedPriceInCents).toBeUndefined()
-      expect(await fetchCompletedServices(todayRange, NOW)).not.toContainEqual(expect.objectContaining({ id: request.id }))
     })
   })
 })

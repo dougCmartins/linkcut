@@ -3,7 +3,9 @@ import { fireEvent, screen, within } from '@testing-library/vue'
 import ExpensesView from '../ExpensesView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
 import { formatBRL } from '@/utils/currency'
-import { fetchMonthToDateFinances } from '@/Dashboard/dashboard.api'
+import { fetchMonthToDateFinances } from '@/Domain/Finance/monthToDate.api'
+import { envelope } from '@/utils/testFetch'
+import { installFakeFinanceApi } from '../../__tests__/fakeFinanceApi'
 
 const parseTotal = (text: string) => Number(text.replace(/[^\d,]/g, '').replace(',', '.'))
 
@@ -14,18 +16,20 @@ const totalText = async () => {
 
 describe('ExpensesView', () => {
   beforeEach(() => {
-    localStorage.clear()
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 17, 18, 0))
+    installFakeFinanceApi()
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('shows the month total and the fixed expenses with their due status', async () => {
     // Arrange
-    const { expenses } = await fetchMonthToDateFinances(new Date())
+    const { expenses } = await fetchMonthToDateFinances()
 
     // Act
     renderWithPlugins(ExpensesView)
@@ -144,5 +148,34 @@ describe('ExpensesView', () => {
     // Assert
     expect(await screen.findByText('Lâminas, pomadas e talco')).toBeTruthy()
     expect(screen.getByText(/R\$\s250,00/)).toBeTruthy()
+  })
+
+  it('shows the API error and keeps the form when a save is refused', async () => {
+    // Arrange
+    installFakeFinanceApi({}, { 'PUT /finance/fixed-expenses/:id': () => envelope('EXPENSE_NOT_FOUND', 404) })
+    renderWithPlugins(ExpensesView)
+    await screen.findByText('Internet')
+    await fireEvent.click(screen.getByRole('button', { name: 'Editar Internet' }))
+
+    // Act
+    await fireEvent.update(screen.getByLabelText('Valor (R$)'), '130,00')
+    await fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    // Assert
+    expect(await screen.findByText('Esta despesa não existe mais. Atualize a página.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeTruthy()
+  })
+
+  it('a fixed and a one-off expense with the same id are edited separately', async () => {
+    // Arrange
+    renderWithPlugins(ExpensesView)
+    await screen.findByText('Aluguel da cadeira')
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Editar Aluguel da cadeira' }))
+
+    // Assert
+    expect(screen.getAllByRole('button', { name: 'Salvar' })).toHaveLength(1)
+    expect(screen.getByText('Lâminas e pomadas')).toBeTruthy()
   })
 })
