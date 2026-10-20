@@ -7,18 +7,24 @@ use Domain\Settings\Data\PruneImagesData;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Laravel\Passport\ClientRepository;
+use Laravel\Passport\Passport;
 use Minishlink\WebPush\VAPID;
 
 // Idempotent: the Docker entrypoint runs it on every start.
+// One per provider (barbers and clients), so a token of one never authenticates on the guard of the other.
 Artisan::command('passport:ensure-personal-client', function (ClientRepository $clients): void {
-    try {
-        $clients->personalAccessClient('users');
-        $this->info('Personal access client already exists.');
-    } catch (RuntimeException) {
-        $clients->createPersonalAccessGrantClient('linkcut', 'users');
-        $this->info('Personal access client created.');
+    foreach (['users', 'clients'] as $provider) {
+        $exists = Passport::client()->newQuery()->where('revoked', false)->where('provider', $provider)->get()
+            ->contains(fn ($client): bool => $client->hasGrantType('personal_access'));
+        if ($exists) {
+            $this->info("Personal access client for {$provider} already exists.");
+
+            continue;
+        }
+        $clients->createPersonalAccessGrantClient("linkcut-{$provider}", $provider);
+        $this->info("Personal access client for {$provider} created.");
     }
-})->purpose('Create the Passport personal access client used after 2FA, if missing');
+})->purpose('Create the Passport personal access clients (barbers and clients), if missing');
 
 // Uploaded images that no settings use anymore (scheduled daily; see the "scheduler" service).
 Artisan::command('settings:prune-images', function (PruneUnusedImages $prune): void {

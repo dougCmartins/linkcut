@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Domain\Client\Controllers;
+
+use Domain\Client\Actions\CompleteClientRegistration;
+use Domain\Client\Actions\LoginClient;
+use Domain\Client\Actions\LogoutClient;
+use Domain\Client\Actions\RefreshClientSession;
+use Domain\Client\Actions\ResetClientPassword;
+use Domain\Client\Actions\SendClientCode;
+use Domain\Client\Actions\ShowAuthenticatedClient;
+use Domain\Client\Data\ClientCodeRequestData;
+use Domain\Client\Data\ClientData;
+use Domain\Client\Data\ClientLoginData;
+use Domain\Client\Data\ClientPasswordData;
+use Domain\Client\Data\ClientRefreshData;
+use Domain\Client\Data\ClientSessionData;
+use Domain\Client\Data\CodeSentData;
+use Illuminate\Http\Response;
+
+final class ClientAuthController
+{
+    public function sendCode(ClientCodeRequestData $data, SendClientCode $action): CodeSentData
+    {
+        return $action->handle($data);
+    }
+
+    public function register(ClientPasswordData $data, CompleteClientRegistration $action): ClientSessionData
+    {
+        return $action->handle($data);
+    }
+
+    public function resetPassword(ClientPasswordData $data, ResetClientPassword $action): ClientSessionData
+    {
+        return $action->handle($data);
+    }
+
+    public function login(ClientLoginData $data, LoginClient $action): ClientSessionData
+    {
+        return $action->handle($data);
+    }
+
+    public function refresh(ClientRefreshData $data, RefreshClientSession $action): ClientSessionData
+    {
+        return $action->handle($data);
+    }
+
+    public function logout(ClientRefreshData $data, LogoutClient $action): Response
+    {
+        $action->handle($data);
+
+        return response()->noContent();
+    }
+
+    public function me(ShowAuthenticatedClient $action): ClientData
+    {
+        return $action->handle();
+    }
+}

@@ -24,6 +24,8 @@ abstract class TestCase extends BaseTestCase
         if (! file_exists(storage_path('oauth-private.key'))) {
             Artisan::call('passport:keys', ['--force' => true]);
         }
-        Client::factory()->asPersonalAccessTokenClient()->create();
+        // Bound to their provider, like passport:ensure-personal-client does.
+        Client::factory()->asPersonalAccessTokenClient()->create(['provider' => 'users']);
+        Client::factory()->asPersonalAccessTokenClient()->create(['provider' => 'clients']);
     }
 }

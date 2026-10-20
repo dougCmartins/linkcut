@@ -1,5 +1,6 @@
 <?php
 
+use Domain\Client\Models\Client;
 use Domain\Identity\Models\User;
 
 return [
@@ -48,6 +49,13 @@ return [
             'driver' => 'passport',
             'provider' => 'users',
         ],
+
+        // Clients of the barbershops (area "Meus horários"). Their tokens never open a barber route, and the other
+        // way round: each Passport personal access client is bound to its provider.
+        'client' => [
+            'driver' => 'passport',
+            'provider' => 'clients',
+        ],
     ],
 
     /*
@@ -71,6 +79,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => User::class,
+        ],
+
+        'clients' => [
+            'driver' => 'eloquent',
+            'model' => Client::class,
         ],
 
         // 'users' => [
