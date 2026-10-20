@@ -178,7 +178,9 @@ As regras não cobrem estes pontos, então ficam decididos aqui:
 - o painel, o histórico, as despesas e o CSV mostram os mesmos números da API;
 - editar ou remover uma despesa reflete no resumo do mês.
 
-### Etapa 3 — Agenda
+### Etapa 3 — Agenda ✅
+
+> Feita, com uma diferença: `GET /api/public/{slug}/availability?service_id` devolve **todos os dias da janela** com os horários livres numa chamada só, em vez de um dia por vez. O modal precisa disso para marcar os dias sem horário, e o "hoje" passa a ser o da barbearia, não o do aparelho. Sem `service_id`, usa o serviço mais curto.
 
 **Backend (Schedule + Orchestrator)**
 - **Tabela `booking_requests`:**

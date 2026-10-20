@@ -8,28 +8,28 @@ import TimeSlotPicker from './TimeSlotPicker.vue'
 import BookingForm from './BookingForm.vue'
 import BookingSuccess from './BookingSuccess.vue'
 import BookingVacationNotice from './BookingVacationNotice.vue'
-import { useBookingStore } from './booking.store'
-import { computeAvailableTimes, isOnVacation, isScheduleLocked } from './availability'
+import { createBookingRequest, fetchAvailability } from './booking.api'
+import type { AvailableDay } from './booking.model'
+import { isOnVacation, isScheduleLocked } from './availability'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { createEmptySettings } from '@/Domain/Settings/settings.defaults'
-import { formatDayMonth, fromIsoDate, nextDays, toIsoDate } from '@/utils/date'
+import { useApiErrors } from '@/composables/useApiErrors'
+import { ApiErrorCode } from '@/types/apiErrorCode'
+import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
 
 const MIN_NAME_LENGTH = 2
 
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
-const store = useBookingStore()
+const { hasErrorCode, messageKey } = useApiErrors()
 const publicPageStore = usePublicPageStore()
 const dialog = useTemplateRef<HTMLElement>('dialog')
 
-const now = new Date()
 // App.vue opens the modal only after the booking options loaded; the fallback just keeps the types simple.
 const schedule = computed(() => publicPageStore.bookingOptions ?? createEmptySettings().schedule)
 const services = computed(() => schedule.value.services)
 const findService = (serviceId: string) => services.value.find((service) => service.id === serviceId)
-const days = computed(() => nextDays(schedule.value.bookingWindowDays, now))
-const isLocked = computed(() => isScheduleLocked(days.value, schedule.value.vacation))
 const whatsappUrl = computed(() => {
   const profile = publicPageStore.page?.profile
   return profile ? buildWhatsappUrl(profile.whatsappNumber, profile.whatsappMessage) : ''
@@ -43,26 +43,35 @@ const form = reactive({
   clientWhatsapp: '',
 })
 const submittedSummary = ref<string | null>(null)
+const isSubmitting = ref(false)
+const submitError = ref('')
 
-/** Length used to find free times: the chosen service, or the shortest one before choosing. */
-const durationMinutes = computed(() => {
-  const selected = form.serviceId ? findService(form.serviceId) : undefined
-  return selected?.durationMinutes ?? Math.min(...services.value.map((service) => service.durationMinutes))
-})
+/** Free times of the booking window, computed by the API (its "today" is the barbershop's). */
+const availability = ref<AvailableDay[]>([])
+const isLoadingTimes = ref(false)
+const availabilityFailed = ref(false)
 
-function timesOn(date: Date): string[] {
-  return computeAvailableTimes({
-    date,
-    schedule: schedule.value,
-    durationMinutes: durationMinutes.value,
-    booked: store.bookedSlots,
-    now,
-  })
+async function loadAvailability(): Promise<void> {
+  const slug = publicPageStore.slug
+  if (!slug) return
+  isLoadingTimes.value = true
+  availabilityFailed.value = false
+  try {
+    availability.value = await fetchAvailability(slug, form.serviceId)
+  } catch {
+    availabilityFailed.value = true
+  } finally {
+    isLoadingTimes.value = false
+  }
 }
 
-const unavailableDates = computed(() => days.value.filter((day) => timesOn(day).length === 0).map(toIsoDate))
-const times = computed(() => (form.date ? timesOn(fromIsoDate(form.date)) : []))
+const days = computed(() => availability.value.map((day) => fromIsoDate(day.date)))
+const isLocked = computed(() => isScheduleLocked(days.value, schedule.value.vacation))
+const unavailableDates = computed(() => availability.value.filter((day) => day.times.length === 0).map((day) => day.date))
+const times = computed(() => availability.value.find((day) => day.date === form.date)?.times ?? [])
 const timeEmptyText = computed(() => {
+  if (isLoadingTimes.value) return t('booking.loadingTimes')
+  if (availabilityFailed.value) return t('booking.timesFailed')
   if (!form.date) return t('booking.pickDayFirst')
   return isOnVacation(fromIsoDate(form.date), schedule.value.vacation) ? schedule.value.vacation.message : t('booking.noTimes')
 })
@@ -73,28 +82,47 @@ const canSubmit = computed(
     form.date !== null &&
     form.time !== null &&
     form.clientName.trim().length >= MIN_NAME_LENGTH &&
-    isValidBrazilianPhone(form.clientWhatsapp),
+    isValidBrazilianPhone(form.clientWhatsapp) &&
+    !isSubmitting.value,
 )
 
+// The free times depend on the length of the chosen service.
+watch(() => form.serviceId, loadAvailability)
 // A time picked earlier may not fit after changing the day or the service.
 watch(times, (available) => {
   if (form.time && !available.includes(form.time)) form.time = null
 })
 
-function submit(): void {
-  if (!canSubmit.value || !form.serviceId || !form.date || !form.time) return
-  const request = store.submitRequest({
-    serviceId: form.serviceId,
-    date: form.date,
-    time: form.time,
-    clientName: form.clientName.trim(),
-    clientWhatsapp: onlyDigits(form.clientWhatsapp),
-  })
-  submittedSummary.value = t('booking.summary', {
-    service: findService(request.serviceId)?.name ?? '',
-    date: formatDayMonth(fromIsoDate(request.date)),
-    time: request.time,
-  })
+async function submit(): Promise<void> {
+  const slug = publicPageStore.slug
+  if (!canSubmit.value || !slug || !form.serviceId || !form.date || !form.time) return
+  isSubmitting.value = true
+  submitError.value = ''
+  try {
+    const confirmation = await createBookingRequest(slug, {
+      serviceId: form.serviceId,
+      date: form.date,
+      time: form.time,
+      clientName: form.clientName.trim(),
+      clientWhatsapp: onlyDigits(form.clientWhatsapp),
+    })
+    submittedSummary.value = t('booking.summary', {
+      service: confirmation.serviceName || (findService(form.serviceId)?.name ?? ''),
+      date: formatDayMonth(fromIsoDate(confirmation.date)),
+      time: confirmation.time,
+    })
+  } catch (caught) {
+    if (hasErrorCode(caught, ApiErrorCode.SlotUnavailable)) {
+      // Someone took this time a moment ago: show the times that are still free.
+      submitError.value = t('booking.slotTaken')
+      form.time = null
+      await loadAvailability()
+    } else {
+      submitError.value = t(`errors.api.${messageKey(caught)}`)
+    }
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 function onKeydown(event: KeyboardEvent): void {
@@ -105,6 +133,7 @@ onMounted(() => {
   document.body.style.overflow = 'hidden'
   window.addEventListener('keydown', onKeydown)
   dialog.value?.focus()
+  void loadAvailability()
 })
 
 onBeforeUnmount(() => {
@@ -194,6 +223,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="border-t border-line bg-page px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <p v-if="submitError" class="mb-3 text-sm font-semibold text-danger" role="alert">{{ submitError }}</p>
           <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!canSubmit">
             {{ t('booking.submit') }}
           </BaseButton>

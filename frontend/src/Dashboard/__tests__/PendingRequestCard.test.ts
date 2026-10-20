@@ -5,20 +5,21 @@ import { renderWithPlugins } from '@/utils/testRender'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 
 const request = {
-  id: 'req-42',
+  id: 42,
   clientName: 'Lucas Andrade',
   clientWhatsapp: '11988887777',
-  serviceId: 'haircut',
+  serviceId: '1',
+  serviceName: 'Corte',
+  durationMinutes: 45,
   date: '2026-10-20',
   time: '14:30',
   status: AppointmentStatus.Pending,
 }
-const service = { id: 'haircut', name: 'Corte', durationMinutes: 45, priceInCents: 5000 }
 
 describe('PendingRequestCard', () => {
   it('shows client, service and time', () => {
     // Arrange & Act
-    renderWithPlugins(PendingRequestCard, { props: { request, service } })
+    renderWithPlugins(PendingRequestCard, { props: { request, priceInCents: 5000 } })
 
     // Assert
     expect(screen.getByText('Lucas Andrade')).toBeTruthy()
@@ -28,23 +29,23 @@ describe('PendingRequestCard', () => {
 
   it('emits accept with the request id', async () => {
     // Arrange
-    const { emitted } = renderWithPlugins(PendingRequestCard, { props: { request, service } })
+    const { emitted } = renderWithPlugins(PendingRequestCard, { props: { request, priceInCents: 5000 } })
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: 'Aceitar' }))
 
     // Assert
-    expect(emitted('accept')).toEqual([['req-42']])
+    expect(emitted('accept')).toEqual([[42]])
   })
 
   it('emits reject with the request id', async () => {
     // Arrange
-    const { emitted } = renderWithPlugins(PendingRequestCard, { props: { request, service } })
+    const { emitted } = renderWithPlugins(PendingRequestCard, { props: { request, priceInCents: 5000 } })
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: 'Recusar' }))
 
     // Assert
-    expect(emitted('reject')).toEqual([['req-42']])
+    expect(emitted('reject')).toEqual([[42]])
   })
 })

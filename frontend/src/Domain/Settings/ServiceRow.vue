@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TextField from '@/components/ui/TextField.vue'
-import type { Service } from '@/Booking/booking.model'
+import type { Service } from './settings.model'
 import { SERVICE_LIMITS, TEXT_LIMITS } from './settings.validation'
 import { formatBRL, formatMoneyInput, parseMoneyInput } from '@/utils/currency'
 

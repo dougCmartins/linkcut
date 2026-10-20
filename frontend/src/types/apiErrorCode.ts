@@ -22,6 +22,9 @@ export const ApiErrorCode = {
   ImageNotFound: 'IMAGE_NOT_FOUND',
   InvalidImage: 'INVALID_IMAGE',
   ExpenseNotFound: 'EXPENSE_NOT_FOUND',
+  SlotUnavailable: 'SLOT_UNAVAILABLE',
+  InvalidStatusTransition: 'INVALID_STATUS_TRANSITION',
+  BookingRequestNotFound: 'BOOKING_REQUEST_NOT_FOUND',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

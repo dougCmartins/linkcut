@@ -61,6 +61,11 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('refresh', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
         // Public pages by slug (bio link, portfolio, booking options) and image uploads.
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
+        // Public booking requests: a few per minute per visitor, so nobody fills a barber's agenda.
+        RateLimiter::for('booking', fn (Request $request) => [
+            Limit::perMinute(5)->by($request->ip()),
+            Limit::perHour(20)->by($request->ip()),
+        ]);
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 

@@ -1,6 +1,6 @@
 # Requisitos — Histórico de atendimentos e painel do mês
 
-> **Escopo:** frontend. Sem backend ainda: os dados vêm de uma **API simulada** (`frontend/src/History/history.api.ts`), que gera um histórico fixo de cerca de 2 anos (o mesmo dia mostra sempre os mesmos atendimentos). Para ligar o backend, só esse arquivo muda.
+> **Escopo:** frontend e API (`/api/finance`). Os dados de demonstração (cerca de 2 anos de atendimentos) vêm do seeder.
 > **Rota:** `/painel/historico` (precisa de login). Abre ao tocar no card **Faturamento** do painel.
 
 ## 1. Painel principal (dashboard)
@@ -49,10 +49,10 @@
 | RF-A4 | Um aviso "Atendimento concluído · R$ 50,00 no faturamento" fica 5 s na tela com o botão **Desfazer**, que volta o atendimento para confirmado e o retira do histórico (proteção contra toque por engano). |
 | RF-A5 | Só um atendimento **confirmado e de hoje** pode ser concluído; qualquer outro caso é recusado (falha rápida). O mesmo atendimento nunca conta duas vezes no faturamento (o id do registro é o id do agendamento). |
 
-**Situação atual (Etapa 2):** o histórico vem da API (`revenue_entries`). Até a Etapa 3, "Concluir atendimento" continua simulado no navegador e **não entra** no faturamento da API.
+**Situação atual (Etapa 3):** "Concluir atendimento" chama `POST /api/schedule/requests/{id}/complete`, que grava o preço e o custo atuais do serviço no histórico. O "Desfazer" chama `POST …/reopen` e tira o lançamento.
 
 ## 4. API
 
 - `GET /api/finance/history?from&to&page&per_page` (50, 100 ou 200): página do período, do mais novo ao mais antigo, mais os totais do período inteiro (faturamento, quantidade e ticket médio).
 - `GET /api/finance/history/export?from&to`: CSV do período inteiro, gerado pelo servidor em streaming. Usa `;` como separador, vírgula decimal, BOM UTF-8 e CRLF, e neutraliza células que viram fórmula.
-- Etapa 3: concluir e desfazer um atendimento vão chamar `RecordServiceRevenue` (idempotente pelo pedido) e `RemoveServiceRevenue`, com o preço e o custo daquele momento.
+- Concluir e desfazer passam pelo `Orchestrator/CompleteAppointment`, que usa `RecordServiceRevenue` (idempotente pelo pedido) e `RemoveServiceRevenue`.

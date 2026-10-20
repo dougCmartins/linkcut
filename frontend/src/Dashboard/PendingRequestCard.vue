@@ -2,12 +2,13 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import type { BookingRequest, Service } from '@/Booking/booking.model'
+import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { formatBRL } from '@/utils/currency'
 import { formatDayMonth, formatWeekdayShort, fromIsoDate } from '@/utils/date'
 
-const props = defineProps<{ request: BookingRequest; service: Service | undefined }>()
-const emit = defineEmits<{ accept: [requestId: string]; reject: [requestId: string] }>()
+/** `priceInCents`: the service's current price (unknown when the service was removed). */
+const props = defineProps<{ request: BookingRequest; priceInCents: number | undefined }>()
+const emit = defineEmits<{ accept: [requestId: number]; reject: [requestId: number] }>()
 const { t } = useI18n()
 
 const initials = computed(() =>
@@ -25,7 +26,7 @@ const schedule = computed(() => {
     time: props.request.time,
   })
 })
-const price = computed(() => (props.service ? formatBRL(props.service.priceInCents) : ''))
+const price = computed(() => (props.priceInCents === undefined ? '' : formatBRL(props.priceInCents)))
 </script>
 
 <template>
@@ -42,7 +43,7 @@ const price = computed(() => (props.service ? formatBRL(props.service.priceInCen
         <p class="truncate text-sm text-muted">{{ schedule }}</p>
       </div>
       <div class="text-right">
-        <p class="text-sm font-semibold">{{ service?.name }}</p>
+        <p class="text-sm font-semibold">{{ request.serviceName }}</p>
         <p class="font-display text-sm font-extrabold text-accent">{{ price }}</p>
       </div>
     </div>

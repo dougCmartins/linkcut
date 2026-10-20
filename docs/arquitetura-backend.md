@@ -21,7 +21,10 @@ backend/
 ├── src/Domain/
 │   ├── Tenant/               O tenant (barbearia) e o isolamento por tenant_id
 │   ├── Identity/             Conta do barbeiro, login, 2FA e sessão
-│   └── Orchestrator/SignIn/  Fluxo que cruza Identity + Tenant
+│   ├── Settings/             Perfil, portfólio, tema, serviços, horários, imagens e páginas públicas
+│   ├── Finance/              Histórico (faturamento), despesas e resumo do mês
+│   ├── Schedule/             Pedidos de agendamento e seus status
+│   └── Orchestrator/         Fluxos que cruzam domínios: SignIn, PublicBooking, CompleteAppointment
 └── database/                 migrations, factories, seeders
 ```
 
@@ -82,6 +85,13 @@ Exemplo: `Orchestrator/SignIn/CompleteSignIn` faz:
 1. confere o código (Identity `VerifyTwoFactorCode`);
 2. confere se o tenant está ativo (Tenant `EnsureTenantIsActive`);
 3. abre a sessão (Identity `IssueSession`).
+
+Os outros dois:
+
+| Orchestrator | Domínios | Faz |
+|---|---|---|
+| `PublicBooking` | Settings + Schedule | `ShowAvailability` calcula os horários livres de toda a janela de agendamento (regras de Settings, horários ocupados de Schedule, sem dados de clientes). `RequestBooking` confere o horário e pede ao Schedule para gravar o pedido, que confere de novo com a barbearia travada (`lockForUpdate`) e responde `SLOT_UNAVAILABLE` 409 se outro cliente pegou o horário. |
+| `CompleteAppointment` | Schedule + Settings + Finance | Numa transação: marca o pedido como concluído (só confirmado e de hoje), lê o preço e o custo atuais do serviço e grava o lançamento no histórico. O desfazer volta o status e apaga o lançamento. |
 
 ## Como criar um domínio novo
 

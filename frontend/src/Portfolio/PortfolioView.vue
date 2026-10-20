@@ -5,7 +5,7 @@ import SmartImage from '@/components/ui/SmartImage.vue'
 import AboutCard from './AboutCard.vue'
 import WorkGallery from './WorkGallery.vue'
 import StickyBookingBar from './StickyBookingBar.vue'
-import { useBookingStore } from '@/Booking/booking.store'
+import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
 import { usePublicPage } from '@/Domain/Settings/usePublicPage'
 

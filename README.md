@@ -44,7 +44,7 @@ make test    # testes da API · make test-web: testes do SPA
 
 ## Frontend (Vue 3 + Tailwind)
 
-Telas mobile-first. Login, Configurações, páginas públicas, Histórico, Despesas e as métricas do painel usam a API real. Os pedidos de agendamento ainda são simulados (`frontend/src/mocks/`) até a Etapa 3 ([plano](docs/plano-migracao-backend.md)):
+Telas mobile-first. Todas usam a API real, sem dados simulados ([plano da migração](docs/plano-migracao-backend.md)):
 
 | Rota | Tela |
 |------|------|

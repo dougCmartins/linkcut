@@ -1,4 +1,3 @@
-import type { Service } from '@/Booking/booking.model'
 import type { SocialNetwork } from '@/types/socialNetwork'
 import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 
@@ -88,6 +87,16 @@ export interface PortfolioSettings {
   story: string
   highlights: Highlight[]
   photos: PortfolioPhoto[]
+}
+
+/** A service the client can book. */
+export interface Service {
+  id: string
+  name: string
+  durationMinutes: number
+  priceInCents: number
+  /** Fixed cost per procedure (material, products), private to the barber. Missing in public data. */
+  costInCents?: number
 }
 
 export interface DayHours {

@@ -19,6 +19,9 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.ImageNotFound]: 'imageNotFound',
   [ApiErrorCode.InvalidImage]: 'invalidImage',
   [ApiErrorCode.ExpenseNotFound]: 'expenseNotFound',
+  [ApiErrorCode.SlotUnavailable]: 'slotUnavailable',
+  [ApiErrorCode.InvalidStatusTransition]: 'invalidStatusTransition',
+  [ApiErrorCode.BookingRequestNotFound]: 'bookingRequestNotFound',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

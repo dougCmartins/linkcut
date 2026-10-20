@@ -10,7 +10,7 @@ import WorkingHoursEditor from './WorkingHoursEditor.vue'
 import { useSettingsStore } from './settings.store'
 import { BOOKING_WINDOW_OPTIONS, NEW_SERVICE_ID_PREFIX, SLOT_INTERVAL_OPTIONS, SettingsSection } from './settings.model'
 import { useSectionErrors } from './useSectionErrors'
-import type { Service } from '@/Booking/booking.model'
+import type { Service } from './settings.model'
 
 const DEFAULT_NEW_SERVICE_DURATION = 30
 

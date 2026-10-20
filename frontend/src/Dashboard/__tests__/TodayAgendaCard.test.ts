@@ -5,21 +5,22 @@ import { renderWithPlugins } from '@/utils/testRender'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 
 const request = {
-  id: 'req-42',
+  id: 42,
   clientName: 'Lucas Andrade',
   clientWhatsapp: '11988887777',
-  serviceId: 'haircut',
+  serviceId: '1',
+  serviceName: 'Corte',
+  durationMinutes: 45,
   date: '2026-10-20',
   time: '14:30',
   status: AppointmentStatus.Confirmed,
 }
-const service = { id: 'haircut', name: 'Corte', durationMinutes: 45, priceInCents: 5000 }
 const completeName = 'Concluir atendimento de Lucas Andrade às 14:30'
 
 describe('TodayAgendaCard', () => {
   it('shows time, client, service and price', () => {
     // Arrange & Act
-    renderWithPlugins(TodayAgendaCard, { props: { request, service, isBusy: false } })
+    renderWithPlugins(TodayAgendaCard, { props: { request, priceInCents: 5000, isBusy: false } })
 
     // Assert
     expect(screen.getByText('14:30')).toBeTruthy()
@@ -30,18 +31,18 @@ describe('TodayAgendaCard', () => {
 
   it('emits complete with the request id', async () => {
     // Arrange
-    const { emitted } = renderWithPlugins(TodayAgendaCard, { props: { request, service, isBusy: false } })
+    const { emitted } = renderWithPlugins(TodayAgendaCard, { props: { request, priceInCents: 5000, isBusy: false } })
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: completeName }))
 
     // Assert
-    expect(emitted('complete')).toEqual([['req-42']])
+    expect(emitted('complete')).toEqual([[42]])
   })
 
   it('disables the button while concluding', () => {
     // Arrange & Act
-    renderWithPlugins(TodayAgendaCard, { props: { request, service, isBusy: true } })
+    renderWithPlugins(TodayAgendaCard, { props: { request, priceInCents: 5000, isBusy: true } })
 
     // Assert
     expect((screen.getByRole('button', { name: completeName }) as HTMLButtonElement).disabled).toBe(true)
@@ -52,7 +53,7 @@ describe('TodayAgendaCard', () => {
     const completed = { ...request, status: AppointmentStatus.Completed, completedPriceInCents: 4500 }
 
     // Act
-    renderWithPlugins(TodayAgendaCard, { props: { request: completed, service, isBusy: false } })
+    renderWithPlugins(TodayAgendaCard, { props: { request: completed, priceInCents: 5000, isBusy: false } })
 
     // Assert
     expect(screen.getByText('Concluído')).toBeTruthy()

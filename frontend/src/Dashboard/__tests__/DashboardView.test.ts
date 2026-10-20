@@ -4,14 +4,40 @@ import DashboardView from '../DashboardView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
 import { fetchMonthToDateFinances } from '@/Domain/Finance/monthToDate.api'
 import { formatBRL } from '@/utils/currency'
-import { useBookingStore } from '@/Booking/booking.store'
-import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
-import { createFinanceRoutes } from '@/Domain/Finance/__tests__/fakeFinanceApi'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
+import { createFinanceRoutes, type RevenueRow } from '@/Domain/Finance/__tests__/fakeFinanceApi'
+import { createScheduleRoutes, requestRow, type RequestRow } from '@/Domain/Schedule/__tests__/fakeScheduleApi'
+
+const TODAY = '2026-10-17'
+
+/** Settings, Finance and Schedule fakes together; concluding moves the fake revenue, like the API. */
+function installFakeApis(requests?: RequestRow[]) {
+  const finance = createFinanceRoutes({ today: TODAY })
+  const schedule = createScheduleRoutes({
+    today: TODAY,
+    requests,
+    onComplete: (row, price, cost) =>
+      finance.state.history.push({
+        id: 10_000 + row.id,
+        date: row.date,
+        time: row.starts_at,
+        client_name: row.client_name,
+        service_name: row.service_name,
+        price_in_cents: price,
+        cost_in_cents: cost,
+      } satisfies RevenueRow),
+    onReopen: (row) => {
+      finance.state.history = finance.state.history.filter((entry) => entry.id !== 10_000 + row.id)
+    },
+  })
+  installFakeSettingsApi(undefined, { ...finance.routes, ...schedule.routes })
+  return { finance, schedule }
+}
 
 describe('DashboardView', () => {
   beforeEach(() => {
-    installFakeSettingsApi(undefined, createFinanceRoutes().routes)
+    installFakeApis()
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 17, 18, 0))
   })
@@ -62,18 +88,14 @@ describe('DashboardView', () => {
     expect(screen.getByText(/Nenhum atendimento confirmado para hoje/)).toBeTruthy()
   })
 
-  it('accept → agenda → conclude, with undo (revenue reaches the API only in stage 3)', async () => {
+  it('accept → agenda → conclude adds the price to the revenue, and undo takes it back', async () => {
     // Arrange
+    const { schedule } = installFakeApis([requestRow({ id: 5, client_name: 'Ana Souza', date: TODAY, starts_at: '09:00' })])
+    const revenueBefore = (await fetchMonthToDateFinances()).revenueInCents
+    const revenueLink = (cents: number) => (name: string) =>
+      name === `Faturamento do mês até hoje: ${formatBRL(cents)}. Ver histórico`
     renderWithPlugins(DashboardView)
-    await useSettingsStore().ensureLoaded()
-    const bookingStore = useBookingStore()
-    const request = bookingStore.submitRequest({
-      clientName: 'Ana Souza',
-      clientWhatsapp: '11912345678',
-      serviceId: '1',
-      date: '2026-10-17',
-      time: '09:00',
-    })
+    await screen.findByRole('link', { name: revenueLink(revenueBefore) })
 
     // Act
     const pendingCard = (await screen.findByText('Ana Souza')).closest('article') as HTMLElement
@@ -81,14 +103,44 @@ describe('DashboardView', () => {
     await fireEvent.click(await screen.findByRole('button', { name: 'Concluir atendimento de Ana Souza às 09:00' }))
 
     // Assert
-    expect(await screen.findByText('1 de 1 concluídos')).toBeTruthy()
+    await screen.findByRole('link', { name: revenueLink(revenueBefore + 5000) })
+    expect(screen.getByText('1 de 1 concluídos')).toBeTruthy()
+    expect(screen.getByText(/Atendimento concluído · R\$\s50,00 no faturamento/)).toBeTruthy()
 
     // Act (undo)
-    await fireEvent.click(await screen.findByRole('button', { name: 'Desfazer' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Desfazer' }))
 
     // Assert (undo)
-    await vi.waitFor(() => expect(bookingStore.requests.find((item) => item.id === request.id)?.status).toBe('confirmed'))
+    await screen.findByRole('link', { name: revenueLink(revenueBefore) })
+    expect(schedule.requests[0]?.status).toBe('confirmed')
     expect(screen.getByText('0 de 1 concluídos')).toBeTruthy()
+  })
+
+  it('lists the pending requests from the API with the service price', async () => {
+    // Arrange & Act (App.vue loads the barber's settings on dashboard pages)
+    renderWithPlugins(DashboardView)
+    await useSettingsStore().ensureLoaded()
+
+    // Assert
+    const card = (await screen.findByText('Bruno Lima')).closest('article') as HTMLElement
+    expect(within(card).getByText('Barba')).toBeTruthy()
+    expect(within(card).getByText(/R\$\s40,00/)).toBeTruthy()
+    expect(screen.getByText('Pedro Martins')).toBeTruthy()
+  })
+
+  it('shows the API message when a request was already answered elsewhere', async () => {
+    // Arrange
+    const { schedule } = installFakeApis()
+    renderWithPlugins(DashboardView)
+    const card = (await screen.findByText('Bruno Lima')).closest('article') as HTMLElement
+    schedule.requests[0]!.status = 'rejected'
+
+    // Act
+    await fireEvent.click(within(card).getByRole('button', { name: 'Aceitar' }))
+
+    // Assert
+    expect(await screen.findByText('Este pedido já foi atualizado. Atualize a página.')).toBeTruthy()
+    await vi.waitFor(() => expect(screen.queryByText('Bruno Lima')).toBeNull())
   })
 
   it('the margin tooltip explains the calculation with the month numbers', async () => {
