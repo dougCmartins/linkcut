@@ -22,13 +22,13 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/painel/historico',
     name: 'history',
-    component: () => import('@/History/HistoryView.vue'),
+    component: () => import('@/Domain/Finance/History/HistoryView.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/painel/despesas',
     name: 'expenses',
-    component: () => import('@/Expenses/ExpensesView.vue'),
+    component: () => import('@/Domain/Finance/Expenses/ExpensesView.vue'),
     meta: { requiresAuth: true },
   },
   {

@@ -18,6 +18,7 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.TenantInactive]: 'tenantInactive',
   [ApiErrorCode.ImageNotFound]: 'imageNotFound',
   [ApiErrorCode.InvalidImage]: 'invalidImage',
+  [ApiErrorCode.ExpenseNotFound]: 'expenseNotFound',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

@@ -18,6 +18,8 @@ export interface HttpOptions {
   body?: unknown
   /** Sends the access token and refreshes it once on 401. Default: true. */
   auth?: boolean
+  /** "blob" for file downloads (e.g. CSV). Errors are still read as the JSON envelope. Default: "json". */
+  responseType?: 'json' | 'blob'
 }
 
 /** Supplied by the auth store, so the client does not depend on it. */
@@ -62,6 +64,7 @@ async function send<T>(path: string, options: HttpOptions): Promise<HttpResponse
   }
 
   if (response.status === 204) return { data: undefined as T }
+  if (response.ok && options.responseType === 'blob') return { data: (await response.blob()) as T }
   const body: unknown = await response.json().catch(() => null)
   if (!response.ok) {
     throw isEnvelope(body)

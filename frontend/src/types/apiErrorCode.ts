@@ -21,6 +21,7 @@ export const ApiErrorCode = {
   TenantNotFound: 'TENANT_NOT_FOUND',
   ImageNotFound: 'IMAGE_NOT_FOUND',
   InvalidImage: 'INVALID_IMAGE',
+  ExpenseNotFound: 'EXPENSE_NOT_FOUND',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]
