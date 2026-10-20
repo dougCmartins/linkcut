@@ -34,8 +34,9 @@ final class DatabaseSeeder extends Seeder
             ], ['instagram' => 'https://instagram.com/rafa.barber']);
             $this->settings($navalha, 'Navalha Norte', ['whatsapp_number' => '21977776666'], []);
 
-            // Only the demo account gets a history and expenses; Navalha Norte starts empty.
+            // Only the demo account gets a history, expenses and booking requests; Navalha Norte starts empty.
             app(FinanceDemoSeeder::class)->forTenant($rafael);
+            app(ScheduleDemoSeeder::class)->forTenant($rafael);
         });
     }
 
