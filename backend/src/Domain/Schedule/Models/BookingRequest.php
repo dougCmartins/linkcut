@@ -17,6 +17,7 @@ final class BookingRequest extends Model
     protected $fillable = [
         'tenant_id', 'client_name', 'client_whatsapp', 'service_id', 'service_name', 'duration_minutes',
         'date', 'starts_at', 'ends_at', 'status', 'completed_at', 'client_distance_meters',
+        'client_id', 'client_email', 'reminded_at',
     ];
 
     protected function casts(): array
@@ -27,6 +28,8 @@ final class BookingRequest extends Model
             'status' => BookingStatus::class,
             'completed_at' => 'immutable_datetime',
             'client_distance_meters' => 'integer',
+            'client_id' => 'integer',
+            'reminded_at' => 'immutable_datetime',
         ];
     }
 

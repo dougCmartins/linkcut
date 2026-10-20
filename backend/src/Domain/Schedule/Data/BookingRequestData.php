@@ -23,5 +23,9 @@ final class BookingRequestData extends Data
         public readonly BookingStatus $status,
         /** How far the client was from the barbershop when booking (null = not shared). */
         public readonly ?int $client_distance_meters = null,
+        /** Where the client gets the e-mails (empty for requests made before e-mail was asked). */
+        public readonly string $client_email = '',
+        /** The client account behind the booking (null for requests made before accounts existed). */
+        public readonly ?int $client_id = null,
     ) {}
 }

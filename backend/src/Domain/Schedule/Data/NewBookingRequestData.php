@@ -17,6 +17,9 @@ final class NewBookingRequestData extends Data
         public readonly int $duration_minutes,
         public readonly string $date,
         public readonly string $starts_at,
+        public readonly string $client_email,
+        /** The client account (global) behind this booking. */
+        public readonly int $client_id,
         /** How far the client was from the barbershop (null = not shared). */
         public readonly ?int $client_distance_meters = null,
     ) {}

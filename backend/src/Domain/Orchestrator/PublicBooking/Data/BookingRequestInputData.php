@@ -7,6 +7,7 @@ namespace Domain\Orchestrator\PublicBooking\Data;
 use Domain\Settings\Support\WhatsappNumberRule;
 use Spatie\LaravelData\Attributes\Validation\Between;
 use Spatie\LaravelData\Attributes\Validation\DateFormat;
+use Spatie\LaravelData\Attributes\Validation\Email;
 use Spatie\LaravelData\Attributes\Validation\IntegerType;
 use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Attributes\Validation\Min;
@@ -26,6 +27,9 @@ final class BookingRequestInputData extends Data
         public readonly string $client_name,
         #[Required, StringType, Rule(new WhatsappNumberRule)]
         public readonly string $client_whatsapp,
+        /** Where the client gets the answer and the reminder; also the client's account. */
+        #[Required, StringType, Email, Max(120)]
+        public readonly string $client_email,
         #[Required, IntegerType, Min(1)]
         public readonly int $service_id,
         #[Required, DateFormat('Y-m-d')]

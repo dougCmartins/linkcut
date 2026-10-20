@@ -1,0 +1,54 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Domain\Orchestrator\ClientAppointments\Actions;
+
+use Domain\Client\Models\Client;
+use Domain\Orchestrator\Barbershop\Actions\ShowBarbershopContact;
+use Domain\Orchestrator\Barbershop\Data\BarbershopContactData;
+use Domain\Orchestrator\ClientAppointments\Data\ClientAppointmentData;
+use Domain\Schedule\Actions\ListClientBookings;
+use Domain\Schedule\Data\ClientBookingData;
+use Domain\Schedule\Data\ClientBookingsQueryData;
+use Domain\Tenant\Context\CurrentTenant;
+use Spatie\LaravelData\DataCollection;
+
+/**
+ * The signed-in client's appointments at every barbershop where they booked (newest first). No marketplace:
+ * only barbershops of their own bookings show up.
+ */
+final class ListClientAppointments
+{
+    public function __construct(
+        private readonly ListClientBookings $listBookings,
+        private readonly ShowBarbershopContact $showContact,
+        private readonly CurrentTenant $currentTenant,
+    ) {}
+
+    /** @return DataCollection<int, ClientAppointmentData> */
+    public function handle(): DataCollection
+    {
+        /** @var Client $client */
+        $client = auth('client')->user();
+        $bookings = collect($this->listBookings->handle(new ClientBookingsQueryData(client_id: $client->id))->all());
+
+        /** @var array<int, BarbershopContactData> $barbershops */
+        $barbershops = $bookings->pluck('tenant_id')->unique()
+            ->mapWithKeys(fn (int $tenantId): array => [
+                $tenantId => $this->currentTenant->run($tenantId, fn (): BarbershopContactData => $this->showContact->handle()),
+            ])->all();
+
+        $appointments = $bookings->map(fn (ClientBookingData $booking): ClientAppointmentData => new ClientAppointmentData(
+            id: $booking->id,
+            service_name: $booking->service_name,
+            date: $booking->date,
+            starts_at: $booking->starts_at,
+            ends_at: $booking->ends_at,
+            status: $booking->status,
+            barbershop: $barbershops[$booking->tenant_id],
+        ));
+
+        return ClientAppointmentData::collect($appointments, DataCollection::class);
+    }
+}

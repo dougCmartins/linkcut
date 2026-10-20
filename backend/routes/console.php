@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Domain\Orchestrator\ClientEmails\Actions\InviteClientsToRegister;
+use Domain\Orchestrator\ClientEmails\Actions\SendBookingReminders;
 use Domain\Settings\Actions\PruneUnusedImages;
 use Domain\Settings\Data\PruneImagesData;
 use Illuminate\Support\Facades\Artisan;
@@ -32,6 +34,18 @@ Artisan::command('settings:prune-images', function (PruneUnusedImages $prune): v
 })->purpose('Delete uploaded images no settings reference anymore');
 
 Schedule::command('settings:prune-images')->dailyAt('03:30');
+
+// E-mails to clients: the day-before reminder and the single sign-up invitation.
+Artisan::command('schedule:send-reminders', function (SendBookingReminders $reminders): void {
+    $this->info('Reminders sent: '.$reminders->handle());
+})->purpose('E-mail clients the day before a confirmed appointment');
+
+Artisan::command('client:invite-registration', function (InviteClientsToRegister $invites): void {
+    $this->info('Invitations sent: '.$invites->handle());
+})->purpose('E-mail clients who booked but did not complete the sign-up (once)');
+
+Schedule::command('schedule:send-reminders')->hourly()->withoutOverlapping();
+Schedule::command('client:invite-registration')->hourly()->withoutOverlapping();
 
 // Keys of the push notifications. Idempotent: writes them to .env only when missing (the Docker entrypoint runs it).
 Artisan::command('notifications:vapid-keys {--show : Print new keys instead of writing .env}', function (): void {

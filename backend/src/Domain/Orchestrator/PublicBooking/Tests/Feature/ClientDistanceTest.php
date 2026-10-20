@@ -25,7 +25,7 @@ final class ClientDistanceTest extends TestCase
     /** @return array<string, mixed> */
     private function booking(int $serviceId, array $location = []): array
     {
-        return ['client_name' => 'João Silva', 'client_whatsapp' => '11912345678', 'service_id' => $serviceId, 'date' => '2026-10-20', 'time' => '10:00', ...$location];
+        return ['client_name' => 'João Silva', 'client_whatsapp' => '11912345678', 'client_email' => 'joao@example.com', 'service_id' => $serviceId, 'date' => '2026-10-20', 'time' => '10:00', ...$location];
     }
 
     public function test_the_barber_sees_how_far_the_client_was_without_the_client_coordinates(): void

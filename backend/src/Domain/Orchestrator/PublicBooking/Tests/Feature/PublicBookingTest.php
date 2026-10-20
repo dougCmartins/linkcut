@@ -26,6 +26,7 @@ final class PublicBookingTest extends TestCase
         return [
             'client_name' => 'João Silva',
             'client_whatsapp' => '(11) 91234-5678',
+            'client_email' => 'Joao@Example.com',
             'service_id' => $serviceId,
             'date' => '2026-10-20',
             'time' => '10:00',
