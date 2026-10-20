@@ -3,7 +3,9 @@ import type { SocialNetwork } from '@/types/socialNetwork'
 import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 import {
   NEW_SERVICE_ID_PREFIX,
+  emptyAddress,
   type AppSettings,
+  type BarbershopAddress,
   type DayHours,
   type ImageRef,
   type PortfolioSettings,
@@ -28,7 +30,20 @@ interface HighlightBody {
   value: string | null
 }
 
+interface AddressBody {
+  zip_code: string
+  street: string
+  number: string
+  complement: string | null
+  district: string
+  city: string
+  state: string
+  latitude: number | null
+  longitude: number | null
+}
+
 interface ProfileBody {
+  address: AddressBody | null
   name: string
   handle: string | null
   bio: string | null
@@ -95,6 +110,18 @@ interface PublicPageBody {
 const toSocials = (socials: SocialLinkBody[]): SocialLink[] =>
   socials.map((social) => ({ network: social.network, url: social.url ?? '' }))
 
+const toAddress = (body: AddressBody): BarbershopAddress => ({
+  zipCode: body.zip_code,
+  street: body.street,
+  number: body.number,
+  complement: body.complement ?? '',
+  district: body.district,
+  city: body.city,
+  state: body.state,
+  latitude: body.latitude,
+  longitude: body.longitude,
+})
+
 const toHighlights = (highlights: HighlightBody[]) =>
   highlights.map((highlight) => ({ label: highlight.label ?? '', value: highlight.value ?? '' }))
 
@@ -108,6 +135,7 @@ function toProfile(body: ProfileBody): ProfileSettings {
     whatsappNumber: body.whatsapp_number,
     whatsappMessage: body.whatsapp_message ?? '',
     socials: toSocials(body.socials),
+    address: body.address ? toAddress(body.address) : emptyAddress(),
   }
 }
 
@@ -171,6 +199,18 @@ function profileBody(profile: ProfileSettings) {
     whatsapp_number: profile.whatsappNumber,
     whatsapp_message: profile.whatsappMessage,
     socials: profile.socials.map((social) => ({ network: social.network, url: social.url.trim() || null })),
+    address: {
+      zip_code: profile.address.zipCode.replace(/\D/g, ''),
+      street: profile.address.street.trim(),
+      number: profile.address.number.trim(),
+      complement: profile.address.complement.trim() || null,
+      district: profile.address.district.trim(),
+      city: profile.address.city.trim(),
+      state: profile.address.state,
+      // Only set by "Estou na barbearia"; otherwise the API finds the point from the address.
+      latitude: profile.address.latitude,
+      longitude: profile.address.longitude,
+    },
   }
 }
 
@@ -264,6 +304,7 @@ export async function fetchPublicPage(slug: string): Promise<PublicPage> {
       whatsappNumber: data.profile.whatsapp_number,
       whatsappMessage: data.profile.whatsapp_message ?? '',
       socials: toSocials(data.profile.socials),
+      address: data.profile.address ? toAddress(data.profile.address) : null,
     },
     portfolio: {
       coverUrl: data.portfolio.cover_url ?? '',

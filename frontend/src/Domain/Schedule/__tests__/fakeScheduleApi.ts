@@ -19,6 +19,7 @@ export interface RequestRow {
   starts_at: string
   ends_at: string
   status: 'pending' | 'confirmed' | 'rejected' | 'completed'
+  client_distance_meters: number | null
 }
 
 /** Corte (id 1, 45 min, R$ 50) and Barba (id 2, 30 min, R$ 40), as in the Settings fixture. */
@@ -53,6 +54,7 @@ export function requestRow(overrides: Partial<RequestRow> & Pick<RequestRow, 'id
     starts_at: startsAt,
     ends_at: addMinutes(startsAt, service.duration),
     status: 'pending',
+    client_distance_meters: null,
     ...overrides,
   }
 }
@@ -104,7 +106,15 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
       return { status: 200, body: { service_id: serviceId, days } }
     },
     [`POST /public/${SLUG}/booking-requests`]: ({ body }: FakeCall) => {
-      const input = body as { client_name: string; client_whatsapp: string; service_id: number; date: string; time: string }
+      const input = body as {
+        client_name: string
+        client_whatsapp: string
+        service_id: number
+        date: string
+        time: string
+        client_latitude: number | null
+        client_longitude: number | null
+      }
       if (blocking().some((row) => row.date === input.date && row.starts_at === input.time)) return envelope('SLOT_UNAVAILABLE', 409)
       const row = requestRow({
         id: nextId++,
@@ -113,6 +123,8 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
         service_id: input.service_id,
         date: input.date,
         starts_at: input.time,
+        // The real API measures it from the barbershop; any shared location is 3.2 km away here.
+        client_distance_meters: input.client_latitude === null ? null : 3200,
       })
       requests.push(row)
       return { status: 201, body: { id: row.id, service_name: row.service_name, date: row.date, time: row.starts_at, status: 'pending' } }

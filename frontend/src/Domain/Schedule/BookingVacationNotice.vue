@@ -2,7 +2,8 @@
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
-defineProps<{ message: string; whatsappUrl: string }>()
+/** The agenda can't take requests (vacation, or no address yet): the message and a way to talk to the barber. */
+withDefaults(defineProps<{ message: string; whatsappUrl: string; title?: string }>(), { title: undefined })
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 </script>
@@ -15,7 +16,7 @@ const { t } = useI18n()
         <path d="M16 3v4M8 3v4M3 10h18M9.5 14.5l5 5M14.5 14.5l-5 5" />
       </svg>
     </span>
-    <h3 class="mt-6 text-2xl">{{ t('booking.vacationTitle') }}</h3>
+    <h3 class="mt-6 text-2xl">{{ title ?? t('booking.vacationTitle') }}</h3>
     <p class="mt-2 text-muted break-words">{{ message }}</p>
     <BaseButton class="mt-8" variant="secondary" elevated block :href="whatsappUrl">{{ t('bioLink.whatsapp') }}</BaseButton>
     <button type="button" class="mt-4 text-sm font-semibold text-muted hover:text-ink" @click="emit('close')">

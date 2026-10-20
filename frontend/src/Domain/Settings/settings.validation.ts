@@ -1,4 +1,5 @@
 import {
+  BRAZIL_STATES,
   MAX_PORTFOLIO_PHOTOS,
   type AppSettings,
   type PortfolioSettings,
@@ -25,6 +26,11 @@ export const TEXT_LIMITS = {
   photoAlt: { max: 80 },
   serviceName: { max: 30 },
   vacationMessage: { max: 160 },
+  addressStreet: { max: 120 },
+  addressNumber: { max: 10 },
+  addressComplement: { max: 60 },
+  addressDistrict: { max: 60 },
+  addressCity: { max: 60 },
 } as const
 
 export const SERVICE_LIMITS = {
@@ -74,6 +80,15 @@ export function validateProfile(profile: ProfileSettings): ValidationErrors {
     const url = social.url.trim()
     add(`socials.${index}`, url && !url.startsWith('https://') ? { key: 'https' } : null)
   })
+  // Required: clients see the address when they book.
+  const { address } = profile
+  add('address.zipCode', address.zipCode.replace(/\D/g, '').length === 8 ? null : { key: 'zipCode' })
+  add('address.street', checkLength(address.street, TEXT_LIMITS.addressStreet, true))
+  add('address.number', checkLength(address.number, TEXT_LIMITS.addressNumber, true))
+  add('address.complement', checkLength(address.complement, TEXT_LIMITS.addressComplement))
+  add('address.district', checkLength(address.district, TEXT_LIMITS.addressDistrict, true))
+  add('address.city', checkLength(address.city, TEXT_LIMITS.addressCity, true))
+  add('address.state', (BRAZIL_STATES as readonly string[]).includes(address.state) ? null : { key: 'state' })
   return errors
 }
 

@@ -26,6 +26,17 @@ export function createTestSettings(): AppSettings {
         { network: SocialNetwork.TikTok, url: '' },
         { network: SocialNetwork.YouTube, url: '' },
       ],
+      address: {
+        zipCode: '01304001',
+        street: 'Rua Augusta',
+        number: '1500',
+        complement: '',
+        district: 'Consolação',
+        city: 'São Paulo',
+        state: 'SP',
+        latitude: -23.5578,
+        longitude: -46.6609,
+      },
     },
     portfolio: {
       cover: testImage(3),
@@ -97,6 +108,22 @@ const themeBody = (theme: AppSettings['theme']) => ({
   button_style: theme.buttonStyle,
 })
 
+/** null when the street is empty (a barbershop without address), like the API. */
+const addressBody = ({ profile: { address } }: AppSettings) =>
+  address.street
+    ? {
+        zip_code: address.zipCode,
+        street: address.street,
+        number: address.number,
+        complement: address.complement || null,
+        district: address.district,
+        city: address.city,
+        state: address.state,
+        latitude: address.latitude,
+        longitude: address.longitude,
+      }
+    : null
+
 const socialsBody = (settings: AppSettings) =>
   settings.profile.socials.map((social) => ({ network: social.network, url: social.url || null }))
 
@@ -113,6 +140,7 @@ export function settingsBody(settings = createTestSettings()) {
       whatsapp_number: profile.whatsappNumber,
       whatsapp_message: profile.whatsappMessage,
       socials: socialsBody(settings),
+      address: addressBody(settings),
     },
     portfolio: {
       cover: portfolio.cover,
@@ -139,6 +167,7 @@ export function publicPageBody(settings = createTestSettings()) {
       whatsapp_number: profile.whatsappNumber,
       whatsapp_message: profile.whatsappMessage,
       socials: socialsBody(settings).filter((social) => social.url),
+      address: addressBody(settings),
     },
     portfolio: {
       cover_url: portfolio.cover?.url ?? null,

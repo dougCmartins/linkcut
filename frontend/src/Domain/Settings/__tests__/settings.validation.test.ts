@@ -43,6 +43,37 @@ describe('validateProfile', () => {
   })
 })
 
+describe('validateProfile address', () => {
+  it('requires the address, with an 8-digit CEP and a valid state', () => {
+    // Arrange
+    const { profile } = createTestSettings()
+    profile.address = { ...profile.address, zipCode: '0130400', street: ' ', number: '', state: 'XX', complement: 'x'.repeat(61) }
+
+    // Act
+    const errors = validateProfile(profile)
+
+    // Assert
+    expect(errors['address.zipCode']?.key).toBe('zipCode')
+    expect(errors['address.street']?.key).toBe('required')
+    expect(errors['address.number']?.key).toBe('required')
+    expect(errors['address.state']?.key).toBe('state')
+    expect(errors['address.complement']?.key).toBe('tooLong')
+    expect(errors['address.city']).toBeUndefined()
+  })
+
+  it('accepts a CEP typed with the dash', () => {
+    // Arrange
+    const { profile } = createTestSettings()
+    profile.address.zipCode = '01304-001'
+
+    // Act
+    const errors = validateProfile(profile)
+
+    // Assert
+    expect(errors['address.zipCode']).toBeUndefined()
+  })
+})
+
 describe('validatePortfolio', () => {
   it('rejects more than 4 photos', () => {
     // Arrange

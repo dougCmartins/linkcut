@@ -4,7 +4,8 @@ import DashboardView from '../DashboardView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
 import { fetchMonthToDateFinances } from '@/Domain/Finance/monthToDate.api'
 import { formatBRL } from '@/utils/currency'
-import { installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
+import { createTestSettings, installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
+import { emptyAddress } from '@/Domain/Settings/settings.model'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { createFinanceRoutes, type RevenueRow } from '@/Domain/Finance/__tests__/fakeFinanceApi'
 import { createScheduleRoutes, requestRow, type RequestRow } from '@/Domain/Schedule/__tests__/fakeScheduleApi'
@@ -126,6 +127,22 @@ describe('DashboardView', () => {
     expect(within(card).getByText('Barba')).toBeTruthy()
     expect(within(card).getByText(/R\$\s40,00/)).toBeTruthy()
     expect(screen.getByText('Pedro Martins')).toBeTruthy()
+  })
+
+  it('asks the barber for the address when the barbershop has none', async () => {
+    // Arrange
+    const settings = createTestSettings()
+    settings.profile.address = emptyAddress()
+    installFakeSettingsApi(settings, { ...createFinanceRoutes({ today: TODAY }).routes, ...createScheduleRoutes({ today: TODAY }).routes })
+
+    // Act
+    renderWithPlugins(DashboardView)
+    await useSettingsStore().ensureLoaded()
+
+    // Assert
+    const link = await screen.findByRole('link', { name: 'Cadastrar endereço' })
+    expect(link.getAttribute('href')).toBe('/painel/configuracoes?aba=link')
+    expect(screen.getByText(/Cadastre o endereço da barbearia/)).toBeTruthy()
   })
 
   it('shows the API message when a request was already answered elsewhere', async () => {

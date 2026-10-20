@@ -25,6 +25,7 @@ export const ApiErrorCode = {
   SlotUnavailable: 'SLOT_UNAVAILABLE',
   InvalidStatusTransition: 'INVALID_STATUS_TRANSITION',
   BookingRequestNotFound: 'BOOKING_REQUEST_NOT_FOUND',
+  BarbershopAddressMissing: 'BARBERSHOP_ADDRESS_MISSING',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

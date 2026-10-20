@@ -13,6 +13,7 @@ const request = {
   durationMinutes: 45,
   date: '2026-10-20',
   time: '14:30',
+  clientDistanceMeters: null,
   status: AppointmentStatus.Confirmed,
 }
 const completeName = 'Concluir atendimento de Lucas Andrade às 14:30'

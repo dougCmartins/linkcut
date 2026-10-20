@@ -13,6 +13,7 @@ const request = {
   durationMinutes: 45,
   date: '2026-10-20',
   time: '14:30',
+  clientDistanceMeters: 3240,
   status: AppointmentStatus.Pending,
 }
 
@@ -25,6 +26,16 @@ describe('PendingRequestCard', () => {
     expect(screen.getByText('Lucas Andrade')).toBeTruthy()
     expect(screen.getByText('Corte')).toBeTruthy()
     expect(screen.getByText(/14:30/)).toBeTruthy()
+  })
+
+  it('shows how far the client was, or that the location was not shared', () => {
+    // Arrange & Act
+    renderWithPlugins(PendingRequestCard, { props: { request, priceInCents: 5000 } })
+    renderWithPlugins(PendingRequestCard, { props: { request: { ...request, id: 43, clientDistanceMeters: null }, priceInCents: 5000 } })
+
+    // Assert
+    expect(screen.getByText('a 3,2 km da barbearia')).toBeTruthy()
+    expect(screen.getByText('localização não informada')).toBeTruthy()
   })
 
   it('emits accept with the request id', async () => {

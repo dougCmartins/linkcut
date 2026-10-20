@@ -3,22 +3,42 @@ import { fireEvent, screen } from '@testing-library/vue'
 import BookingModal from '../BookingModal.vue'
 import { SLUG, TODAY, installFakeScheduleApi, requestRow, type ScheduleOptions } from './fakeScheduleApi'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
-import type { ScheduleSettings } from '@/Domain/Settings/settings.model'
+import type { BarbershopAddress, ScheduleSettings } from '@/Domain/Settings/settings.model'
 import { createTestSettings } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 import { renderWithPlugins } from '@/utils/testRender'
 
 /** Renders the modal on the public page of SLUG, with its booking options changed by `change`. */
-function renderModal(change: (schedule: ScheduleSettings) => void = () => {}, api: ScheduleOptions = {}) {
+function renderModal(
+  change: (schedule: ScheduleSettings) => void = () => {},
+  api: ScheduleOptions = {},
+  address: BarbershopAddress | null = createTestSettings().profile.address,
+) {
   const fake = installFakeScheduleApi(api)
   const rendered = renderWithPlugins(BookingModal, {}, () => {
-    const { schedule } = createTestSettings()
+    const settings = createTestSettings()
+    const { schedule } = settings
     schedule.services = schedule.services.map(({ costInCents: _cost, ...service }) => service)
     change(schedule)
     const store = usePublicPageStore()
     store.slug = SLUG
     store.bookingOptions = schedule
+    store.page = {
+      profile: { ...settings.profile, avatarUrl: '', backgroundUrl: '', address },
+      portfolio: { coverUrl: '', quote: '', story: '', highlights: [], photos: [] },
+      theme: settings.theme,
+    }
   })
   return { ...rendered, ...fake }
+}
+
+/** The device answers the location request with `point`, or with an error code (1 = denied). */
+function fakeDeviceLocation(answer: { latitude: number; longitude: number } | { errorCode: number }) {
+  const getCurrentPosition = vi.fn((success: PositionCallback, failure: PositionErrorCallback) => {
+    if ('errorCode' in answer) failure({ code: answer.errorCode, PERMISSION_DENIED: 1 } as GeolocationPositionError)
+    else success({ coords: answer } as GeolocationPosition)
+  })
+  Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true })
+  return getCurrentPosition
 }
 
 const dayButtons = () => screen.getAllByRole('radio').filter((element) => element.getAttribute('aria-label'))
@@ -88,6 +108,8 @@ describe('BookingModal', () => {
       service_id: 1,
       date: '2026-10-20',
       time: '11:00',
+      client_latitude: null,
+      client_longitude: null,
     })
     expect(requests.at(-1)?.status).toBe('pending')
   })
@@ -151,5 +173,65 @@ describe('BookingModal with the booking options of the barbershop', () => {
     const days = await loadedDays()
     expect(days.every((day) => (day as HTMLButtonElement).disabled)).toBe(true)
     expect(TODAY).toBe('2026-10-19')
+  })
+})
+
+describe('BookingModal and the barbershop address', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('shows where the barbershop is, with directions', () => {
+    // Arrange & Act
+    renderModal()
+
+    // Assert
+    expect(screen.getByText('Rua Augusta, 1500 – Consolação, São Paulo/SP')).toBeTruthy()
+    const directions = screen.getByRole('link', { name: /Como chegar/ })
+    expect(directions.getAttribute('href')).toContain('https://www.google.com/maps/search/?api=1&query=Rua%20Augusta')
+    expect(directions.getAttribute('target')).toBe('_blank')
+  })
+
+  it('a client who shares the location sees the distance and the request carries it', async () => {
+    // Arrange: the MASP, 648 m from the barbershop
+    fakeDeviceLocation({ latitude: -23.5614, longitude: -46.6559 })
+    const { calls } = renderModal()
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar minha localização' }))
+    await fillValidBooking()
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+
+    // Assert
+    expect(screen.getByText('Você está a 648 m da barbearia.')).toBeTruthy()
+    await screen.findByText('Solicitação enviada!')
+    expect(calls.at(-1)?.body).toMatchObject({ client_latitude: -23.5614, client_longitude: -46.6559 })
+  })
+
+  it('a client who denies the location still books, without coordinates', async () => {
+    // Arrange
+    fakeDeviceLocation({ errorCode: 1 })
+    const { calls } = renderModal()
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar minha localização' }))
+    await fillValidBooking()
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+
+    // Assert
+    expect(screen.getByText('Tudo bem, você pode agendar mesmo assim.')).toBeTruthy()
+    await screen.findByText('Solicitação enviada!')
+    expect(calls.at(-1)?.body).toMatchObject({ client_latitude: null, client_longitude: null })
+  })
+
+  it('a barbershop without address shows a notice instead of the form', () => {
+    // Arrange & Act
+    renderModal(() => {}, {}, null)
+
+    // Assert
+    expect(screen.getByText('Agenda indisponível')).toBeTruthy()
+    expect(screen.getByText(/ainda não informou o endereço/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Solicitar Agendamento' })).toBeNull()
   })
 })

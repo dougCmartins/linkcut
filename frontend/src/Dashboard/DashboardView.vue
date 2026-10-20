@@ -16,7 +16,7 @@ import { useMonthToDateStore } from '@/Domain/Finance/monthToDate.store'
 import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/financialSummary'
 import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
-import { imageUrl } from '@/Domain/Settings/settings.model'
+import { hasAddress, imageUrl } from '@/Domain/Settings/settings.model'
 import { fetchCurrentTenant } from '@/Domain/Tenant/tenant.api'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { useRouter } from 'vue-router'
@@ -37,6 +37,8 @@ async function logout(): Promise<void> {
 }
 
 const profile = computed(() => settingsStore.profile)
+/** Without an address the public agenda refuses bookings, so the barber is told right away. */
+const isMissingAddress = computed(() => settingsStore.isLoaded && !hasAddress(profile.value.address))
 const avatarUrl = computed(() => imageUrl(profile.value.avatar))
 const firstName = computed(() => profile.value.name.trim().split(' ')[0] ?? profile.value.name)
 const PLACEHOLDER = '—'
@@ -148,6 +150,15 @@ async function undo(): Promise<void> {
         </svg>
       </button>
     </header>
+
+    <p
+      v-if="isMissingAddress"
+      class="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-card bg-danger/10 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-danger/40"
+      role="alert"
+    >
+      {{ t('dashboard.addressMissing') }}
+      <RouterLink to="/painel/configuracoes?aba=link" class="underline">{{ t('dashboard.addressMissingLink') }}</RouterLink>
+    </p>
 
     <section class="mt-8" :aria-labelledby="'dashboard-period'">
       <div class="flex items-center justify-between gap-3">

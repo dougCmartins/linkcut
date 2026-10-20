@@ -14,6 +14,9 @@ import { isOnVacation, isScheduleLocked } from './availability'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { createEmptySettings } from '@/Domain/Settings/settings.defaults'
 import { useApiErrors } from '@/composables/useApiErrors'
+import { GeolocationStatus, useGeolocation } from '@/composables/useGeolocation'
+import { hasAddress } from '@/Domain/Settings/settings.model'
+import { distanceInMeters, formatAddress, formatDistance, mapsUrl } from '@/utils/address'
 import { ApiErrorCode } from '@/types/apiErrorCode'
 import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
@@ -30,6 +33,33 @@ const dialog = useTemplateRef<HTMLElement>('dialog')
 const schedule = computed(() => publicPageStore.bookingOptions ?? createEmptySettings().schedule)
 const services = computed(() => schedule.value.services)
 const findService = (serviceId: string) => services.value.find((service) => service.id === serviceId)
+/** Shown before booking, so clients from far away notice it. Without it the barbershop can't take requests. */
+const barbershopAddress = computed(() => {
+  const address = publicPageStore.page?.profile.address ?? null
+  return hasAddress(address) ? address : null
+})
+
+// Optional: the client's location, only to tell the barber how far they are (the API keeps only the distance).
+const geolocation = useGeolocation()
+const clientDistance = computed(() => {
+  const point = geolocation.point.value
+  const address = barbershopAddress.value
+  if (!point || address?.latitude == null || address.longitude == null) return null
+  return distanceInMeters(point, { latitude: address.latitude, longitude: address.longitude })
+})
+const locationMessage = computed(() => {
+  switch (geolocation.status.value) {
+    case GeolocationStatus.Asking:
+      return t('booking.location.asking')
+    case GeolocationStatus.Denied:
+      return t('booking.location.denied')
+    case GeolocationStatus.Unavailable:
+      return t('booking.location.unavailable')
+    default:
+      return clientDistance.value === null ? '' : t('booking.location.distance', { distance: formatDistance(clientDistance.value) })
+  }
+})
+
 const whatsappUrl = computed(() => {
   const profile = publicPageStore.page?.profile
   return profile ? buildWhatsappUrl(profile.whatsappNumber, profile.whatsappMessage) : ''
@@ -105,6 +135,7 @@ async function submit(): Promise<void> {
       time: form.time,
       clientName: form.clientName.trim(),
       clientWhatsapp: onlyDigits(form.clientWhatsapp),
+      clientLocation: geolocation.point.value,
     })
     submittedSummary.value = t('booking.summary', {
       service: confirmation.serviceName || (findService(form.serviceId)?.name ?? ''),
@@ -172,6 +203,15 @@ onBeforeUnmount(() => {
       <BookingSuccess v-if="submittedSummary" class="px-5 pb-8" :summary="submittedSummary" @done="emit('close')" />
 
       <BookingVacationNotice
+        v-else-if="!barbershopAddress"
+        class="px-5 pb-8"
+        :title="t('booking.noAddressTitle')"
+        :message="t('booking.noAddress')"
+        :whatsapp-url="whatsappUrl"
+        @close="emit('close')"
+      />
+
+      <BookingVacationNotice
         v-else-if="isLocked"
         class="px-5 pb-8"
         :message="schedule.vacation.message"
@@ -181,6 +221,33 @@ onBeforeUnmount(() => {
 
       <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="submit">
         <div class="flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6">
+          <section class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft" aria-labelledby="booking-where">
+            <h3 id="booking-where" class="text-xs font-bold tracking-wide text-muted uppercase">{{ t('booking.whereTitle') }}</h3>
+            <p class="mt-1.5 text-[15px] leading-snug font-semibold break-words">{{ formatAddress(barbershopAddress) }}</p>
+            <a
+              :href="mapsUrl(barbershopAddress)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mt-2 inline-flex items-center gap-1 text-sm font-bold text-accent"
+            >
+              {{ t('booking.directions') }} →
+            </a>
+            <div class="mt-4 border-t border-line pt-4">
+              <p class="text-sm font-semibold">{{ t('booking.location.title') }}</p>
+              <p v-if="locationMessage" class="mt-1.5 text-sm" role="status">{{ locationMessage }}</p>
+              <BaseButton
+                v-if="geolocation.status.value === GeolocationStatus.Idle"
+                class="mt-3"
+                variant="secondary"
+                block
+                @click="geolocation.request()"
+              >
+                {{ t('booking.location.share') }}
+              </BaseButton>
+              <p class="mt-2 text-xs text-muted">{{ t('booking.location.privacy') }}</p>
+            </div>
+          </section>
+
           <fieldset class="min-w-0">
             <legend class="mb-3 text-sm font-bold">{{ t('booking.stepService') }}</legend>
             <div role="radiogroup" :aria-label="t('booking.stepService')" class="grid gap-3">

@@ -15,6 +15,7 @@ interface BookingRequestBody {
   starts_at: string
   ends_at: string
   status: AppointmentStatus
+  client_distance_meters: number | null
 }
 
 const toRequest = (body: BookingRequestBody): BookingRequest => ({
@@ -27,6 +28,7 @@ const toRequest = (body: BookingRequestBody): BookingRequest => ({
   date: body.date,
   time: body.starts_at,
   status: body.status,
+  clientDistanceMeters: body.client_distance_meters ?? null,
 })
 
 const publicPath = (slug: string) => `/public/${encodeURIComponent(slug)}`
@@ -53,6 +55,8 @@ export async function createBookingRequest(slug: string, input: BookingRequestIn
         service_id: Number(input.serviceId),
         date: input.date,
         time: input.time,
+        client_latitude: input.clientLocation?.latitude ?? null,
+        client_longitude: input.clientLocation?.longitude ?? null,
       },
     },
   )
