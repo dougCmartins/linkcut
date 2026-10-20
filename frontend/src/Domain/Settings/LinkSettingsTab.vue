@@ -5,6 +5,7 @@ import ImageUploader from '@/components/ui/ImageUploader.vue'
 import SocialIcon from '@/components/ui/SocialIcon.vue'
 import TextArea from '@/components/ui/TextArea.vue'
 import TextField from '@/components/ui/TextField.vue'
+import AddressEditor from './AddressEditor.vue'
 import LinkPreview from './LinkPreview.vue'
 import PhoneFrame from './PhoneFrame.vue'
 import SettingsCard from './SettingsCard.vue'
@@ -75,6 +76,10 @@ const backgroundUrl = computed(() => imageUrl(profile.value.background))
           :rows="2"
           :error="errorFor('whatsappMessage')"
         />
+      </SettingsCard>
+
+      <SettingsCard id="address" :title="t('settings.address.title')" :description="t('settings.address.description')">
+        <AddressEditor v-model="profile.address" :saved="store.profile.address" :error-for="errorFor" />
       </SettingsCard>
 
       <SettingsCard :title="t('settings.link.socialsTitle')" :description="t('settings.link.socialsDescription')">

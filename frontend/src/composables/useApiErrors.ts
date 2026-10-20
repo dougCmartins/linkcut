@@ -22,6 +22,7 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.SlotUnavailable]: 'slotUnavailable',
   [ApiErrorCode.InvalidStatusTransition]: 'invalidStatusTransition',
   [ApiErrorCode.BookingRequestNotFound]: 'bookingRequestNotFound',
+  [ApiErrorCode.BarbershopAddressMissing]: 'barbershopAddressMissing',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

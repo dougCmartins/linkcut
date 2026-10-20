@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { AppointmentStatus } from '@/types/appointmentStatus'
+import { formatDistance } from '@/utils/address'
 import { formatBRL } from '@/utils/currency'
 
 /** `priceInCents`: the service's current price (shown until it is concluded with its own). */
@@ -12,6 +13,11 @@ const emit = defineEmits<{ complete: [requestId: number] }>()
 const { t } = useI18n()
 
 const isCompleted = computed(() => props.request.status === AppointmentStatus.Completed)
+const distance = computed(() =>
+  props.request.clientDistanceMeters === null
+    ? t('dashboard.distanceUnknown')
+    : t('dashboard.distance', { distance: formatDistance(props.request.clientDistanceMeters) }),
+)
 const price = computed(() => formatBRL(props.request.completedPriceInCents ?? props.priceInCents ?? 0))
 </script>
 
@@ -30,6 +36,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       <div class="min-w-0 flex-1">
         <h3 class="truncate text-base" :class="isCompleted ? 'text-muted' : ''">{{ request.clientName }}</h3>
         <p class="truncate text-sm text-muted">{{ request.serviceName }}</p>
+        <p class="truncate text-xs text-muted">{{ distance }}</p>
       </div>
       <p class="shrink-0 font-display font-extrabold tabular-nums" :class="isCompleted ? 'text-success' : 'text-accent'">
         {{ price }}

@@ -229,6 +229,8 @@ As regras não cobrem estes pontos, então ficam decididos aqui:
 
 ## 5. Fora deste plano (próximos)
 
+- ✅ Endereço da barbearia e distância do cliente no agendamento ([requisitos](requisitos-localizacao.md)).
+
 - Onboarding: criar a barbearia e o dono pela tela.
 - Avisar o barbeiro de novo pedido (e-mail, push ou WhatsApp).
 - Provedor real de SMS.

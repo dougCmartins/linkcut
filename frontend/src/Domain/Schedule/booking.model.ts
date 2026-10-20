@@ -17,6 +17,8 @@ export interface BookingRequest {
   /** Start, "HH:mm". */
   time: string
   status: AppointmentStatus
+  /** How far the client was from the barbershop when booking (null = not shared). */
+  clientDistanceMeters: number | null
   /** Price that went into the revenue when it was concluded. */
   completedPriceInCents?: number
 }
@@ -28,6 +30,8 @@ export interface BookingRequestInput {
   serviceId: string
   date: string
   time: string
+  /** Only when the client shared the location (used to compute the distance; never stored). */
+  clientLocation?: { latitude: number; longitude: number } | null
 }
 
 /** A day of the booking window and its free start times ("HH:mm"). */

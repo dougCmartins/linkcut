@@ -34,6 +34,10 @@ final class DatabaseSeeder extends Seeder
             ], ['instagram' => 'https://instagram.com/rafa.barber']);
             $this->settings($navalha, 'Navalha Norte', ['whatsapp_number' => '21977776666'], []);
 
+            // Demo addresses with a fixed point on the map (no web lookup while seeding).
+            $this->address($rafael, ['01304001', 'Rua Augusta', '1500', 'Consolação', 'São Paulo', 'SP', -23.5578, -46.6609]);
+            $this->address($navalha, ['22011000', 'Rua Barata Ribeiro', '200', 'Copacabana', 'Rio de Janeiro', 'RJ', -22.9661, -43.1832]);
+
             // Only the demo account gets a history, expenses and booking requests; Navalha Norte starts empty.
             app(FinanceDemoSeeder::class)->forTenant($rafael);
             app(ScheduleDemoSeeder::class)->forTenant($rafael);
@@ -57,6 +61,32 @@ final class DatabaseSeeder extends Seeder
             foreach ($socials as $network => $url) {
                 SocialLink::query()->where('network', $network)->update(['url' => $url]);
             }
+        });
+    }
+
+    /**
+     * Only when the barbershop has no address yet (also fills databases seeded before the address existed).
+     *
+     * @param  array{0: string, 1: string, 2: string, 3: string, 4: string, 5: string, 6: float, 7: float}  $address
+     */
+    private function address(Tenant $tenant, array $address): void
+    {
+        app(CurrentTenant::class)->run($tenant->id, function () use ($address): void {
+            $profile = ProfileSettings::query()->firstOrFail();
+            if ($profile->hasAddress()) {
+                return;
+            }
+            [$zipCode, $street, $number, $district, $city, $state, $latitude, $longitude] = $address;
+            $profile->update([
+                'address_zip_code' => $zipCode,
+                'address_street' => $street,
+                'address_number' => $number,
+                'address_district' => $district,
+                'address_city' => $city,
+                'address_state' => $state,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
         });
     }
 

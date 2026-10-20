@@ -6,10 +6,18 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 use Laravel\Passport\Client;
 
 abstract class TestCase extends BaseTestCase
 {
+    /** No test ever calls a real web service (e.g. the address lookup): use Http::fake(). */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Http::preventStrayRequests();
+    }
+
     /** Passport needs keys and a personal access client to issue access tokens. */
     protected function preparePassport(): void
     {

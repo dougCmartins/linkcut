@@ -58,6 +58,39 @@ export interface SocialLink {
   url: string
 }
 
+/** The 27 Brazilian states (UF). */
+export const BRAZIL_STATES = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
+  'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+] as const
+
+/**
+ * Where the barbershop is: clients see it when they book (required to receive bookings).
+ * The point on the map is null until it is found from the address or set with "Estou na barbearia".
+ */
+export interface BarbershopAddress {
+  /** CEP, 8 digits. */
+  zipCode: string
+  street: string
+  number: string
+  complement: string
+  district: string
+  city: string
+  /** UF, e.g. "SP". */
+  state: string
+  latitude: number | null
+  longitude: number | null
+}
+
+export function emptyAddress(): BarbershopAddress {
+  return { zipCode: '', street: '', number: '', complement: '', district: '', city: '', state: '', latitude: null, longitude: null }
+}
+
+/** Barbershops created before the address was required have none until the barber fills it in. */
+export function hasAddress(address: BarbershopAddress | null): address is BarbershopAddress {
+  return Boolean(address?.street.trim())
+}
+
 export interface ProfileSettings {
   name: string
   handle: string
@@ -67,6 +100,8 @@ export interface ProfileSettings {
   whatsappNumber: string
   whatsappMessage: string
   socials: SocialLink[]
+  /** Always an object in the editor; empty fields when not filled in yet. */
+  address: BarbershopAddress
 }
 
 export interface Highlight {
@@ -149,6 +184,8 @@ export interface PublicProfile {
   whatsappNumber: string
   whatsappMessage: string
   socials: SocialLink[]
+  /** Null when the barbershop has no address yet (then it can't receive bookings). */
+  address: BarbershopAddress | null
 }
 
 export interface PublicPortfolio {

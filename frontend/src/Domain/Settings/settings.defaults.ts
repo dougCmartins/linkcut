@@ -1,4 +1,4 @@
-import type { AppSettings, ThemeSettings } from './settings.model'
+import { emptyAddress, type AppSettings, type ThemeSettings } from './settings.model'
 import { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 
 /** The default settings of a new barbershop come from the API; here only what the SPA needs before it answers. */
@@ -23,6 +23,7 @@ export function createEmptySettings(): AppSettings {
       whatsappNumber: '',
       whatsappMessage: '',
       socials: [],
+      address: emptyAddress(),
     },
     portfolio: { cover: null, quote: '', story: '', highlights: [], photos: [] },
     schedule: {

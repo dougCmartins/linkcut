@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import type { BookingRequest } from '@/Domain/Schedule/booking.model'
+import { formatDistance } from '@/utils/address'
 import { formatBRL } from '@/utils/currency'
 import { formatDayMonth, formatWeekdayShort, fromIsoDate } from '@/utils/date'
 
@@ -26,6 +27,11 @@ const schedule = computed(() => {
     time: props.request.time,
   })
 })
+const distance = computed(() =>
+  props.request.clientDistanceMeters === null
+    ? t('dashboard.distanceUnknown')
+    : t('dashboard.distance', { distance: formatDistance(props.request.clientDistanceMeters) }),
+)
 const price = computed(() => (props.priceInCents === undefined ? '' : formatBRL(props.priceInCents)))
 </script>
 
@@ -41,6 +47,7 @@ const price = computed(() => (props.priceInCents === undefined ? '' : formatBRL(
       <div class="min-w-0 flex-1">
         <h3 class="truncate text-base">{{ request.clientName }}</h3>
         <p class="truncate text-sm text-muted">{{ schedule }}</p>
+        <p class="truncate text-xs text-muted">{{ distance }}</p>
       </div>
       <div class="text-right">
         <p class="text-sm font-semibold">{{ request.serviceName }}</p>

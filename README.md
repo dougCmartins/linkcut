@@ -60,6 +60,8 @@ Telas mobile-first. Todas usam a API real, sem dados simulados ([plano da migra�
 
 🔒 = só com login. Em desenvolvimento, use a conta de demonstração `rafael@linkcut.app` / `linkcut123`. O código 2FA chega no Mailpit (e-mail) ou em `backend/storage/logs/sms.log` (SMS). Detalhes em [`docs/requisitos-autenticacao.md`](docs/requisitos-autenticacao.md).
 
+O agendamento mostra o **endereço da barbearia**, obrigatório para receber pedidos. O cliente pode compartilhar a localização, e o barbeiro vê a que distância ele está, sem guardar as coordenadas ([requisitos](docs/requisitos-localizacao.md)).
+
 Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em [`docs/requisitos-configuracoes.md`](docs/requisitos-configuracoes.md)), salvas na API (`/api/settings`) e lidas pelo visitante em `/api/public/{slug}`, sem o custo dos serviços. As imagens são enviadas para a API, que as guarda em WebP (até 1600 px). O "Ver minha página" do painel leva ao endereço da barbearia (`/:slug`).
 
 As cores ficam em um único arquivo, `frontend/src/styles/core.css`: 6 paletas, cada uma com versão clara e escura, mais uma cor personalizada opcional. O visitante pode alternar claro/escuro nas páginas públicas pelo botão no canto superior direito.

@@ -8,15 +8,20 @@ use Domain\Orchestrator\PublicBooking\Data\AvailabilityQueryData;
 use Domain\Orchestrator\PublicBooking\Data\AvailableDayData;
 use Domain\Orchestrator\PublicBooking\Data\BookingConfirmationData;
 use Domain\Orchestrator\PublicBooking\Data\BookingRequestInputData;
+use Domain\Orchestrator\PublicBooking\Exceptions\BarbershopAddressMissingException;
+use Domain\Orchestrator\PublicBooking\Support\Distance;
 use Domain\Schedule\Actions\CreateBookingRequest;
 use Domain\Schedule\Data\NewBookingRequestData;
 use Domain\Schedule\Exceptions\SlotUnavailableException;
 use Domain\Settings\Actions\ShowBookingOptions;
+use Domain\Settings\Actions\ShowProfileSettings;
+use Domain\Settings\Data\AddressData;
 use Domain\Settings\Data\PublicServiceData;
 
 /**
- * A client asks for a time on the public page: the time must be one of the free times now
- * (hours, window, vacation, taken times), then Schedule saves it as pending, checking again under a lock.
+ * A client asks for a time on the public page. The barbershop must have an address (the client saw where it is);
+ * the time must be one of the free times now (hours, window, vacation, taken times); then Schedule saves it as
+ * pending, checking again under a lock. When the client shared the location, only the distance is kept.
  */
 final class RequestBooking
 {
@@ -24,11 +29,14 @@ final class RequestBooking
         private readonly ShowAvailability $showAvailability,
         private readonly ShowBookingOptions $showBookingOptions,
         private readonly CreateBookingRequest $createBookingRequest,
+        private readonly ShowProfileSettings $showProfile,
     ) {}
 
     public function handle(BookingRequestInputData $data): BookingConfirmationData
     {
+        // Availability first: it also creates the default settings of a new barbershop.
         $availability = $this->showAvailability->handle(new AvailabilityQueryData(service_id: $data->service_id));
+        $address = $this->showProfile->handle()->address ?? throw new BarbershopAddressMissingException;
         $day = collect($availability->days->all())->first(fn (AvailableDayData $day): bool => $day->date === $data->date);
         if (! $day || ! in_array($data->time, $day->times, true)) {
             throw new SlotUnavailableException;
@@ -45,6 +53,7 @@ final class RequestBooking
             duration_minutes: $service->duration_minutes,
             date: $data->date,
             starts_at: $data->time,
+            client_distance_meters: self::distance($data, $address),
         ));
 
         return new BookingConfirmationData(
@@ -54,6 +63,16 @@ final class RequestBooking
             time: $request->starts_at,
             status: $request->status->value,
         );
+    }
+
+    /** Meters between the client and the barbershop, when both points are known. */
+    private static function distance(BookingRequestInputData $data, AddressData $address): ?int
+    {
+        if ($data->client_latitude === null || $data->client_longitude === null || $address->latitude === null || $address->longitude === null) {
+            return null;
+        }
+
+        return Distance::meters($data->client_latitude, $data->client_longitude, $address->latitude, $address->longitude);
     }
 
     /** Same storage as the barber's own WhatsApp: digits only, without the country code. */
