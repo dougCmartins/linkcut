@@ -34,12 +34,8 @@ export type ButtonShape = (typeof ButtonShape)[keyof typeof ButtonShape]
 
 export const BUTTON_SHAPES: ButtonShape[] = Object.values(ButtonShape)
 
-/**
- * Look of the main buttons. Elevated is the original LinkCut 3D button;
- * the others come from the Figma kit (fill, outline, hard shadow, soft shadow).
- */
+/** Look of the main buttons, from the Figma kit. Fill (flat) is the default. */
 export const ButtonStyle = {
-  Elevated: 'elevated',
   Fill: 'fill',
   Outline: 'outline',
   HardShadow: 'hardShadow',

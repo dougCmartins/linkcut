@@ -170,6 +170,20 @@ final class SettingsEditorTest extends TestCase
         $invalid->assertJsonPath('errors.palette.0', 'enum');
     }
 
+    public function test_new_barbershops_get_flat_buttons_and_the_removed_elevated_style_is_refused(): void
+    {
+        // Arrange
+        $this->actingAsBarber();
+
+        // Act
+        $defaults = $this->getJson('/api/settings');
+        $elevated = $this->putJson('/api/settings/theme', $this->themePayload(['button_style' => 'elevated']));
+
+        // Assert
+        $defaults->assertOk()->assertJsonPath('theme.button_style', 'fill');
+        $elevated->assertUnprocessable()->assertJsonPath('errors.button_style.0', 'enum');
+    }
+
     public function test_portfolio_accepts_at_most_four_photos_with_a_description(): void
     {
         // Arrange

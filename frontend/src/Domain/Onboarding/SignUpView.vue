@@ -199,13 +199,13 @@ onBeforeUnmount(() => {
       <div>
         <label for="sign-up-slug" class="block pl-2 text-xs font-semibold text-muted">{{ t('signUp.slug.label') }}</label>
         <div
-          class="mt-1.5 flex h-12 items-center rounded-full bg-surface pl-5 ring-1 ring-line shadow-soft focus-within:ring-2 focus-within:ring-accent"
+          class="mt-1.5 flex h-11 items-center rounded-full bg-surface pl-5 ring-1 ring-line shadow-soft focus-within:ring-2 focus-within:ring-accent"
         >
-          <span class="shrink-0 text-[15px] text-muted" aria-hidden="true">{{ publicHost }}</span>
+          <span class="shrink-0 text-base text-muted" aria-hidden="true">{{ publicHost }}</span>
           <input
             id="sign-up-slug"
             :value="form.slug"
-            class="h-full min-w-0 flex-1 rounded-r-full bg-transparent pr-5 text-[15px] text-ink focus:outline-none"
+            class="h-full min-w-0 flex-1 rounded-r-full bg-transparent pr-5 text-base text-ink focus:outline-none"
             autocomplete="off"
             autocapitalize="none"
             spellcheck="false"

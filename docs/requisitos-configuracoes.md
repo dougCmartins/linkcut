@@ -72,7 +72,7 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 - **RF20 — Cor livre.** Interruptor "Usar cor personalizada" com seletor de cor (hex). O sistema calcula sozinho a cor do texto dos botões (preto ou branco) e a sombra do botão. Se o contraste da cor com o fundo ficar abaixo de 3:1, mostra um aviso.
 - **RF21 — Restaurar padrão.** Um botão volta a aparência para Padrão, escuro, botões em pílula, sem cor livre.
 - **RF23 — Formato dos botões.** Quadrado, Arredondado ou Pílula, com as mesmas proporções do kit no Figma (botões de 36 px: raio 0, 8 px e totalmente arredondado). O raio é proporcional à altura de cada botão (8/36 ≈ 22% no Arredondado), então botões maiores mantêm o mesmo visual. Vale para os botões de ação das telas públicas e do painel e para os horários do agendamento.
-- **RF24 — Estilo dos botões.** Elevado (o visual original do LinkCut, padrão), Preenchido, Contorno, Sombra dura e Sombra suave. As medidas seguem o kit do Figma (botões de 36 px), sempre proporcionais à altura do botão:
+- **RF24 — Estilo dos botões.** Preenchido (padrão), Contorno, Sombra dura e Sombra suave. O antigo estilo "Elevado" (faixa 3D embaixo do botão) foi removido por deixar os botões altos demais; quem usava passou para Preenchido. As medidas seguem o kit do Figma (botões de 36 px), sempre proporcionais à altura do botão:
 
   | Estilo | Borda | Sombra |
   |---|---|---|
@@ -80,6 +80,8 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
   | Contorno | 1 px | — |
   | Sombra dura | 1 px | 4 × 4 px, sem desfoque |
   | Sombra suave | — | 0 × 4 px, desfoque 4 px, preto 16% (mais forte no modo escuro) |
+
+  **Tamanhos (todo o app):** o botão principal tem 44 px de altura, a mesma dos campos (área de toque mínima confortável), com texto de 15 px em negrito; o botão comum tem 40 px e texto de 14 px. Os campos usam texto de 16 px, porque abaixo disso o Safari do iPhone dá zoom ao tocar no campo.
 
   Preto e branco viram as cores da paleta escolhida. No botão principal, a sombra dura usa a cor de borda da paleta, para não se misturar com o botão quando o destaque é da mesma cor do texto. Vale para os botões principais (Link da Bio, Agendar, Aceitar, Salvar, Solicitar Agendamento) e para a pré-visualização. Os botões secundários do painel continuam neutros.
 - **RF22 — Visitante.** O botão claro/escuro continua nas páginas públicas. O visitante pode trocar o modo só para ele (fica salvo no navegador dele), mas o padrão é o que o barbeiro escolheu. No Painel e nas Configurações vale sempre o tema do barbeiro.

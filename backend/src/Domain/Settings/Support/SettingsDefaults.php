@@ -68,7 +68,7 @@ final class SettingsDefaults
             'mode' => ThemeMode::Dark,
             'custom_accent' => null,
             'button_shape' => ButtonShape::Pill,
-            'button_style' => ButtonStyle::Elevated,
+            'button_style' => ButtonStyle::Fill,
         ];
     }
 }

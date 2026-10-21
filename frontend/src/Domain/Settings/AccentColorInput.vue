@@ -45,7 +45,7 @@ const contrast = computed(() => {
             :id="id"
             type="color"
             :value="pickerValue"
-            class="mt-1.5 h-12 w-16 cursor-pointer rounded-full bg-surface p-1 ring-1 ring-line shadow-soft"
+            class="mt-1.5 h-11 w-16 cursor-pointer rounded-full bg-surface p-1 ring-1 ring-line shadow-soft"
             @input="accent = ($event.target as HTMLInputElement).value"
           />
         </div>
