@@ -11,6 +11,9 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Vite answers only known addresses. Cloudflare quick tunnels (a new *.trycloudflare.com each time) are allowed;
+    // other ones go in VITE_ALLOWED_HOSTS (comma-separated).
+    allowedHosts: ['.trycloudflare.com', ...(process.env.VITE_ALLOWED_HOSTS ?? '').split(',').filter(Boolean)],
     // The SPA calls the API on its own address (/api, /storage): the same setup works on this computer and on a
     // phone on the same Wi-Fi (http://<computer IP>:5173). In Docker the API is http://backend:8085.
     proxy: {
