@@ -7,6 +7,7 @@ import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
+import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
 
@@ -16,6 +17,7 @@ const bookingStore = useBookingStore()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const publicPageStore = usePublicPageStore()
+const tenantStore = useTenantStore()
 const { visitorMode } = useVisitorMode()
 
 // Public pages use the theme of the barbershop being visited (visitors may switch light/dark);
@@ -35,7 +37,10 @@ watch(
 watch(
   () => authStore.user,
   (user) => {
-    if (!user) settingsStore.clear()
+    if (!user) {
+      settingsStore.clear()
+      tenantStore.clear()
+    }
   },
 )
 

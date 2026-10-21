@@ -100,7 +100,10 @@ async function submitCode(code: string): Promise<void> {
       />
     </BaseCard>
 
-    <RouterLink to="/" class="mt-6 text-center text-sm font-semibold text-muted hover:text-ink">
+    <RouterLink to="/cadastrar" class="mt-6 text-center text-sm font-semibold text-accent">
+      {{ t('auth.noAccount') }}
+    </RouterLink>
+    <RouterLink to="/" class="mt-3 text-center text-sm font-semibold text-muted hover:text-ink">
       {{ t('auth.backToPublic') }}
     </RouterLink>
   </main>

@@ -173,6 +173,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Opens a session obtained elsewhere (the sign-up answers with one: the e-mail was just confirmed). */
+  function startSession(next: Session): void {
+    setSession(next)
+    resetLogin()
+  }
+
   /** Reloads the user from the API (e.g. the default 2FA channel). */
   async function refreshProfile(): Promise<void> {
     setUser(await authApi.fetchMe())
@@ -213,6 +219,7 @@ export const useAuthStore = defineStore('auth', () => {
     restart,
     ensureSession,
     logout,
+    startSession,
     refreshProfile,
     updateTwoFactorChannel,
     onSessionExpired,

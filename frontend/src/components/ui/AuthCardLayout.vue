@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseCard from '@/components/ui/BaseCard.vue'
 
-/** Frame of the client-area sign-in pages: logo, one card. */
+/** Frame of the sign-in and sign-up pages (barber and client): logo, one card. */
 defineProps<{ title: string; subtitle?: string }>()
 </script>
 

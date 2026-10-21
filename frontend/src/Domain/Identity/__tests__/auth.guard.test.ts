@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { installAuthGuard, safeRedirect } from '../auth.guard'
 import { useAuthStore } from '../auth.store'
 import { routes } from '@/router'
+import { installFakeApi } from '@/utils/testFetch'
 
 function createTestRouter() {
   const router = createRouter({ history: createMemoryHistory(), routes })
@@ -38,6 +39,37 @@ describe('auth guard', () => {
     // Assert
     expect(router.currentRoute.value.name).toBe('login')
     expect(router.currentRoute.value.query.redirect).toBe('/painel/configuracoes?aba=agenda')
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('sends a new barbershop to the setup wizard until it is done', async () => {
+    // Arrange
+    installFakeApi({ 'GET /tenant': () => ({ status: 200, body: { id: 3, name: 'Nova', slug: 'nova', onboarded: false } }) })
+    const router = createTestRouter()
+    signIn()
+
+    // Act
+    await router.push('/painel/despesas')
+
+    // Assert
+    expect(router.currentRoute.value.name).toBe('onboarding')
+  })
+
+  it('a barbershop already set up never sees the wizard again', async () => {
+    // Arrange
+    installFakeApi({ 'GET /tenant': () => ({ status: 200, body: { id: 3, name: 'Rafael', slug: 'rafael', onboarded: true } }) })
+    const router = createTestRouter()
+    signIn()
+
+    // Act
+    await router.push('/painel/boas-vindas')
+
+    // Assert
+    expect(router.currentRoute.value.path).toBe('/painel')
   })
 
   it('lets a signed-in barber open the dashboard', async () => {

@@ -32,7 +32,7 @@ interface CodeDeliveryResponse {
   resend_available_at: string
 }
 
-interface SessionResponse {
+export interface SessionResponse {
   access_token: string
   token_type: string
   expires_in: number
@@ -54,7 +54,8 @@ function toUser(user: UserResponse): SessionUser {
   }
 }
 
-function toSession(session: SessionResponse, now = Date.now()): Session {
+/** Also used by the sign-up (it answers with the same session). */
+export function toSession(session: SessionResponse, now = Date.now()): Session {
   return {
     accessToken: session.access_token,
     refreshToken: session.refresh_token,
