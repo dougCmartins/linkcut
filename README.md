@@ -37,10 +37,20 @@ Telas no celular (390 px), com dados de exemplo.
 | `docker-compose.yml` + `Makefile` | MySQL, API, fila, Pulse, Mailpit e SPA |
 
 ```bash
-make up      # SPA :5173 · API :8087 · Pulse :8087/pulse · Mailpit :8025 · MySQL :3309
-make seed    # login de demonstração: rafael@linkcut.app / linkcut123
-make test    # testes da API · make test-web: testes do SPA
+make up         # sobe tudo: SPA :5173 · API :8087 · Pulse :8087/pulse · Mailpit :8025 · MySQL :3309
+make stop       # para tudo (o banco fica guardado)
+make seed       # login de demonstração: rafael@linkcut.app / linkcut123
+make test       # testes da API · make test-web: testes do SPA
+make help       # todos os comandos
 ```
+
+Depois de cada `git pull` (na pasta raiz), basta `make up`:
+- confere se o Docker está rodando;
+- avisa se o Node da sua máquina não é o do projeto (`.nvmrc`, Node 22). Os containers já usam o Node certo;
+- devolve ao seu usuário os arquivos criados pelos containers;
+- instala sozinho as dependências novas: `composer install` na API e `npm install` no SPA, quando o `package-lock.json` mudou.
+
+Se o SPA ainda reclamar de um pacote que não existe, rode `make reset-web` (reinstala as dependências do zero).
 
 ## Frontend (Vue 3 + Tailwind)
 
