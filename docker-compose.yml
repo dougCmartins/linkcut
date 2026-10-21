@@ -13,6 +13,9 @@ x-backend: &backend
     MAIL_HOST: mailpit
     MAIL_PORT: 1025
     APP_URL: http://localhost:8087
+    # Images and e-mail links work on this computer and on a phone on the same Wi-Fi (LAN_IP comes from the Makefile).
+    PUBLIC_STORAGE_URL: /storage
+    FRONTEND_URL: http://${LAN_IP:-localhost}:5173
     HOST_UID: ${HOST_UID:-0}
     HOST_GID: ${HOST_GID:-0}
   volumes:
@@ -85,7 +88,9 @@ services:
   frontend:
     build: ./frontend
     environment:
-      VITE_API_URL: http://localhost:8087/api
+      # Relative: Vite forwards /api and /storage to the API (vite.config.ts), so any address of the computer works.
+      VITE_API_URL: /api
+      VITE_PROXY_TARGET: http://backend:8085
     ports:
       - "5173:5173"
     volumes:
