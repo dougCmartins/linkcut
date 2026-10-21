@@ -84,6 +84,18 @@ final class ImageUploadTest extends TestCase
         $response->assertJsonPath('code', 'IMAGE_NOT_FOUND');
     }
 
+    public function test_image_urls_are_relative_so_they_open_on_any_address(): void
+    {
+        // Arrange: the SPA and the API share one address (computer, phone, tunnel, VPS).
+        config(['app.url' => 'http://localhost:8087']);
+
+        // Act
+        $url = Storage::build(config('filesystems.disks.public'))->url('tenants/1/images/a.webp');
+
+        // Assert
+        $this->assertSame('/storage/tenants/1/images/a.webp', $url);
+    }
+
     public function test_the_saved_avatar_is_returned_with_its_url(): void
     {
         // Arrange

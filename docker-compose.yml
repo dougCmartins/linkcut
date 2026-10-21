@@ -13,8 +13,7 @@ x-backend: &backend
     MAIL_HOST: mailpit
     MAIL_PORT: 1025
     APP_URL: http://localhost:8087
-    # Images and e-mail links work on this computer and on a phone on the same Wi-Fi (LAN_IP comes from the Makefile).
-    PUBLIC_STORAGE_URL: /storage
+    # E-mail links work on this computer and on a phone on the same Wi-Fi (LAN_IP comes from the Makefile).
     FRONTEND_URL: http://${LAN_IP:-localhost}:5173
     HOST_UID: ${HOST_UID:-0}
     HOST_GID: ${HOST_GID:-0}

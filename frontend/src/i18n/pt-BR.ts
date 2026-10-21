@@ -321,6 +321,8 @@ export default {
       uploading: 'Enviando imagem…',
       hint: 'JPG, PNG ou WebP até 5 MB.',
       uploadFailed: 'Não foi possível enviar a imagem. Tente de novo.',
+      refused: 'Imagem recusada. Use um arquivo JPG, PNG ou WebP de até 5 MB.',
+      notDisplayed: 'A imagem foi enviada, mas não conseguimos exibi-la. Tente de novo.',
       errors: {
         invalidType: 'Formato não aceito. Use JPG, PNG ou WebP.',
         tooLarge: 'Arquivo acima de 5 MB.',

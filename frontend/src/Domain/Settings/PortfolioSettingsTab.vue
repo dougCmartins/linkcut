@@ -16,7 +16,7 @@ import { useSectionErrors } from './useSectionErrors'
 const { t } = useI18n()
 const store = useSettingsStore()
 const { errorFor } = useSectionErrors(SettingsSection.Portfolio)
-const { upload, isBusy, failedField } = useImageUpload()
+const { upload, isBusy, errorFor: uploadErrorFor } = useImageUpload()
 
 const portfolio = computed(() => store.drafts.portfolio)
 const coverUrl = computed(() => imageUrl(portfolio.value.cover))
@@ -31,12 +31,23 @@ function addPhoto(file: File): void {
 }
 
 function replacePhoto(index: number, file: File): void {
-  void upload(`photo-${index}`, file, (image) => {
-    const photo = portfolio.value.photos[index]
-    if (!photo) return
-    photo.imageId = image.id
-    photo.url = image.url
-  })
+  const photo = portfolio.value.photos[index]
+  if (!photo) return
+  // On failure the photo goes back to the saved one in this position (or stays as it was, if it is new).
+  const saved = store.portfolio.photos.find((item) => item.imageId === photo.imageId)
+  void upload(
+    `photo-${index}`,
+    file,
+    (image) => {
+      photo.imageId = image.id
+      photo.url = image.url
+    },
+    () => {
+      if (!saved) return
+      photo.imageId = saved.imageId
+      photo.url = saved.url
+    },
+  )
 }
 
 function removePhoto(index: number): void {
@@ -52,7 +63,8 @@ function removePhoto(index: number): void {
           :label="t('settings.portfolio.cover')"
           :src="coverUrl"
           :is-busy="isBusy('cover')"
-          @select="upload('cover', $event, (image) => (portfolio.cover = image))"
+          :error="uploadErrorFor('cover')"
+          @select="upload('cover', $event, (image) => (portfolio.cover = image), () => (portfolio.cover = store.portfolio.cover))"
           @remove="portfolio.cover = null"
         />
       </SettingsCard>
@@ -98,6 +110,7 @@ function removePhoto(index: number): void {
               :alt="photo.alt"
               shape="square"
               :is-busy="isBusy(`photo-${index}`)"
+              :error="uploadErrorFor(`photo-${index}`)"
               @select="replacePhoto(index, $event)"
               @remove="removePhoto(index)"
             />
@@ -115,6 +128,7 @@ function removePhoto(index: number): void {
               shape="square"
               :removable="false"
               :is-busy="isBusy('newPhoto')"
+              :error="uploadErrorFor('newPhoto')"
               @select="addPhoto"
             />
           </li>
@@ -124,7 +138,6 @@ function removePhoto(index: number): void {
         </p>
       </SettingsCard>
 
-      <p v-if="failedField" class="text-sm text-danger" role="alert">{{ t('settings.image.uploadFailed') }}</p>
     </div>
 
     <div class="lg:sticky lg:top-6">

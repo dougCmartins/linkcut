@@ -41,8 +41,10 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            // Local Docker uses "/storage" (served through the SPA's proxy, so images also load on a phone).
-            'url' => env('PUBLIC_STORAGE_URL', env('APP_URL').'/storage'),
+            // Relative by default: the SPA and the API share one address (Vite proxy in development, Caddy in
+            // production), so images load on this computer, on a phone, through a tunnel and on the VPS alike.
+            // Set PUBLIC_STORAGE_URL only to serve images from another host (e.g. a CDN).
+            'url' => env('PUBLIC_STORAGE_URL', '/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

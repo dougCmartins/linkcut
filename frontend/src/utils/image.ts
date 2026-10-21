@@ -43,3 +43,26 @@ export async function resizeImage(file: Blob, maxDimension = MAX_IMAGE_DIMENSION
     return file
   }
 }
+
+/** Default wait for an uploaded image to load before showing it (slow phones on 3G/4G). */
+export const IMAGE_LOAD_TIMEOUT_MS = 15_000
+
+/**
+ * Resolves when the browser can load the image at `url`, rejects otherwise (error or timeout).
+ * Used after an upload: the field only shows the new image once it really displays.
+ */
+export function preloadImage(url: string, timeoutMs = IMAGE_LOAD_TIMEOUT_MS): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    const timer = setTimeout(() => reject(new Error('Image load timeout')), timeoutMs)
+    image.onload = () => {
+      clearTimeout(timer)
+      resolve()
+    }
+    image.onerror = () => {
+      clearTimeout(timer)
+      reject(new Error('Image did not load'))
+    }
+    image.src = url
+  })
+}
