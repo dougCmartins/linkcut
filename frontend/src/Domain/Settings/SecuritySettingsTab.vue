@@ -92,7 +92,7 @@ onMounted(() => {
           </span>
           <span class="min-w-0 flex-1">
             <span class="block font-display font-extrabold tracking-tight">{{ option.label }}</span>
-            <span class="block truncate text-sm text-muted">{{ option.detail }}</span>
+            <span class="block text-sm text-muted [overflow-wrap:anywhere]">{{ option.detail }}</span>
           </span>
           <span
             class="flex size-5 shrink-0 items-center justify-center rounded-full ring-2"

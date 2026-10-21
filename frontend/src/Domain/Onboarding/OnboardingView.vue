@@ -8,6 +8,7 @@ import TextField from '@/components/ui/TextField.vue'
 import AddressEditor from '@/Domain/Settings/AddressEditor.vue'
 import ServiceRow from '@/Domain/Settings/ServiceRow.vue'
 import WorkingHoursEditor from '@/Domain/Settings/WorkingHoursEditor.vue'
+import PublicLinkCard from '@/Domain/Settings/PublicLinkCard.vue'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useSectionErrors } from '@/Domain/Settings/useSectionErrors'
 import { NEW_SERVICE_ID_PREFIX, SaveResult, SettingsSection, type Service } from '@/Domain/Settings/settings.model'
@@ -33,14 +34,11 @@ const scheduleErrors = useSectionErrors(SettingsSection.Schedule)
 const step = ref<Step>('contact')
 const isBusy = ref(false)
 const error = ref('')
-const copied = ref(false)
 /** Field errors show only after the barber tries to go on (not on an untouched form). */
 const triedSteps = ref<Step[]>([])
 
 const profile = computed(() => settings.drafts.profile)
 const schedule = computed(() => settings.drafts.schedule)
-const publicPath = computed(() => (tenantStore.tenant ? `/${tenantStore.tenant.slug}` : ''))
-const publicUrl = computed(() => `${window.location.host}${publicPath.value}`)
 
 const errorFor = (current: Step, errors: typeof profileErrors) => (field: string) =>
   triedSteps.value.includes(current) ? errors.errorFor(field) : undefined
@@ -86,15 +84,6 @@ async function saveAndContinue(section: SettingsSection, current: Step, next: St
     error.value = t(`errors.api.${apiErrors.messageKey(caught)}`)
   } finally {
     isBusy.value = false
-  }
-}
-
-async function copyLink(): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(`${window.location.origin}${publicPath.value}`)
-    copied.value = true
-  } catch {
-    copied.value = false
   }
 }
 
@@ -199,15 +188,8 @@ onMounted(() => {
     </div>
 
     <div v-else class="grid gap-5">
-      <BaseCard class="grid gap-3 p-5 text-center">
-        <p class="text-sm text-muted">{{ t('onboarding.linkLabel') }}</p>
-        <p class="font-display text-lg font-extrabold [overflow-wrap:anywhere]">{{ publicUrl }}</p>
-        <div class="grid gap-2 sm:grid-cols-2">
-          <BaseButton variant="secondary" block @click="copyLink">{{ copied ? t('onboarding.copied') : t('onboarding.copy') }}</BaseButton>
-          <BaseButton variant="secondary" block :to="publicPath">{{ t('onboarding.viewPage') }}</BaseButton>
-        </div>
-        <p class="text-xs text-muted">{{ t('onboarding.shareHint') }}</p>
-      </BaseCard>
+      <PublicLinkCard />
+      <p class="text-center text-xs text-muted">{{ t('onboarding.shareHint') }}</p>
       <BaseButton variant="primary" size="lg" elevated block :disabled="isBusy" @click="finish">{{ t('onboarding.finish') }}</BaseButton>
     </div>
   </main>

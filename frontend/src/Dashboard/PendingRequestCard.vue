@@ -45,11 +45,11 @@ const price = computed(() => (props.priceInCents === undefined ? '' : formatBRL(
         {{ initials }}
       </span>
       <div class="min-w-0 flex-1">
-        <h3 class="truncate text-base">{{ request.clientName }}</h3>
-        <p class="truncate text-sm text-muted">{{ schedule }}</p>
-        <p class="truncate text-xs text-muted">{{ distance }}</p>
+        <h3 class="text-base break-words">{{ request.clientName }}</h3>
+        <p class="text-sm text-muted">{{ schedule }}</p>
+        <p class="text-xs text-muted">{{ distance }}</p>
       </div>
-      <div class="text-right">
+      <div class="shrink-0 text-right">
         <p class="text-sm font-semibold">{{ request.serviceName }}</p>
         <p class="font-display text-sm font-extrabold text-accent">{{ price }}</p>
       </div>

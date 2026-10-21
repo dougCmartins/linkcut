@@ -257,6 +257,14 @@
     min-height: 100dvh;
   }
 
+  /*
+   * A grid without its own columns gets one column that can shrink: otherwise it grows to its widest content
+   * (an e-mail, a long name) and pushes the page past the screen on small phones.
+   */
+  .grid:not([class*='grid-cols-']) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   h1,
   h2,
   h3 {

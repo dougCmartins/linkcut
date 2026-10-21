@@ -53,9 +53,9 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
         {{ request.time }}
       </span>
       <div class="min-w-0 flex-1">
-        <h3 class="truncate text-base" :class="isCompleted ? 'text-muted' : ''">{{ request.clientName }}</h3>
-        <p class="truncate text-sm text-muted">{{ request.serviceName }}</p>
-        <p class="truncate text-xs text-muted">{{ distance }}</p>
+        <h3 class="text-base break-words" :class="isCompleted ? 'text-muted' : ''">{{ request.clientName }}</h3>
+        <p class="text-sm text-muted break-words">{{ request.serviceName }}</p>
+        <p class="text-xs text-muted">{{ distance }}</p>
       </div>
       <p class="shrink-0 font-display font-extrabold tabular-nums" :class="isCompleted ? 'text-success' : 'text-accent'">
         {{ price }}
