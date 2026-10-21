@@ -48,10 +48,11 @@ final class UpdateProfileSettings
             ]);
 
             SocialLink::query()->delete();
-            foreach ($data->socials as $position => $social) {
-                /** @var SocialLinkData $social */
-                SocialLink::query()->create(['network' => $social->network, 'url' => $social->url, 'position' => $position]);
-            }
+            SocialLink::insertForCurrentTenant(array_map(
+                fn (SocialLinkData $social, int $position): array => ['network' => $social->network->value, 'url' => $social->url, 'position' => $position],
+                $data->socials->all(),
+                array_keys($data->socials->all()),
+            ));
         });
 
         Log::info('settings_profile_updated');

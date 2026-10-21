@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\PublicBooking\Support;
 
+use Carbon\CarbonImmutable;
+use Domain\Settings\Data\BookingOptionsData;
 use Domain\Settings\Data\BusinessHourData;
+use Domain\Settings\Data\PublicServiceData;
 use Domain\Settings\Data\VacationData;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Start times a client can request on one day: inside the opening hours, every `interval` minutes,
@@ -14,6 +18,38 @@ use Domain\Settings\Data\VacationData;
  */
 final class AvailableTimes
 {
+    /**
+     * Free times of one day of the booking window for a service.
+     *
+     * @param  list<array{0: string, 1: string}>  $busy  taken [starts_at, ends_at) of that day
+     * @return list<string>
+     */
+    public static function forDate(BookingOptionsData $options, PublicServiceData $service, CarbonImmutable $day, CarbonImmutable $now, array $busy): array
+    {
+        $hours = collect($options->weekly_hours->all())->first(fn (BusinessHourData $item): bool => $item->weekday === $day->dayOfWeek);
+
+        return self::forDay(
+            date: $day->toDateString(),
+            hours: $hours,
+            vacation: $options->vacation,
+            intervalMinutes: $options->slot_interval_minutes,
+            durationMinutes: $service->duration_minutes,
+            busy: $busy,
+            nowMinutes: $day->isSameDay($now) ? $now->hour * 60 + $now->minute : null,
+        );
+    }
+
+    /** The chosen service, or the shortest one when none was chosen. */
+    public static function service(BookingOptionsData $options, ?int $serviceId): PublicServiceData
+    {
+        $services = collect($options->services->all());
+        $service = $serviceId
+            ? $services->first(fn (PublicServiceData $item): bool => $item->id === $serviceId)
+            : $services->sortBy('duration_minutes')->first();
+
+        return $service ?? throw ValidationException::withMessages(['service_id' => 'exists']);
+    }
+
     /**
      * @param  list<array{0: string, 1: string}>  $busy  taken [starts_at, ends_at) of that day
      * @return list<string>

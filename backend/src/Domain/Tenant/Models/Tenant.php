@@ -16,6 +16,9 @@ final class Tenant extends Model
     /** @use HasFactory<TenantFactory> */
     use HasFactory;
 
+    /** The columns TenantData needs (lists select only these). */
+    public const DATA_COLUMNS = ['id', 'name', 'slug', 'active', 'timezone', 'onboarded_at'];
+
     protected $fillable = ['name', 'slug', 'active', 'timezone', 'onboarded_at'];
 
     protected function casts(): array

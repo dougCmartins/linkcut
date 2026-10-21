@@ -73,4 +73,12 @@ if [ "${RUN_SETUP:-true}" = "true" ]; then
   php artisan passport:ensure-personal-client
 fi
 
+# Production: config, routes and event listeners read once and cached (every container, after .env is final).
+# Changing .env.production needs a restart: make prod-up recreates the containers.
+if grep -Eq '^APP_ENV=production' .env; then
+  php artisan config:cache --ansi
+  php artisan route:cache --ansi
+  php artisan event:cache --ansi
+fi
+
 exec "$@"

@@ -11,6 +11,7 @@ use App\Sms\SmsSender;
 use Domain\Notification\Support\PushSender;
 use Domain\Notification\Support\WebPushSender;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Context\TenantClock;
 use Domain\Tenant\Events\TenantResolved;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ final class AppServiceProvider extends ServiceProvider
 
         // One tenant context per request (reset between requests and queued jobs).
         $this->app->scoped(CurrentTenant::class);
+        $this->app->scoped(TenantClock::class);
 
         $this->app->bind(SmsSender::class, fn () => match (config('sms.driver')) {
             'log' => new LogSmsSender,

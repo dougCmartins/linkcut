@@ -11,27 +11,29 @@ use Domain\Finance\Data\RevenueEntryData;
 use Domain\Finance\Models\RevenueEntry;
 use Spatie\LaravelData\DataCollection;
 
-/** One page of the history (newest first) and the totals of the whole period. */
+/** One page of the history (newest first) and the totals of the whole period (two queries). */
 final class ListHistory
 {
     public function handle(HistoryQueryData $data): HistoryPageData
     {
         $period = fn () => RevenueEntry::query()->betweenDates($data->from, $data->to);
 
-        $page = $period()->newestFirst()->paginate(perPage: $data->per_page, page: $data->page);
-        $count = $page->total();
-        $total = (int) $period()->sum('price_in_cents');
+        // Count and total in one aggregate, then only the rows of the page.
+        $totals = $period()->selectRaw('count(*) as entries, coalesce(sum(price_in_cents), 0) as total')->toBase()->first();
+        $count = (int) $totals->entries;
+        $total = (int) $totals->total;
+        $items = $period()->newestFirst()->forPage($data->page, $data->per_page)->get();
 
         return new HistoryPageData(
-            items: RevenueEntryData::collect($page->items(), DataCollection::class),
+            items: RevenueEntryData::collect($items, DataCollection::class),
             summary: new HistorySummaryData(
                 total_in_cents: $total,
                 count: $count,
                 average_ticket_in_cents: $count ? (int) round($total / $count) : 0,
             ),
-            page: $page->currentPage(),
-            per_page: $page->perPage(),
-            last_page: $page->lastPage(),
+            page: $data->page,
+            per_page: $data->per_page,
+            last_page: max(1, (int) ceil($count / $data->per_page)),
         );
     }
 }

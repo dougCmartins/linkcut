@@ -15,7 +15,7 @@ final class ListActiveTenants
     /** @return DataCollection<int, TenantData> */
     public function handle(): DataCollection
     {
-        $tenants = Tenant::query()->where('active', true)->orderBy('id')->get()
+        $tenants = Tenant::query()->select(Tenant::DATA_COLUMNS)->where('active', true)->orderBy('id')->get()
             ->map(fn (Tenant $tenant): TenantData => TenantDataMapper::toData($tenant));
 
         return TenantData::collect($tenants, DataCollection::class);

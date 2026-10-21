@@ -8,6 +8,7 @@ use Domain\Notification\Actions\SendBookingEmail;
 use Domain\Notification\Data\BookingEmailData;
 use Domain\Notification\Enums\BookingEmailKind;
 use Domain\Orchestrator\Barbershop\Actions\ShowBarbershopContact;
+use Domain\Orchestrator\Barbershop\Data\BarbershopContactData;
 use Domain\Schedule\Data\BookingRequestData;
 
 /** Sends an e-mail about a booking of the current barbershop (skipped for old requests without e-mail). */
@@ -18,12 +19,18 @@ final class BookingEmails
         private readonly SendBookingEmail $sendEmail,
     ) {}
 
-    public function send(BookingRequestData $booking, BookingEmailKind $kind, ?string $registrationUrl = null, ?string $optOutUrl = null): void
-    {
+    /** @param BarbershopContactData|null $barbershop already read by the caller (batches), else read here */
+    public function send(
+        BookingRequestData $booking,
+        BookingEmailKind $kind,
+        ?string $registrationUrl = null,
+        ?string $optOutUrl = null,
+        ?BarbershopContactData $barbershop = null,
+    ): void {
         if ($booking->client_email === '') {
             return;
         }
-        $barbershop = $this->showContact->handle();
+        $barbershop ??= $this->showContact->handle();
 
         $this->sendEmail->handle(new BookingEmailData(
             kind: $kind,

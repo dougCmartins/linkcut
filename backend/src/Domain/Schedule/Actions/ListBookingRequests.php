@@ -13,6 +13,9 @@ use Spatie\LaravelData\DataCollection;
 /** Requests with the given status from today on (older ones no longer need an answer). */
 final class ListBookingRequests
 {
+    /** Safety cap: the dashboard never loads an unbounded list. */
+    private const LIMIT = 200;
+
     public function __construct(private readonly TenantClock $clock) {}
 
     /** @return DataCollection<int, BookingRequestData> */
@@ -22,6 +25,7 @@ final class ListBookingRequests
             ->where('status', $data->status)
             ->where('date', '>=', $this->clock->today()->toDateString())
             ->chronological()
+            ->limit(self::LIMIT)
             ->get();
 
         return BookingRequestData::collect($requests, DataCollection::class);

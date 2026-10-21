@@ -114,7 +114,8 @@ prod-check:
 	@test -f .env.production || { echo "Falta o .env.production: cp .env.production.example .env.production e preencha (docs/deploy-vps.md)."; exit 1; }
 
 prod-up: prod-check ## [VPS] Sobe ou atualiza a produção (rode depois de cada git pull)
-	$(PROD) up -d --build --remove-orphans
+	@# The app containers are always recreated (a new .env.production takes effect); the database is not restarted.
+	$(PROD) up -d --build --remove-orphans --force-recreate app queue scheduler web
 	@echo ""
 	@echo "  No ar em: https://$$(grep -E '^DOMAIN=' .env.production | cut -d= -f2)"
 	@echo ""

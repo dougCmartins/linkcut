@@ -31,7 +31,7 @@ final class ResolveTenant
         }
 
         $tenant = $this->ensureTenantIsActive->handle(new TenantIdData(tenant_id: (int) $tenantId));
-        $this->currentTenant->set($tenant->id);
+        $this->currentTenant->set($tenant->id, $tenant->timezone);
 
         return $next($request);
     }

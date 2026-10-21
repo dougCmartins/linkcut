@@ -6,10 +6,12 @@ namespace Domain\Schedule\Data;
 
 use Spatie\LaravelData\Data;
 
-/** Appointments starting from `from` until `to` (local "Y-m-d H:i" of the barbershop). */
+/** Barbershops that share a timezone and the "Y-m-d H:i" window (in that timezone) of their reminders. */
 final class ReminderWindowData extends Data
 {
+    /** @param list<int> $tenant_ids */
     public function __construct(
+        public readonly array $tenant_ids,
         public readonly string $from,
         public readonly string $to,
     ) {}

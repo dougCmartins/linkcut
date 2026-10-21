@@ -12,6 +12,7 @@ use Domain\Settings\Data\UpdateScheduleSettingsData;
 use Domain\Settings\Models\BookingSettings;
 use Domain\Settings\Models\BusinessHour;
 use Domain\Settings\Models\Service;
+use Domain\Tenant\Context\CurrentTenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,7 @@ final class UpdateScheduleSettings
     public function __construct(
         private readonly CreateDefaultSettings $createDefaultSettings,
         private readonly ShowScheduleSettings $showSchedule,
+        private readonly CurrentTenant $currentTenant,
     ) {}
 
     public function handle(UpdateScheduleSettingsData $data): ScheduleSettingsData
@@ -35,14 +37,18 @@ final class UpdateScheduleSettings
         DB::transaction(function () use ($data): void {
             $this->syncServices($data);
 
-            foreach ($data->weekly_hours as $hours) {
-                /** @var BusinessHourData $hours */
-                BusinessHour::query()->updateOrCreate(['weekday' => $hours->weekday], [
+            $tenantId = $this->currentTenant->id();
+            BusinessHour::query()->upsert(
+                array_map(fn (BusinessHourData $hours): array => [
+                    'tenant_id' => $tenantId,
+                    'weekday' => $hours->weekday,
                     'is_open' => $hours->is_open,
                     'opens_at' => $hours->opens_at,
                     'closes_at' => $hours->closes_at,
-                ]);
-            }
+                ], $data->weekly_hours->all()),
+                uniqueBy: ['tenant_id', 'weekday'],
+                update: ['is_open', 'opens_at', 'closes_at'],
+            );
 
             BookingSettings::query()->firstOrFail()->update([
                 'slot_interval_minutes' => $data->slot_interval_minutes,
@@ -61,6 +67,8 @@ final class UpdateScheduleSettings
 
     private function syncServices(UpdateScheduleSettingsData $data): void
     {
+        $inputIds = array_filter(array_map(fn (ServiceInputData $input): ?int => $input->id, $data->services->all()));
+        $existing = Service::query()->whereKey($inputIds)->get()->keyBy('id');
         $keptIds = [];
         foreach ($data->services as $position => $input) {
             /** @var ServiceInputData $input */
@@ -71,7 +79,7 @@ final class UpdateScheduleSettings
                 'cost_in_cents' => $input->cost_in_cents,
                 'position' => $position,
             ];
-            $service = $input->id ? Service::query()->find($input->id) : null;
+            $service = $input->id ? $existing->get($input->id) : null;
             if ($service) {
                 $service->update($attributes);
             } else {
