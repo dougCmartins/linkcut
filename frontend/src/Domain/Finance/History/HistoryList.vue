@@ -28,8 +28,8 @@ function dayLabel(isoDate: string): string {
         <li v-for="record in group.records" :key="record.id" class="flex items-center gap-3 px-4 py-3">
           <span class="w-12 shrink-0 font-display text-sm font-extrabold tabular-nums text-muted">{{ record.time }}</span>
           <span class="min-w-0 flex-1">
-            <span class="block truncate font-semibold">{{ record.clientName }}</span>
-            <span class="block truncate text-sm text-muted">{{ record.serviceName }}</span>
+            <span class="block font-semibold break-words">{{ record.clientName }}</span>
+            <span class="block text-sm text-muted break-words">{{ record.serviceName }}</span>
           </span>
           <span class="shrink-0 font-display font-extrabold tabular-nums">{{ formatBRL(record.priceInCents) }}</span>
         </li>

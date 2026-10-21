@@ -53,6 +53,16 @@ describe('SettingsView', () => {
     expect(await screen.findByLabelText('Sua história')).toBeTruthy()
   })
 
+  it('starts the Link tab with the public link to copy for the Instagram bio', async () => {
+    // Arrange & Act
+    await renderSettings()
+
+    // Assert
+    expect(await screen.findByText('Link da sua página')).toBeTruthy()
+    await vi.waitFor(() => expect(screen.getByTestId('public-link').textContent).toContain('/rafael'))
+    expect(screen.getByRole('button', { name: 'Copiar link' })).toBeTruthy()
+  })
+
   it('opens the tab named in the URL', async () => {
     // Arrange & Act
     await renderSettings('/painel/configuracoes?aba=agenda')

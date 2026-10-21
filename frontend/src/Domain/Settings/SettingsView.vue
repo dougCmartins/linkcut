@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
       </RouterLink>
       <div class="min-w-0">
         <h1 class="text-2xl leading-tight">{{ t('settings.title') }}</h1>
-        <p class="truncate text-sm text-muted">{{ t('settings.subtitle') }}</p>
+        <p class="text-sm text-muted">{{ t('settings.subtitle') }}</p>
       </div>
     </header>
 

@@ -35,7 +35,7 @@ const channels = computed(() =>
       </span>
       <span class="min-w-0 flex-1">
         <span class="block font-display font-extrabold tracking-tight">{{ t(`auth.channels.${channel}`) }}</span>
-        <span class="block truncate text-sm text-muted">{{ destinations[channel] }}</span>
+        <span class="block text-sm text-muted [overflow-wrap:anywhere]">{{ destinations[channel] }}</span>
       </span>
       <svg class="size-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
         <path d="m9 6 6 6-6 6" />

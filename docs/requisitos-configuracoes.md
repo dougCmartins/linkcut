@@ -40,6 +40,7 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 - **RF03 — Salvar e descartar.** Cada aba tem seu próprio rascunho. Quando há alterações, aparece uma barra fixa com **Salvar** e **Descartar**. O botão Salvar fica desabilitado enquanto houver erro. A aba com alterações pendentes ganha um ponto indicador. Ao sair da tela com alterações pendentes, o sistema pede confirmação.
 
 ### Aba Link
+- **RF25 — Link público.** No topo da aba, o link da página da barbearia (`<domínio>/<link>`) com "Copiar link", "Ver minha página" e, no celular, "Compartilhar". A dica explica onde colar no Instagram (Editar perfil → Links → Adicionar link externo). O mesmo cartão fecha o passo a passo do onboarding.
 - **RF04 — Perfil.** Campos: nome (obrigatório, 2–40 caracteres), @usuário (até 30), texto de apresentação (até 160), foto de perfil e imagem de fundo.
 - **RF05 — WhatsApp.** Telefone com DDD (10 ou 11 dígitos, ou já com o 55 na frente) e mensagem padrão (até 200 caracteres). O botão público abre `https://wa.me/55<número>?text=<mensagem>`.
 - **RF06 — Redes sociais.** Instagram, TikTok e YouTube. Todas opcionais; se preenchidas, precisam começar com `https://`. A tela pública só mostra as que estiverem preenchidas.
@@ -90,7 +91,7 @@ Hoje as telas públicas (Link da Bio, Portfólio, Agendamento) e o Painel usam d
 
 | Código | Categoria | Requisito |
 |---|---|---|
-| RNF01 | Usabilidade | Mobile-first: tudo funciona a partir de 360 px de largura. A pré-visualização fica abaixo do formulário no celular e ao lado dele em telas largas. |
+| RNF01 | Usabilidade | Mobile-first: tudo funciona a partir de 320 px de largura, sem rolagem lateral e respeitando a margem (conferido em 320, 360, 390 e 412 px). Textos longos quebram a linha em vez de serem cortados com "…"; e-mails quebram em qualquer ponto. Um `grid` sem colunas definidas tem uma coluna que encolhe (`styles/core.css`). A pré-visualização fica abaixo do formulário no celular e ao lado dele em telas largas. |
 | RNF02 | Acessibilidade | Todo campo tem `label`; erros ligados ao campo (`aria-describedby`, `aria-invalid`); abas com `role="tablist"` e navegação por setas; interruptores com `role="switch"`; foco visível; contraste AA nas paletas prontas; texto alternativo obrigatório nas fotos de trabalhos. |
 | RNF03 | i18n | Todo texto de interface vem do arquivo de idioma (`i18n/pt-BR.ts`). Código, variáveis e chaves em inglês. |
 | RNF04 | Segurança | Nenhum `v-html` (o Vue escapa o texto, o que evita XSS). Links de redes sociais só com `https://`. WhatsApp guardado só com dígitos. Uploads validados por tipo e tamanho. |

@@ -130,10 +130,10 @@ async function undo(): Promise<void> {
     <header class="flex items-center gap-3">
       <AvatarImage :src="avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" size="md" />
       <div class="min-w-0 flex-1">
-        <p class="truncate text-xs font-semibold text-muted">
+        <p class="text-xs font-semibold text-muted">
           <time :datetime="toIsoDate(today)">{{ todayLabel }}</time>
         </p>
-        <h1 class="truncate text-xl leading-tight">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
+        <h1 class="text-xl leading-tight break-words">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
         <RouterLink v-if="publicPath" :to="publicPath" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
       </div>
       <RouterLink

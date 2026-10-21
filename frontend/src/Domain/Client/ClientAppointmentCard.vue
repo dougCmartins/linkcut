@@ -30,9 +30,9 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
   <article class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <h3 class="truncate text-base">{{ appointment.serviceName }}</h3>
+        <h3 class="text-base break-words">{{ appointment.serviceName }}</h3>
         <p class="text-sm font-semibold tabular-nums">{{ when }}</p>
-        <p class="truncate text-sm text-muted">
+        <p class="text-sm text-muted break-words">
           {{ appointment.barbershop.name }}
         </p>
       </div>

@@ -109,7 +109,7 @@ async function exportCsv(): Promise<void> {
       </RouterLink>
       <div class="min-w-0 flex-1">
         <h1 class="text-2xl leading-tight">{{ t('history.title') }}</h1>
-        <p class="truncate text-sm text-muted">{{ t('history.subtitle') }}</p>
+        <p class="text-sm text-muted">{{ t('history.subtitle') }}</p>
       </div>
     </header>
 

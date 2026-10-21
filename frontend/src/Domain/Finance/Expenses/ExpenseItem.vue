@@ -11,13 +11,13 @@ const { t } = useI18n()
 <template>
   <div class="py-3">
     <div class="flex items-baseline gap-3">
-      <p class="min-w-0 flex-1 truncate font-bold">{{ title }}</p>
+      <p class="min-w-0 flex-1 font-bold break-words">{{ title }}</p>
       <p class="shrink-0 font-display font-extrabold tabular-nums" :class="isCounted ? '' : 'text-muted'">
         {{ formatBRL(amountInCents) }}
       </p>
     </div>
     <div class="flex items-center gap-3">
-      <p class="min-w-0 flex-1 truncate text-xs text-muted">{{ detail }}</p>
+      <p class="min-w-0 flex-1 text-xs text-muted break-words">{{ detail }}</p>
       <div class="-mr-2 -mb-2 flex shrink-0">
         <button
           type="button"
