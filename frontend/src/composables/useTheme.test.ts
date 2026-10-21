@@ -7,7 +7,7 @@ const oceanDark = {
   mode: ThemeMode.Dark,
   customAccent: null,
   buttonShape: ButtonShape.Pill,
-  buttonStyle: ButtonStyle.Elevated,
+  buttonStyle: ButtonStyle.Fill,
 }
 
 describe('applyThemeToDocument', () => {

@@ -77,7 +77,6 @@
   --accent: #d6a740;
   --on-accent: #1b1406;
   --accent-edge: #8c6820;
-  --neutral-edge: #07050b;
 }
 [data-theme='default'][data-mode='light'] {
   --page: #f3f1ec;
@@ -88,7 +87,6 @@
   --accent: #121212;
   --on-accent: #ffffff;
   --accent-edge: #b48a2c;
-  --neutral-edge: #d9d4ca;
 }
 
 /* Classic — barber-pole red on navy / cream */
@@ -101,7 +99,6 @@
   --accent: #e0473a;
   --on-accent: #160505;
   --accent-edge: #8f241c;
-  --neutral-edge: #08090c;
 }
 [data-theme='classic'][data-mode='light'] {
   --page: #f5f1e8;
@@ -112,7 +109,6 @@
   --accent: #b3261e;
   --on-accent: #ffffff;
   --accent-edge: #6e1510;
-  --neutral-edge: #d8d0bf;
 }
 
 /* Ocean — sky blue */
@@ -125,7 +121,6 @@
   --accent: #3fb6e8;
   --on-accent: #04131c;
   --accent-edge: #1d6f92;
-  --neutral-edge: #050b12;
 }
 [data-theme='ocean'][data-mode='light'] {
   --page: #eef4f8;
@@ -136,7 +131,6 @@
   --accent: #0b6fa4;
   --on-accent: #ffffff;
   --accent-edge: #074a6e;
-  --neutral-edge: #cbd9e4;
 }
 
 /* Forest — green */
@@ -149,7 +143,6 @@
   --accent: #6cc58f;
   --on-accent: #06150c;
   --accent-edge: #2f7a4d;
-  --neutral-edge: #060b08;
 }
 [data-theme='forest'][data-mode='light'] {
   --page: #f1f4ef;
@@ -160,7 +153,6 @@
   --accent: #1f6b45;
   --on-accent: #ffffff;
   --accent-edge: #123f29;
-  --neutral-edge: #cfd9cc;
 }
 
 /* Wine — burgundy / rose */
@@ -173,7 +165,6 @@
   --accent: #e2789a;
   --on-accent: #22070f;
   --accent-edge: #8e3553;
-  --neutral-edge: #0b0407;
 }
 [data-theme='wine'][data-mode='light'] {
   --page: #f8f0f2;
@@ -184,7 +175,6 @@
   --accent: #7d1d3f;
   --on-accent: #ffffff;
   --accent-edge: #4d0f25;
-  --neutral-edge: #e2ced5;
 }
 
 /* Minimal — black & white */
@@ -197,7 +187,6 @@
   --accent: #f5f5f5;
   --on-accent: #111111;
   --accent-edge: #6b6b70;
-  --neutral-edge: #050505;
 }
 [data-theme='minimal'][data-mode='light'] {
   --page: #fafafa;
@@ -208,7 +197,6 @@
   --accent: #111111;
   --on-accent: #ffffff;
   --accent-edge: #9a9a9a;
-  --neutral-edge: #dcdcdc;
 }
 
 /* ---------- Button shape ----------
@@ -272,7 +260,7 @@
   h1,
   h2,
   h3 {
-    @apply font-display font-extrabold tracking-tight;
+    @apply font-display font-bold tracking-tight;
   }
 }
 

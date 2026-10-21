@@ -33,7 +33,7 @@ const model = defineModel<string>({ required: true })
 const id = useId()
 const messageId = computed(() => (props.error || props.hint ? `${id}-message` : undefined))
 // Date/time pickers carry their own icon, so they get less padding to fit narrow columns.
-const paddingClass = computed(() => (props.type === 'date' || props.type === 'time' ? 'px-3.5 text-sm' : 'px-5 text-[15px]'))
+const paddingClass = computed(() => (props.type === 'date' || props.type === 'time' ? 'px-3.5 text-sm' : 'px-5 text-base'))
 </script>
 
 <template>
@@ -52,7 +52,7 @@ const paddingClass = computed(() => (props.type === 'date' || props.type === 'ti
       :step="step"
       :aria-invalid="Boolean(error)"
       :aria-describedby="messageId"
-      class="mt-1.5 h-12 w-full min-w-0 rounded-full bg-surface text-ink ring-1 shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none"
+      class="mt-1.5 h-11 w-full min-w-0 rounded-full bg-surface text-ink ring-1 shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none"
       :class="[paddingClass, error ? 'ring-danger' : 'ring-line']"
     />
     <p v-if="messageId" :id="messageId" class="mt-1.5 pl-2 text-xs" :class="error ? 'text-danger' : 'text-muted'">

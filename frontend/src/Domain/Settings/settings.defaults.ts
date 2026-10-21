@@ -8,7 +8,7 @@ export const DEFAULT_THEME: ThemeSettings = {
   mode: ThemeMode.Dark,
   customAccent: null,
   buttonShape: ButtonShape.Pill,
-  buttonStyle: ButtonStyle.Elevated,
+  buttonStyle: ButtonStyle.Fill,
 }
 
 /** Placeholder while the settings load (nothing is shown or editable until then). */

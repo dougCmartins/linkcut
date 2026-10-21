@@ -11,13 +11,6 @@ const PRESS = 'hover:-translate-y-0.5 active:translate-y-0 disabled:translate-y-
  * which keep the Figma kit proportions at any button height.
  */
 const SKINS: Record<ButtonStyle, Record<ButtonTone, string>> = {
-  // Original LinkCut 3D look: colored edge under the button.
-  [ButtonStyle.Elevated]: {
-    primary:
-      'bg-accent text-on-accent [--edge:var(--accent-edge)] shadow-[0_6px_0_0_var(--edge),var(--shadow-soft)] hover:-translate-y-0.5 hover:shadow-[0_8px_0_0_var(--edge),var(--shadow-float)] active:translate-y-1 active:shadow-[0_2px_0_0_var(--edge)] disabled:translate-y-0',
-    secondary:
-      'bg-surface text-ink ring-1 ring-line [--edge:var(--neutral-edge)] shadow-[0_6px_0_0_var(--edge),var(--shadow-soft)] hover:-translate-y-0.5 hover:shadow-[0_8px_0_0_var(--edge),var(--shadow-float)] active:translate-y-1 active:shadow-[0_2px_0_0_var(--edge)] disabled:translate-y-0',
-  },
   // Figma "Fill": solid color, no border, no shadow.
   [ButtonStyle.Fill]: {
     primary: `bg-accent text-on-accent hover:brightness-110 ${PRESS}`,

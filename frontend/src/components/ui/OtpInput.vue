@@ -91,7 +91,7 @@ defineExpose({
       :disabled="disabled"
       :aria-label="`${label}: ${index + 1}/${length}`"
       :aria-invalid="invalid"
-      class="h-14 w-full min-w-0 rounded-2xl bg-surface text-center font-display text-2xl font-extrabold text-ink ring-1 shadow-soft transition focus:ring-2 focus:ring-accent focus:outline-none disabled:opacity-50"
+      class="h-12 w-full min-w-0 rounded-xl bg-surface text-center font-display text-xl font-bold text-ink ring-1 shadow-soft transition focus:ring-2 focus:ring-accent focus:outline-none disabled:opacity-50"
       :class="invalid ? 'ring-danger' : digit ? 'ring-accent/60' : 'ring-line'"
       @input="onInput(index, $event)"
       @keydown="onKeydown(index, $event)"

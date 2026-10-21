@@ -37,16 +37,4 @@ describe('buttonSkinClasses', () => {
     expect(classes).toContain('button-soft-shadow')
     expect(classes).not.toContain('button-border')
   })
-
-  it('keeps the original 3D edge for the elevated style', () => {
-    // Arrange
-    const style = ButtonStyle.Elevated
-
-    // Act
-    const classes = buttonSkinClasses(style, 'primary')
-
-    // Assert
-    expect(classes).toContain('bg-accent')
-    expect(classes).toContain('shadow-[0_6px_0_0_var(--edge),var(--shadow-soft)]')
-  })
 })

@@ -10,7 +10,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const inputClass =
-  'mt-1.5 h-12 w-full rounded-full bg-surface px-5 text-[15px] text-ink ring-1 ring-line shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none'
+  'mt-1.5 h-11 w-full rounded-full bg-surface px-5 text-base text-ink ring-1 ring-line shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none'
 </script>
 
 <template>

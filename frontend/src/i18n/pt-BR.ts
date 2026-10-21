@@ -469,7 +469,6 @@ export default {
       buttonStyleTitle: 'Estilo dos botões',
       buttonStyleDescription: 'Preenchimento, contorno ou sombra. As medidas seguem o kit do Figma.',
       buttonStyles: {
-        elevated: 'Elevado',
         fill: 'Preenchido',
         outline: 'Contorno',
         hardShadow: 'Sombra dura',
@@ -483,7 +482,7 @@ export default {
       contrastOk: 'Bom contraste com o fundo ({ratio}:1).',
       contrastLow: 'Contraste baixo com o fundo ({ratio}:1). Botões e destaques podem ficar difíceis de ver.',
       reset: 'Restaurar padrão',
-      resetDescription: 'Volta para a paleta Padrão, no modo escuro, botões em pílula no estilo Elevado e sem cor personalizada.',
+      resetDescription: 'Volta para a paleta Padrão, no modo escuro, botões em pílula no estilo Preenchido e sem cor personalizada.',
     },
   },
   socials: {

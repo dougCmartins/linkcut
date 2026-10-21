@@ -23,7 +23,7 @@ const counter = computed(() => `${model.value.length}/${props.maxlength}`)
       :placeholder="placeholder"
       :aria-invalid="Boolean(error)"
       :aria-describedby="messageId"
-      class="mt-1.5 block w-full resize-y rounded-[1.25rem] bg-surface px-5 py-3.5 text-[15px] leading-relaxed text-ink ring-1 shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none"
+      class="mt-1.5 block w-full resize-y rounded-[1.25rem] bg-surface px-5 py-3 text-base leading-relaxed text-ink ring-1 shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none"
       :class="error ? 'ring-danger' : 'ring-line'"
     />
     <div :id="messageId" class="mt-1.5 flex justify-between gap-3 px-2 text-xs">

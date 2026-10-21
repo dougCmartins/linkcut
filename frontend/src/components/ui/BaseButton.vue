@@ -39,8 +39,9 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
   // --control-height feeds the `rounded-button` radius (shape chosen in Settings > Appearance).
-  md: 'h-11 [--control-height:2.75rem] px-5 text-sm',
-  lg: 'h-16 [--control-height:4rem] px-7 text-base',
+  // lg = the main action, same height as the fields (44px, the minimum comfortable touch target).
+  md: 'h-10 [--control-height:2.5rem] px-4 text-sm',
+  lg: 'h-11 [--control-height:2.75rem] px-5 text-[15px]',
 }
 
 const buttonStyle = useButtonStyle()
@@ -53,7 +54,7 @@ const lookClasses = computed(() => {
 })
 
 const classes = computed(() => [
-  'inline-flex items-center justify-center gap-2 rounded-button font-display font-extrabold tracking-tight',
+  'inline-flex items-center justify-center gap-2 rounded-button font-display font-bold tracking-tight',
   'transition duration-150 ease-out select-none',
   'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent',
   'disabled:cursor-not-allowed disabled:opacity-40',

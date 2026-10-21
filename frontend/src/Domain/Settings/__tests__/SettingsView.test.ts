@@ -187,7 +187,7 @@ describe('SettingsView', () => {
 
     // Assert
     expect(previewButtons.every((button) => button.classList.contains('button-border'))).toBe(true)
-    expect(savedBefore).toBe('elevated')
+    expect(savedBefore).toBe('fill')
     expect(store.theme.buttonStyle).toBe('outline')
   })
 

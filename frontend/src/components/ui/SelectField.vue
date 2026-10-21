@@ -20,7 +20,7 @@ const messageId = computed(() => (props.error ? `${id}-message` : undefined))
       v-model="model"
       :aria-invalid="Boolean(error)"
       :aria-describedby="messageId"
-      class="mt-1.5 h-12 w-full min-w-0 rounded-full bg-surface px-5 text-[15px] text-ink ring-1 shadow-soft focus:ring-2 focus:ring-accent focus:outline-none"
+      class="mt-1.5 h-11 w-full min-w-0 rounded-full bg-surface px-5 text-base text-ink ring-1 shadow-soft focus:ring-2 focus:ring-accent focus:outline-none"
       :class="error ? 'ring-danger' : 'ring-line'"
     >
       <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
