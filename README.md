@@ -60,7 +60,13 @@ Se o SPA ainda reclamar de um pacote que não existe, rode `make reset-web` (rei
 
 Tudo passa por essa porta: o Vite repassa `/api` e `/storage` para a API. Os links dos e-mails (Mailpit) também usam esse endereço.
 
-**Sem cadeado (`http`), dois recursos não funcionam no celular:** a localização ("Estou na barbearia", "Compartilhar minha localização") e os avisos de novos pedidos (push). Os navegadores só liberam esses dois em `https` ou em `localhost`. Para testá-los no celular, use um túnel `https`, por exemplo `cloudflared tunnel --url http://localhost:5173`, e abra o endereço `https://…` que ele mostrar.
+**Sem cadeado (`http`), dois recursos não funcionam no celular:** a localização ("Estou na barbearia", "Compartilhar minha localização") e os avisos de novos pedidos (push). Os navegadores só liberam esses dois em `https` ou em `localhost`. Para testá-los no celular (ou colocar o link na bio do Instagram durante os testes), use um túnel `https` do Cloudflare. Com o `make up` rodando, em outro terminal:
+
+```bash
+docker run --rm --network host cloudflare/cloudflared:latest tunnel --url http://localhost:5173
+```
+
+Abra o endereço `https://….trycloudflare.com` que ele mostrar. O endereço muda a cada vez e só funciona enquanto o computador estiver ligado; para um link fixo, é preciso subir numa VPS.
 
 ## Frontend (Vue 3 + Tailwind)
 
