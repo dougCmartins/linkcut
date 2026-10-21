@@ -52,6 +52,10 @@ Depois de cada `git pull` (na pasta raiz), basta `make up`:
 
 Se o SPA ainda reclamar de um pacote que não existe, rode `make reset-web` (reinstala as dependências do zero).
 
+### Produção (VPS)
+
+Passo a passo para colocar no ar com domínio próprio e `https`: [docs/deploy-vps.md](docs/deploy-vps.md) (`make prod-up`).
+
 ### Testar no celular
 
 1. Deixe o celular e o computador **no mesmo Wi-Fi**.
@@ -66,7 +70,7 @@ Tudo passa por essa porta: o Vite repassa `/api` e `/storage` para a API. Os lin
 docker run --rm --network host cloudflare/cloudflared:latest tunnel --url http://localhost:5173
 ```
 
-Abra o endereço `https://….trycloudflare.com` que ele mostrar. O endereço muda a cada vez e só funciona enquanto o computador estiver ligado; para um link fixo, é preciso subir numa VPS.
+Abra o endereço `https://….trycloudflare.com` que ele mostrar. O endereço muda a cada vez e só funciona enquanto o computador estiver ligado; para um link fixo, suba numa VPS: [docs/deploy-vps.md](docs/deploy-vps.md).
 
 ## Frontend (Vue 3 + Tailwind)
 

@@ -12,6 +12,11 @@ if [ "$(id -u)" = "0" ]; then
   fi
 
   chown -R app:app storage bootstrap/cache
+  # Production mounts .env.production as .env: the app writes APP_KEY and the VAPID keys there on the first start.
+  if [ -f .env ]; then
+    chown app:app .env
+    chmod 600 .env
+  fi
   if [ -d vendor ]; then
     chown -R app:app vendor
   fi
@@ -31,7 +36,8 @@ if [ ! -f .env ]; then
   cp .env.example .env
 fi
 
-if [ ! -f vendor/autoload.php ] || [ "${RUN_SETUP:-true}" = "true" ]; then
+# Development installs new dependencies after a git pull; the production image already has them (no dev packages).
+if [ ! -f vendor/autoload.php ] || { [ "${RUN_SETUP:-true}" = "true" ] && [ "${APP_ENV:-local}" != "production" ]; }; then
   composer install --no-interaction --prefer-dist
 fi
 

@@ -19,7 +19,7 @@ export LAN_IP
 
 .DEFAULT_GOAL := help
 .PHONY: help up start stop down restart setup ip check-docker check-node permissions reset-web logs migrate seed fresh \
-	test pint shell-api test-web typecheck build shell-web
+	test pint shell-api test-web typecheck build shell-web prod-check prod-up prod-down prod-logs prod-backup prod-seed
 
 help: ## Lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  make %-12s %s\n", $$1, $$2}'
@@ -106,3 +106,31 @@ build:
 
 shell-web:
 	$(COMPOSE) exec frontend sh
+
+# ---------- Production (VPS) — docs/deploy-vps.md ----------
+PROD := $(COMPOSE) -f docker-compose.prod.yml --env-file .env.production
+
+prod-check:
+	@test -f .env.production || { echo "Falta o .env.production: cp .env.production.example .env.production e preencha (docs/deploy-vps.md)."; exit 1; }
+
+prod-up: prod-check ## [VPS] Sobe ou atualiza a produção (rode depois de cada git pull)
+	$(PROD) up -d --build --remove-orphans
+	@echo ""
+	@echo "  No ar em: https://$$(grep -E '^DOMAIN=' .env.production | cut -d= -f2)"
+	@echo ""
+
+prod-down: prod-check ## [VPS] Para a produção (os dados ficam guardados)
+	$(PROD) down
+
+prod-logs: prod-check ## [VPS] Mostra os logs
+	$(PROD) logs -f --tail=100
+
+prod-backup: prod-check ## [VPS] Cópia do banco em backups/ (agende no cron)
+	@mkdir -p backups
+	$(PROD) exec -T mysql sh -c 'exec mysqldump -uroot -p"$$MYSQL_ROOT_PASSWORD" --single-transaction --routines "$$MYSQL_DATABASE"' \
+		| gzip > backups/linkcut-$$(date +%Y-%m-%d-%H%M).sql.gz
+	@ls -1t backups | head -1
+	@find backups -name 'linkcut-*.sql.gz' -mtime +14 -delete
+
+prod-seed: prod-check ## [VPS] Opcional: barbearias de demonstração (rafael@linkcut.app / linkcut123)
+	$(PROD) exec app php artisan db:seed --force

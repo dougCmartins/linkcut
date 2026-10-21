@@ -45,6 +45,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [AssignRequestContext::class]);
+        // Behind a reverse proxy (Caddy in production, Vite in development): trust its X-Forwarded-* headers, so the
+        // app sees https and the visitor's real IP (signed links, rate limits). The app port is never public in production.
+        $middleware->trustProxies(at: '*');
         $middleware->alias(['tenant' => ResolveTenant::class, 'tenant.slug' => ResolveTenantFromSlug::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) use ($envelope, $isApi): void {
