@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace Domain\Tenant\Controllers;
 
+use Domain\Tenant\Actions\CompleteOnboarding;
 use Domain\Tenant\Actions\ShowCurrentTenant;
 use Domain\Tenant\Data\TenantData;
 
 final class TenantController
 {
     public function show(ShowCurrentTenant $action): TenantData
+    {
+        return $action->handle();
+    }
+
+    public function completeOnboarding(CompleteOnboarding $action): TenantData
     {
         return $action->handle();
     }

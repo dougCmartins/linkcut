@@ -1,5 +1,5 @@
 import type { CodeDelivery, Credentials, LoginChallenge, Session, SessionUser } from './auth.model'
-import type { TwoFactorChannel } from '@/types/twoFactorChannel'
+import { TwoFactorChannel } from '@/types/twoFactorChannel'
 import { http } from '@/http/client'
 
 /**
@@ -16,6 +16,7 @@ interface UserResponse {
   phone_masked: string | null
   role: string
   two_factor_channel: TwoFactorChannel | null
+  available_channels?: TwoFactorChannel[]
 }
 
 interface LoginChallengeResponse {
@@ -31,7 +32,7 @@ interface CodeDeliveryResponse {
   resend_available_at: string
 }
 
-interface SessionResponse {
+export interface SessionResponse {
   access_token: string
   token_type: string
   expires_in: number
@@ -49,10 +50,12 @@ function toUser(user: UserResponse): SessionUser {
     phoneMasked: user.phone_masked,
     role: user.role,
     twoFactorChannel: user.two_factor_channel,
+    availableChannels: user.available_channels ?? [TwoFactorChannel.Email],
   }
 }
 
-function toSession(session: SessionResponse, now = Date.now()): Session {
+/** Also used by the sign-up (it answers with the same session). */
+export function toSession(session: SessionResponse, now = Date.now()): Session {
   return {
     accessToken: session.access_token,
     refreshToken: session.refresh_token,

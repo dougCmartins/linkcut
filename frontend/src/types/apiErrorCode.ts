@@ -26,6 +26,8 @@ export const ApiErrorCode = {
   InvalidStatusTransition: 'INVALID_STATUS_TRANSITION',
   BookingRequestNotFound: 'BOOKING_REQUEST_NOT_FOUND',
   BarbershopAddressMissing: 'BARBERSHOP_ADDRESS_MISSING',
+  SlugUnavailable: 'SLUG_UNAVAILABLE',
+  EmailAlreadyRegistered: 'EMAIL_ALREADY_REGISTERED',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

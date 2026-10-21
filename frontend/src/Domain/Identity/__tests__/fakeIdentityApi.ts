@@ -12,6 +12,8 @@ export const USER = {
   phone_masked: '+55 •• •••••-7777',
   role: 'owner',
   two_factor_channel: null as string | null,
+  /** SMS on in this fake (the real API has it off until there is a provider). */
+  available_channels: ['email', 'sms'],
 }
 
 export function sessionBody(accessToken = 'access-1', refreshToken = 'refresh-1') {

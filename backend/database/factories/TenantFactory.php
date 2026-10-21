@@ -21,7 +21,14 @@ final class TenantFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(1, 99999),
             'active' => true,
+            'onboarded_at' => now(),
         ];
+    }
+
+    /** Just signed up: the wizard is not done yet. */
+    public function notOnboarded(): static
+    {
+        return $this->state(['onboarded_at' => null]);
     }
 
     public function inactive(): static

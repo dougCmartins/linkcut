@@ -8,6 +8,7 @@ use Domain\Tenant\Data\TenantData;
 use Domain\Tenant\Data\TenantSlugData;
 use Domain\Tenant\Exceptions\TenantNotFoundException;
 use Domain\Tenant\Models\Tenant;
+use Domain\Tenant\Support\TenantDataMapper;
 
 /** Public pages: a missing or deactivated barbershop looks the same to visitors (404). */
 final class FindActiveTenantBySlug
@@ -19,12 +20,6 @@ final class FindActiveTenantBySlug
             throw new TenantNotFoundException;
         }
 
-        return new TenantData(
-            id: $tenant->id,
-            name: $tenant->name,
-            slug: $tenant->slug,
-            active: $tenant->active,
-            timezone: $tenant->timezone,
-        );
+        return TenantDataMapper::toData($tenant);
     }
 }

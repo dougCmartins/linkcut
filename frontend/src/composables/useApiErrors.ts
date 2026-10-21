@@ -23,6 +23,8 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.InvalidStatusTransition]: 'invalidStatusTransition',
   [ApiErrorCode.BookingRequestNotFound]: 'bookingRequestNotFound',
   [ApiErrorCode.BarbershopAddressMissing]: 'barbershopAddressMissing',
+  [ApiErrorCode.SlugUnavailable]: 'slugUnavailable',
+  [ApiErrorCode.EmailAlreadyRegistered]: 'emailAlreadyRegistered',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

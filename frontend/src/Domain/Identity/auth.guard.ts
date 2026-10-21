@@ -1,9 +1,11 @@
 import type { Router } from 'vue-router'
 import { useAuthStore } from './auth.store'
+import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { logSecurityEvent } from '@/utils/logger'
 
 export const LOGIN_ROUTE = 'login'
 export const HOME_AFTER_LOGIN = '/painel'
+export const ONBOARDING_ROUTE = 'onboarding'
 
 /** Only same-app paths are accepted as a redirect target (no open redirects). */
 export function safeRedirect(target: unknown): string {
@@ -26,6 +28,13 @@ export function installAuthGuard(router: Router): void {
     if (to.meta.requiresAuth && !(await auth.ensureSession())) {
       logSecurityEvent('route.access_denied', { path: to.path })
       return { name: LOGIN_ROUTE, query: { redirect: to.fullPath } }
+    }
+
+    // A new barbershop goes through the wizard first (WhatsApp, address, services); then never again.
+    if (to.meta.requiresAuth) {
+      const tenant = await useTenantStore().ensureLoaded()
+      if (tenant && !tenant.onboarded && to.name !== ONBOARDING_ROUTE) return { name: ONBOARDING_ROUTE }
+      if (tenant?.onboarded && to.name === ONBOARDING_ROUTE) return HOME_AFTER_LOGIN
     }
 
     if (to.name === LOGIN_ROUTE && auth.hasValidAccess()) {

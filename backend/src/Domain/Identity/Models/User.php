@@ -25,7 +25,7 @@ final class User extends Authenticatable
 
     use Notifiable;
 
-    protected $fillable = ['tenant_id', 'role', 'name', 'email', 'phone', 'password', 'two_factor_channel'];
+    protected $fillable = ['tenant_id', 'role', 'name', 'email', 'phone', 'password', 'two_factor_channel', 'email_verified_at'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -39,6 +39,18 @@ final class User extends Authenticatable
     }
 
     /** Phone in E.164 for the SMS channel (null when the barber has no phone). */
+    /** SMS is offered only when it is turned on (config sms.enabled) and the user has a phone. */
+    public function canReceiveSms(): bool
+    {
+        return (bool) config('sms.enabled') && (bool) $this->phone;
+    }
+
+    /** @return list<TwoFactorChannel> */
+    public function availableTwoFactorChannels(): array
+    {
+        return $this->canReceiveSms() ? [TwoFactorChannel::Email, TwoFactorChannel::Sms] : [TwoFactorChannel::Email];
+    }
+
     public function routeNotificationForSms(): ?string
     {
         return $this->phone;

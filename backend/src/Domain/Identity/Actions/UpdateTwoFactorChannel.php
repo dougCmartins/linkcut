@@ -18,7 +18,7 @@ final class UpdateTwoFactorChannel
     {
         /** @var User $user */
         $user = auth('api')->user();
-        if ($data->channel === TwoFactorChannel::Sms && ! $user->phone) {
+        if ($data->channel === TwoFactorChannel::Sms && ! $user->canReceiveSms()) {
             throw new ChannelUnavailableException;
         }
 

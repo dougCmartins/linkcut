@@ -6,7 +6,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { credentialsSchema } from '@/Domain/Identity/auth.schemas'
 import { useApiErrors } from '@/composables/useApiErrors'
-import ClientLayout from './ClientLayout.vue'
+import AuthCardLayout from '@/components/ui/AuthCardLayout.vue'
 import ClientPasswordForm from './ClientPasswordForm.vue'
 import { safeClientRedirect } from './client.guard'
 import { CodePurpose } from './client.model'
@@ -50,16 +50,16 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <ClientLayout v-if="isResetting" :title="t('client.reset.title')" :subtitle="t('client.reset.subtitle')">
+  <AuthCardLayout v-if="isResetting" :title="t('client.reset.title')" :subtitle="t('client.reset.subtitle')">
     <ClientPasswordForm :purpose="CodePurpose.Password" :initial-email="email" @done="goOn" />
     <template #footer>
       <button type="button" class="mt-6 text-center text-sm font-semibold text-muted hover:text-ink" @click="isResetting = false">
         {{ t('client.reset.back') }}
       </button>
     </template>
-  </ClientLayout>
+  </AuthCardLayout>
 
-  <ClientLayout v-else :title="t('client.login.title')" :subtitle="t('client.login.subtitle')">
+  <AuthCardLayout v-else :title="t('client.login.title')" :subtitle="t('client.login.subtitle')">
     <p v-if="error" class="mb-5 rounded-card bg-danger/10 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-danger/40" role="alert">
       {{ error }}
     </p>
@@ -78,5 +78,5 @@ async function submit(): Promise<void> {
         {{ t('client.login.noAccount') }}
       </p>
     </template>
-  </ClientLayout>
+  </AuthCardLayout>
 </template>

@@ -13,6 +13,13 @@ return [
         'resend_after_seconds' => (int) env('TWO_FACTOR_RESEND_AFTER_SECONDS', 30),
     ],
 
+    // Open sign-up of barbers: the e-mail is confirmed with a code before the account exists.
+    'sign_up' => [
+        'code_ttl_minutes' => 15,
+        'max_attempts' => 5,
+        'resend_after_seconds' => 30,
+    ],
+
     // Short access token (Passport) + opaque refresh token rotated on every use.
     'session' => [
         'access_token_ttl_minutes' => (int) env('ACCESS_TOKEN_TTL_MINUTES', 15),

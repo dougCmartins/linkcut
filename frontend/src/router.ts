@@ -15,6 +15,13 @@ declare module 'vue-router' {
 export const routes: RouteRecordRaw[] = [
   { path: '/', name: 'home', component: () => import('@/Home/HomeView.vue') },
   { path: '/entrar', name: 'login', component: () => import('@/Domain/Identity/LoginView.vue') },
+  { path: '/cadastrar', name: 'sign-up', component: () => import('@/Domain/Onboarding/SignUpView.vue') },
+  {
+    path: '/painel/boas-vindas',
+    name: 'onboarding',
+    component: () => import('@/Domain/Onboarding/OnboardingView.vue'),
+    meta: { requiresAuth: true },
+  },
   {
     path: '/painel',
     name: 'dashboard',

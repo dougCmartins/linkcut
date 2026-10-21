@@ -92,7 +92,7 @@ final class DatabaseSeeder extends Seeder
 
     private function tenantWithOwner(string $tenantName, string $slug, string $name, string $email, ?string $phone): Tenant
     {
-        $tenant = Tenant::query()->updateOrCreate(['slug' => $slug], ['name' => $tenantName, 'active' => true]);
+        $tenant = Tenant::query()->updateOrCreate(['slug' => $slug], ['name' => $tenantName, 'active' => true, 'onboarded_at' => now()]);
 
         User::query()->updateOrCreate(['email' => $email], [
             'tenant_id' => $tenant->id,
