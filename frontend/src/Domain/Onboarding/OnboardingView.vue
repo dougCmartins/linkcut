@@ -201,7 +201,7 @@ onMounted(() => {
     <div v-else class="grid gap-5">
       <BaseCard class="grid gap-3 p-5 text-center">
         <p class="text-sm text-muted">{{ t('onboarding.linkLabel') }}</p>
-        <p class="font-display text-lg font-extrabold break-all">{{ publicUrl }}</p>
+        <p class="font-display text-lg font-extrabold [overflow-wrap:anywhere]">{{ publicUrl }}</p>
         <div class="grid gap-2 sm:grid-cols-2">
           <BaseButton variant="secondary" block @click="copyLink">{{ copied ? t('onboarding.copied') : t('onboarding.copy') }}</BaseButton>
           <BaseButton variant="secondary" block :to="publicPath">{{ t('onboarding.viewPage') }}</BaseButton>

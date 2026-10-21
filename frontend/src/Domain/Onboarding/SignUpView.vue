@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
       {{ error }}
     </p>
 
-    <form v-if="step === 'account'" class="grid gap-5" novalidate @submit.prevent="requestCode">
+    <form v-if="step === 'account'" class="grid grid-cols-1 gap-5" novalidate @submit.prevent="requestCode">
       <TextField v-model="form.name" :label="t('signUp.name')" autocomplete="name" :maxlength="60" />
       <TextField v-model="form.email" :label="t('auth.email')" type="email" inputmode="email" autocomplete="email" />
       <TextField
@@ -179,7 +179,7 @@ onBeforeUnmount(() => {
       </BaseButton>
     </form>
 
-    <form v-else-if="step === 'code'" class="grid gap-5" novalidate @submit.prevent="confirmCode">
+    <form v-else-if="step === 'code'" class="grid grid-cols-1 gap-5" novalidate @submit.prevent="confirmCode">
       <p class="text-sm leading-relaxed text-muted" role="status">{{ t('signUp.codeSent', { email: form.email.trim() }) }}</p>
       <OtpInput v-model="form.code" :length="CODE_LENGTH" :label="t('auth.codeLabel')" :disabled="isBusy" @complete="confirmCode" />
       <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!isCodeComplete">
@@ -194,7 +194,7 @@ onBeforeUnmount(() => {
       <p class="text-xs text-muted">{{ t('signUp.codeHelp') }}</p>
     </form>
 
-    <form v-else class="grid gap-5" novalidate @submit.prevent="finish">
+    <form v-else class="grid grid-cols-1 gap-5" novalidate @submit.prevent="finish">
       <TextField v-model="form.barbershopName" :label="t('signUp.barbershopName')" :maxlength="40" :hint="t('signUp.barbershopHint')" />
       <div>
         <label for="sign-up-slug" class="block pl-2 text-xs font-semibold text-muted">{{ t('signUp.slug.label') }}</label>
