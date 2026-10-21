@@ -25,15 +25,18 @@ final class ShowMonthToDate
         $from = $today->startOfMonth()->toDateString();
         $to = $today->toDateString();
 
-        $revenue = fn () => RevenueEntry::query()->betweenDates($from, $to);
+        $revenue = RevenueEntry::query()->betweenDates($from, $to)
+            ->selectRaw('coalesce(sum(price_in_cents), 0) as revenue, coalesce(sum(cost_in_cents), 0) as costs')
+            ->toBase()
+            ->first();
         $fixed = FixedExpense::query()->get()->filter(fn (FixedExpense $expense): bool => $expense->isDueOn($today))->sum('amount_in_cents');
         $oneOff = (int) OneOffExpense::query()->betweenDates($from, $to)->sum('amount_in_cents');
-        $serviceCosts = (int) $revenue()->sum('cost_in_cents');
+        $serviceCosts = (int) $revenue->costs;
 
         return new MonthToDateData(
             from: $from,
             to: $to,
-            revenue_in_cents: (int) $revenue()->sum('price_in_cents'),
+            revenue_in_cents: (int) $revenue->revenue,
             expenses: new ExpenseBreakdownData(
                 fixed_in_cents: (int) $fixed,
                 one_off_in_cents: $oneOff,

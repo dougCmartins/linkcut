@@ -14,21 +14,26 @@ use Domain\Notification\Data\PushMessageData;
 use Domain\Notification\Data\TenantPushData;
 use Domain\Notification\Enums\BookingEmailKind;
 use Domain\Orchestrator\ClientEmails\Support\BookingEmails;
-use Domain\Orchestrator\PublicBooking\Data\AvailabilityQueryData;
-use Domain\Orchestrator\PublicBooking\Data\AvailableDayData;
 use Domain\Orchestrator\PublicBooking\Data\BookingConfirmationData;
 use Domain\Orchestrator\PublicBooking\Data\BookingRequestInputData;
 use Domain\Orchestrator\PublicBooking\Exceptions\BarbershopAddressMissingException;
+use Domain\Orchestrator\PublicBooking\Support\AvailableTimes;
 use Domain\Orchestrator\PublicBooking\Support\Distance;
 use Domain\Schedule\Actions\CreateBookingRequest;
+use Domain\Schedule\Actions\ListBusySlots;
 use Domain\Schedule\Data\BookingRequestData;
+use Domain\Schedule\Data\BusySlotData;
+use Domain\Schedule\Data\DateRangeData;
 use Domain\Schedule\Data\NewBookingRequestData;
 use Domain\Schedule\Exceptions\SlotUnavailableException;
+use Domain\Settings\Actions\ListContactProfiles;
 use Domain\Settings\Actions\ShowBookingOptions;
-use Domain\Settings\Actions\ShowProfileSettings;
 use Domain\Settings\Data\AddressData;
+use Domain\Settings\Data\BookingOptionsData;
 use Domain\Settings\Data\PublicServiceData;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Context\TenantClock;
+use Domain\Tenant\Data\TenantIdsData;
 
 /**
  * A client asks for a time on the public page. The barbershop must have an address (the client saw where it is);
@@ -40,10 +45,11 @@ use Domain\Tenant\Context\CurrentTenant;
 final class RequestBooking
 {
     public function __construct(
-        private readonly ShowAvailability $showAvailability,
         private readonly ShowBookingOptions $showBookingOptions,
+        private readonly ListBusySlots $listBusySlots,
+        private readonly TenantClock $clock,
         private readonly CreateBookingRequest $createBookingRequest,
-        private readonly ShowProfileSettings $showProfile,
+        private readonly ListContactProfiles $listProfiles,
         private readonly NotifyTenant $notifyTenant,
         private readonly CurrentTenant $currentTenant,
         private readonly FindOrCreateClient $findOrCreateClient,
@@ -52,17 +58,13 @@ final class RequestBooking
 
     public function handle(BookingRequestInputData $data): BookingConfirmationData
     {
-        // Availability first: it also creates the default settings of a new barbershop.
-        $availability = $this->showAvailability->handle(new AvailabilityQueryData(service_id: $data->service_id));
-        $address = $this->showProfile->handle()->address ?? throw new BarbershopAddressMissingException;
-        $day = collect($availability->days->all())->first(fn (AvailableDayData $day): bool => $day->date === $data->date);
-        if (! $day || ! in_array($data->time, $day->times, true)) {
-            throw new SlotUnavailableException;
-        }
+        // Options first: they also create the default settings of a new barbershop.
+        $options = $this->showBookingOptions->handle();
+        $service = AvailableTimes::service($options, $data->service_id);
+        $profile = $this->listProfiles->handle(new TenantIdsData(ids: [$this->currentTenant->id()]))->first();
+        $address = $profile?->address ?? throw new BarbershopAddressMissingException;
+        $this->ensureSlotIsFree($data, $options, $service);
 
-        /** @var PublicServiceData $service */
-        $service = collect($this->showBookingOptions->handle()->services->all())
-            ->first(fn (PublicServiceData $item): bool => $item->id === $data->service_id);
         $client = $this->findOrCreateClient->handle(new ClientContactData(
             name: trim($data->client_name),
             email: $data->client_email,
@@ -91,6 +93,22 @@ final class RequestBooking
             time: $request->starts_at,
             status: $request->status->value,
         );
+    }
+
+    /** Only the requested day is checked (inside the booking window, not taken, not past). */
+    private function ensureSlotIsFree(BookingRequestInputData $data, BookingOptionsData $options, PublicServiceData $service): void
+    {
+        $now = $this->clock->now();
+        $today = $now->startOfDay();
+        $day = CarbonImmutable::createFromFormat('!Y-m-d', $data->date, $now->getTimezone());
+        if (! $day || $day < $today || $day > $today->addDays($options->booking_window_days - 1)) {
+            throw new SlotUnavailableException;
+        }
+        $busy = collect($this->listBusySlots->handle(new DateRangeData(from: $data->date, to: $data->date))->all())
+            ->map(fn (BusySlotData $slot): array => [$slot->starts_at, $slot->ends_at])->values()->all();
+        if (! in_array($data->time, AvailableTimes::forDate($options, $service, $day, $now, $busy), true)) {
+            throw new SlotUnavailableException;
+        }
     }
 
     /** Push to the barber's devices: who, what and when (opens the dashboard on tap). */

@@ -15,6 +15,9 @@ use Spatie\LaravelData\DataCollection;
  */
 final class ListClientBookings
 {
+    /** Newest first: every upcoming appointment and the most recent past ones. */
+    private const LIMIT = 100;
+
     /** @return DataCollection<int, ClientBookingData> */
     public function handle(ClientBookingsQueryData $client): DataCollection
     {
@@ -22,7 +25,8 @@ final class ListClientBookings
             ->where('client_id', $client->client_id)
             ->orderByDesc('date')
             ->orderByDesc('starts_at')
-            ->get()
+            ->limit(self::LIMIT)
+            ->get(['id', 'tenant_id', 'service_name', 'date', 'starts_at', 'ends_at', 'status'])
             ->map(fn (BookingRequest $booking): ClientBookingData => new ClientBookingData(
                 id: $booking->id,
                 tenant_id: $booking->tenant_id,

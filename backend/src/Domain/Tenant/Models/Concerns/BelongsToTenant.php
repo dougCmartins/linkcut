@@ -36,6 +36,25 @@ trait BelongsToTenant
         });
     }
 
+    /**
+     * Several rows in one INSERT, always for the current tenant (a bulk insert skips the "creating" hook,
+     * so the tenant and the timestamps are set here).
+     *
+     * @param  list<array<string, mixed>>  $rows
+     */
+    public static function insertForCurrentTenant(array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+        $tenantId = app(CurrentTenant::class)->id();
+        $now = now();
+        static::query()->insert(array_map(
+            fn (array $row): array => [...$row, 'tenant_id' => $tenantId, 'created_at' => $now, 'updated_at' => $now],
+            $rows,
+        ));
+    }
+
     /** @return Builder<static> */
     public static function withoutTenantScope(): Builder
     {

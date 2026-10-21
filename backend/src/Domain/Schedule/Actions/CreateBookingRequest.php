@@ -28,7 +28,7 @@ final class CreateBookingRequest
         $endsAt = CarbonImmutable::createFromFormat('H:i', $data->starts_at)->addMinutes($data->duration_minutes)->format('H:i');
 
         $request = DB::transaction(function () use ($data, $endsAt): BookingRequest {
-            Tenant::query()->whereKey($this->currentTenant->id())->lockForUpdate()->firstOrFail();
+            Tenant::query()->whereKey($this->currentTenant->id())->lockForUpdate()->firstOrFail(['id']);
             if (BookingRequest::query()->blocking()->overlapping($data->date, $data->starts_at, $endsAt)->exists()) {
                 throw new SlotUnavailableException;
             }

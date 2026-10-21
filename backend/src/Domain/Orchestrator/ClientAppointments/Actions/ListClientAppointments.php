@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Domain\Orchestrator\ClientAppointments\Actions;
 
 use Domain\Client\Models\Client;
-use Domain\Orchestrator\Barbershop\Actions\ShowBarbershopContact;
-use Domain\Orchestrator\Barbershop\Data\BarbershopContactData;
+use Domain\Orchestrator\Barbershop\Actions\ListBarbershopContacts;
 use Domain\Orchestrator\ClientAppointments\Data\ClientAppointmentData;
 use Domain\Schedule\Actions\ListClientBookings;
 use Domain\Schedule\Data\ClientBookingData;
 use Domain\Schedule\Data\ClientBookingsQueryData;
-use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Data\TenantIdsData;
 use Spatie\LaravelData\DataCollection;
 
 /**
@@ -22,8 +21,7 @@ final class ListClientAppointments
 {
     public function __construct(
         private readonly ListClientBookings $listBookings,
-        private readonly ShowBarbershopContact $showContact,
-        private readonly CurrentTenant $currentTenant,
+        private readonly ListBarbershopContacts $listContacts,
     ) {}
 
     /** @return DataCollection<int, ClientAppointmentData> */
@@ -33,11 +31,7 @@ final class ListClientAppointments
         $client = auth('client')->user();
         $bookings = collect($this->listBookings->handle(new ClientBookingsQueryData(client_id: $client->id))->all());
 
-        /** @var array<int, BarbershopContactData> $barbershops */
-        $barbershops = $bookings->pluck('tenant_id')->unique()
-            ->mapWithKeys(fn (int $tenantId): array => [
-                $tenantId => $this->currentTenant->run($tenantId, fn (): BarbershopContactData => $this->showContact->handle()),
-            ])->all();
+        $barbershops = $this->listContacts->handle(new TenantIdsData(ids: $bookings->pluck('tenant_id')->unique()->values()->all()));
 
         $appointments = $bookings->map(fn (ClientBookingData $booking): ClientAppointmentData => new ClientAppointmentData(
             id: $booking->id,

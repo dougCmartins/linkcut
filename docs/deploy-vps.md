@@ -82,7 +82,9 @@ git pull
 make prod-up
 ```
 
-As migrations do banco rodam sozinhas.
+As migrations do banco rodam sozinhas. O `make prod-up` sempre recria os containers do app, então uma mudança no `.env.production` vale na hora.
+
+> **Quem já tinha subido antes:** no seu `.env.production`, troque `CACHE_STORE=database` por `CACHE_STORE=file`. O limite de tentativas deixa de consultar o banco a cada requisição.
 
 ## Backup do banco
 - **Manual:** `make prod-backup` cria `backups/linkcut-AAAA-MM-DD-HHMM.sql.gz`. Backups com mais de 14 dias são apagados.

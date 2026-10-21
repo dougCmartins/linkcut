@@ -16,10 +16,19 @@ final class CurrentTenant
 {
     private ?int $id = null;
 
-    public function set(int $id): void
+    /** Known when the tenant was resolved from its row (saves TenantClock a query). */
+    private ?string $timezone = null;
+
+    public function set(int $id, ?string $timezone = null): void
     {
         $this->id = $id;
+        $this->timezone = $timezone;
         event(new TenantResolved($id));
+    }
+
+    public function timezone(): ?string
+    {
+        return $this->timezone;
     }
 
     public function has(): bool
@@ -36,6 +45,7 @@ final class CurrentTenant
     public function forget(): void
     {
         $this->id = null;
+        $this->timezone = null;
     }
 
     /**
@@ -48,12 +58,13 @@ final class CurrentTenant
      */
     public function run(int $id, Closure $callback): mixed
     {
-        $previous = $this->id;
+        [$previousId, $previousTimezone] = [$this->id, $this->timezone];
         $this->id = $id;
+        $this->timezone = null;
         try {
             return $callback();
         } finally {
-            $this->id = $previous;
+            [$this->id, $this->timezone] = [$previousId, $previousTimezone];
         }
     }
 }

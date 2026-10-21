@@ -41,20 +41,18 @@ final class UpdatePortfolioSettings
             ]);
 
             PortfolioHighlight::query()->delete();
-            foreach ($data->highlights as $position => $highlight) {
-                /** @var HighlightData $highlight */
-                PortfolioHighlight::query()->create([
-                    'label' => $highlight->label ?? '',
-                    'value' => $highlight->value ?? '',
-                    'position' => $position,
-                ]);
-            }
+            PortfolioHighlight::insertForCurrentTenant(array_map(
+                fn (HighlightData $highlight, int $position): array => ['label' => $highlight->label ?? '', 'value' => $highlight->value ?? '', 'position' => $position],
+                $data->highlights->all(),
+                array_keys($data->highlights->all()),
+            ));
 
             PortfolioPhoto::query()->delete();
-            foreach ($data->photos as $position => $photo) {
-                /** @var PortfolioPhotoInputData $photo */
-                PortfolioPhoto::query()->create(['image_id' => $photo->image_id, 'alt' => $photo->alt, 'position' => $position]);
-            }
+            PortfolioPhoto::insertForCurrentTenant(array_map(
+                fn (PortfolioPhotoInputData $photo, int $position): array => ['image_id' => $photo->image_id, 'alt' => $photo->alt, 'position' => $position],
+                $data->photos->all(),
+                array_keys($data->photos->all()),
+            ));
         });
 
         Log::info('settings_portfolio_updated', ['photos' => $data->photos->count()]);

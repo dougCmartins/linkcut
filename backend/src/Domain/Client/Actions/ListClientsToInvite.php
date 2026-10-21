@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Client\Actions;
 
+use Domain\Client\Data\ClientInviteBatchData;
 use Domain\Client\Data\ClientInviteData;
 use Domain\Client\Models\Client;
 use Domain\Client\Support\ClientLinks;
@@ -13,7 +14,7 @@ use Spatie\LaravelData\DataCollection;
 final class ListClientsToInvite
 {
     /** @return DataCollection<int, ClientInviteData> */
-    public function handle(): DataCollection
+    public function handle(ClientInviteBatchData $batch): DataCollection
     {
         $clients = Client::query()
             ->whereNull('password')
@@ -21,7 +22,8 @@ final class ListClientsToInvite
             ->whereNull('emails_opted_out_at')
             ->where('created_at', '<=', now()->subHours((int) config('client.invite_after_hours')))
             ->orderBy('id')
-            ->get()
+            ->limit($batch->limit)
+            ->get(['id', 'name', 'email'])
             ->map(fn (Client $client): ClientInviteData => new ClientInviteData(
                 id: $client->id,
                 name: $client->name,

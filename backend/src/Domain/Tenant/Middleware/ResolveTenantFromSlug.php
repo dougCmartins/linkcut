@@ -23,7 +23,7 @@ final class ResolveTenantFromSlug
     {
         $slug = (string) $request->route('slug');
         $tenant = $this->findActiveTenantBySlug->handle(TenantSlugData::from(TenantSlugData::validate(['slug' => $slug])));
-        $this->currentTenant->set($tenant->id);
+        $this->currentTenant->set($tenant->id, $tenant->timezone);
 
         return $next($request);
     }

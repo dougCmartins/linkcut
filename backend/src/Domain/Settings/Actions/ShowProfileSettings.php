@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Domain\Settings\Actions;
 
-use Domain\Settings\Data\AddressData;
 use Domain\Settings\Data\ImageData;
 use Domain\Settings\Data\ProfileSettingsData;
 use Domain\Settings\Data\SocialLinkData;
@@ -31,23 +30,8 @@ final class ShowProfileSettings
             whatsapp_number: $profile->whatsapp_number,
             whatsapp_message: $profile->whatsapp_message,
             socials: new DataCollection(SocialLinkData::class, $socials),
-            address: $this->address($profile),
+            address: $profile->address(),
         );
-    }
-
-    private function address(ProfileSettings $profile): ?AddressData
-    {
-        return $profile->hasAddress() ? new AddressData(
-            zip_code: $profile->address_zip_code,
-            street: $profile->address_street,
-            number: $profile->address_number,
-            complement: $profile->address_complement,
-            district: $profile->address_district,
-            city: $profile->address_city,
-            state: $profile->address_state,
-            latitude: $profile->latitude,
-            longitude: $profile->longitude,
-        ) : null;
     }
 
     private function image(?Image $image): ?ImageData
