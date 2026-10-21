@@ -15,8 +15,10 @@ const props = withDefaults(
     shape?: UploaderShape
     isBusy?: boolean
     removable?: boolean
+    /** Upload refused or not displayed (shown under the field). */
+    error?: string
   }>(),
-  { alt: '', shape: 'wide', isBusy: false, removable: true },
+  { alt: '', shape: 'wide', isBusy: false, removable: true, error: undefined },
 )
 
 const emit = defineEmits<{ select: [file: File]; remove: [] }>()
@@ -94,6 +96,7 @@ function onChange(event: Event): void {
       <p v-if="fileError" class="mt-1.5 pl-1 text-xs text-danger" role="alert">
         {{ t(`settings.image.errors.${fileError}`) }}
       </p>
+      <p v-else-if="error" class="mt-1.5 pl-1 text-xs text-danger" role="alert">{{ error }}</p>
       <p v-else class="mt-1.5 pl-1 text-xs text-muted">{{ t('settings.image.hint') }}</p>
     </div>
 

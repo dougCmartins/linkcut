@@ -19,7 +19,7 @@ import { useSectionErrors } from './useSectionErrors'
 const { t } = useI18n()
 const store = useSettingsStore()
 const { errorFor } = useSectionErrors(SettingsSection.Profile)
-const { upload, isBusy, failedField } = useImageUpload()
+const { upload, isBusy, errorFor: uploadErrorFor } = useImageUpload()
 
 const profile = computed(() => store.drafts.profile)
 const avatarUrl = computed(() => imageUrl(profile.value.avatar))
@@ -36,7 +36,8 @@ const backgroundUrl = computed(() => imageUrl(profile.value.background))
           :src="avatarUrl"
           shape="circle"
           :is-busy="isBusy('avatar')"
-          @select="upload('avatar', $event, (image) => (profile.avatar = image))"
+          :error="uploadErrorFor('avatar')"
+          @select="upload('avatar', $event, (image) => (profile.avatar = image), () => (profile.avatar = store.profile.avatar))"
           @remove="profile.avatar = null"
         />
         <TextField v-model="profile.name" :label="t('settings.link.name')" :maxlength="TEXT_LIMITS.name.max" :error="errorFor('name')" autocomplete="name" />
@@ -55,7 +56,8 @@ const backgroundUrl = computed(() => imageUrl(profile.value.background))
           :label="t('settings.link.background')"
           :src="backgroundUrl"
           :is-busy="isBusy('background')"
-          @select="upload('background', $event, (image) => (profile.background = image))"
+          :error="uploadErrorFor('background')"
+          @select="upload('background', $event, (image) => (profile.background = image), () => (profile.background = store.profile.background))"
           @remove="profile.background = null"
         />
       </SettingsCard>
@@ -101,7 +103,6 @@ const backgroundUrl = computed(() => imageUrl(profile.value.background))
         </div>
       </SettingsCard>
 
-      <p v-if="failedField" class="text-sm text-danger" role="alert">{{ t('settings.image.uploadFailed') }}</p>
     </div>
 
     <div class="lg:sticky lg:top-6">
