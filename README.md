@@ -52,6 +52,16 @@ Depois de cada `git pull` (na pasta raiz), basta `make up`:
 
 Se o SPA ainda reclamar de um pacote que não existe, rode `make reset-web` (reinstala as dependências do zero).
 
+### Testar no celular
+
+1. Deixe o celular e o computador **no mesmo Wi-Fi**.
+2. Rode `make up` (ou `make ip`). Ele mostra o endereço, por exemplo `http://192.168.0.15:5173`. Abra esse endereço no navegador do celular.
+3. Se não abrir, libere a porta 5173 no firewall do computador. No Ubuntu: `sudo ufw allow 5173/tcp`. No Windows/Mac: permita o Docker na rede local quando o sistema perguntar.
+
+Tudo passa por essa porta: o Vite repassa `/api` e `/storage` para a API. Os links dos e-mails (Mailpit) também usam esse endereço.
+
+**Sem cadeado (`http`), dois recursos não funcionam no celular:** a localização ("Estou na barbearia", "Compartilhar minha localização") e os avisos de novos pedidos (push). Os navegadores só liberam esses dois em `https` ou em `localhost`. Para testá-los no celular, use um túnel `https`, por exemplo `cloudflared tunnel --url http://localhost:5173`, e abra o endereço `https://…` que ele mostrar.
+
 ## Frontend (Vue 3 + Tailwind)
 
 Telas mobile-first. Todas usam a API real, sem dados simulados ([plano da migração](docs/plano-migracao-backend.md)):
