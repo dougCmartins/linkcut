@@ -17,7 +17,7 @@ const isDark = computed(() => currentMode.value === ThemeMode.Dark)
 <template>
   <button
     type="button"
-    :aria-label="t('palette.toggle')"
+    :aria-label="t('palette.toggle', { mode: isDark ? t('palette.dark') : t('palette.light') })"
     :aria-pressed="isDark"
     class="flex h-10 items-center gap-2 rounded-full bg-surface/80 px-3 text-xs font-semibold text-ink ring-1 ring-line shadow-soft backdrop-blur transition hover:-translate-y-0.5"
     @click="toggleVisitorMode(currentMode)"

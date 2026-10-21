@@ -20,7 +20,7 @@ import { distanceInMeters, formatAddress, formatDistance, mapsUrl } from '@/util
 import { ApiErrorCode } from '@/types/apiErrorCode'
 import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
-import { credentialsSchema } from '@/Domain/Identity/auth.schemas'
+import { isValidEmail } from '@/utils/email'
 import { useClientStore } from '@/Domain/Client/client.store'
 
 const MIN_NAME_LENGTH = 2
@@ -77,7 +77,6 @@ const form = reactive({
   clientWhatsapp: clientStore.client?.phone ?? '',
   clientEmail: clientStore.client?.email ?? '',
 })
-const isValidEmail = (value: string) => credentialsSchema.shape.email.safeParse(value).success
 /** After booking, the e-mail for the "Finalizar cadastro" card (none when already signed in). */
 const registerEmail = ref<string | null>(null)
 const submittedSummary = ref<string | null>(null)

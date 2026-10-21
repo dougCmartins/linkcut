@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, watch, watchEffect } from 'vue'
+import { computed, defineAsyncComponent, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PaletteToggle from '@/components/ui/PaletteToggle.vue'
-import BookingModal from '@/Domain/Schedule/BookingModal.vue'
 import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
@@ -10,6 +9,9 @@ import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
+
+// Loaded only when "Agendar" opens: the rest of the public page does not wait for the booking code.
+const BookingModal = defineAsyncComponent(() => import('@/Domain/Schedule/BookingModal.vue'))
 
 const route = useRoute()
 const router = useRouter()

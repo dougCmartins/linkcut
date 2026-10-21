@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePageMeta } from '@/composables/usePageMeta'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
@@ -15,6 +16,11 @@ const bookingStore = useBookingStore()
 const publicPage = usePublicPage()
 
 const profile = computed(() => publicPage.page?.profile)
+// The barbershop's name and bio in search results and in the preview when the link is shared.
+usePageMeta(
+  () => profile.value?.name ?? '',
+  () => profile.value?.bio || (profile.value ? t('bioLink.metaDescription', { name: profile.value.name }) : ''),
+)
 const whatsappUrl = computed(() =>
   profile.value ? buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage) : '',
 )

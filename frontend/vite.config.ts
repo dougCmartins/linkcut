@@ -2,9 +2,20 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    // Messages are compiled at build time, so the browser gets the small runtime-only vue-i18n (no message compiler).
+    VueI18nPlugin({
+      include: [fileURLToPath(new URL('./src/i18n/pt-BR.ts', import.meta.url))],
+      runtimeOnly: true,
+      compositionOnly: true,
+      fullInstall: false,
+    }),
+  ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

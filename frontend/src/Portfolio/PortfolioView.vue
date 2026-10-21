@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePageMeta } from '@/composables/usePageMeta'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SmartImage from '@/components/ui/SmartImage.vue'
@@ -15,6 +16,10 @@ const publicPage = usePublicPage()
 
 const name = computed(() => publicPage.page?.profile.name ?? '')
 const portfolio = computed(() => publicPage.page?.portfolio)
+usePageMeta(
+  () => (name.value ? t('portfolio.metaTitle', { name: name.value }) : ''),
+  () => portfolio.value?.quote || portfolio.value?.story || '',
+)
 const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index) => ({ id: String(index), ...photo })))
 </script>
 
