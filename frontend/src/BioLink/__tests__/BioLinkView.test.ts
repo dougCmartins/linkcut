@@ -33,6 +33,20 @@ describe('BioLinkView', () => {
     expect(screen.getByRole('link', { name: /WhatsApp/ }).getAttribute('href')).toContain('https://wa.me/5511999998888')
   })
 
+  it('uses the barbershop name and bio as the page title and description (search and shared links)', async () => {
+    // Arrange
+    installFakeSettingsApi()
+    document.head.insertAdjacentHTML('beforeend', '<meta name="description" content="">')
+
+    // Act
+    await renderBioLink()
+    await screen.findByRole('heading', { name: 'Rafael Costa' })
+
+    // Assert
+    expect(document.title).toBe('Rafael Costa · linkcut')
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Cortes clássicos e degradês precisos.')
+  })
+
   it('reads the public API without a session and loads the theme of the barbershop', async () => {
     // Arrange
     const settings = createTestSettings()

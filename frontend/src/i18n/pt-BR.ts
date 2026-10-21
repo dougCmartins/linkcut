@@ -1,6 +1,7 @@
 export default {
   palette: {
-    toggle: 'Alternar tema',
+    // Starts with the visible text (Escuro/Claro), as screen readers and voice control expect.
+    toggle: '{mode}: alternar tema',
     dark: 'Escuro',
     light: 'Claro',
   },
@@ -72,6 +73,7 @@ export default {
     home: 'Ir para o linkcut',
   },
   bioLink: {
+    metaDescription: 'Agende seu horário com {name} pelo linkcut.',
     book: 'Agendar Horário Agora',
     portfolio: 'Conheça Minha História',
     whatsapp: 'Tirar Dúvidas no WhatsApp',
@@ -80,6 +82,7 @@ export default {
     poweredBy: 'Feito com LinkCut',
   },
   portfolio: {
+    metaTitle: 'Portfólio de {name}',
     back: 'Voltar',
     coverAlt: 'Foto de capa de {name}',
     eyebrow: 'Sobre mim',

@@ -1,0 +1,8 @@
+# Barbershop pages (linkcut.app/<link>) can be found by search engines; private areas cannot.
+User-agent: *
+Disallow: /painel
+Disallow: /conta
+Disallow: /api/
+Disallow: /entrar
+Disallow: /cadastrar
+Allow: /
