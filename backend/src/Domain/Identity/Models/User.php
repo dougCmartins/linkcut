@@ -25,7 +25,7 @@ final class User extends Authenticatable
 
     use Notifiable;
 
-    protected $fillable = ['tenant_id', 'role', 'name', 'email', 'phone', 'password', 'two_factor_channel'];
+    protected $fillable = ['tenant_id', 'role', 'name', 'email', 'phone', 'password', 'two_factor_channel', 'email_verified_at'];
 
     protected $hidden = ['password', 'remember_token'];
 

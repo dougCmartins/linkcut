@@ -14,5 +14,7 @@ final class TenantData extends Data
         public readonly string $slug,
         public readonly bool $active,
         public readonly string $timezone,
+        /** Finished the first-run wizard (WhatsApp, address, services). */
+        public readonly bool $onboarded = true,
     ) {}
 }

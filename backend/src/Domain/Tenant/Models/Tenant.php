@@ -16,11 +16,11 @@ final class Tenant extends Model
     /** @use HasFactory<TenantFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'active', 'timezone'];
+    protected $fillable = ['name', 'slug', 'active', 'timezone', 'onboarded_at'];
 
     protected function casts(): array
     {
-        return ['active' => 'boolean'];
+        return ['active' => 'boolean', 'onboarded_at' => 'immutable_datetime'];
     }
 
     protected static function newFactory(): TenantFactory

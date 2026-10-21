@@ -9,6 +9,7 @@ use Domain\Tenant\Data\TenantIdData;
 use Domain\Tenant\Exceptions\TenantInactiveException;
 use Domain\Tenant\Exceptions\TenantNotFoundException;
 use Domain\Tenant\Models\Tenant;
+use Domain\Tenant\Support\TenantDataMapper;
 
 /** Refuses a missing or deactivated tenant (sign-in and every authenticated request). */
 final class EnsureTenantIsActive
@@ -23,12 +24,6 @@ final class EnsureTenantIsActive
             throw new TenantInactiveException;
         }
 
-        return new TenantData(
-            id: $tenant->id,
-            name: $tenant->name,
-            slug: $tenant->slug,
-            active: $tenant->active,
-            timezone: $tenant->timezone,
-        );
+        return TenantDataMapper::toData($tenant);
     }
 }

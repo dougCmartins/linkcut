@@ -73,6 +73,15 @@ final class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perMinute(20)->by($request->ip()),
         ]);
+        // Barber sign-up: codes per e-mail and visitor; finishing and checking links per visitor.
+        RateLimiter::for('sign-up-codes', fn (Request $request) => [
+            Limit::perMinute(3)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
+            Limit::perHour(20)->by($request->ip()),
+        ]);
+        RateLimiter::for('sign-up', fn (Request $request) => [
+            Limit::perMinute(10)->by($request->ip()),
+            Limit::perHour(30)->by($request->ip()),
+        ]);
         // Public booking requests: a few per minute per visitor, so nobody fills a barber's agenda.
         RateLimiter::for('booking', fn (Request $request) => [
             Limit::perMinute(5)->by($request->ip()),
