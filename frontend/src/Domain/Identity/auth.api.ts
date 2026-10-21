@@ -1,5 +1,5 @@
 import type { CodeDelivery, Credentials, LoginChallenge, Session, SessionUser } from './auth.model'
-import type { TwoFactorChannel } from '@/types/twoFactorChannel'
+import { TwoFactorChannel } from '@/types/twoFactorChannel'
 import { http } from '@/http/client'
 
 /**
@@ -16,6 +16,7 @@ interface UserResponse {
   phone_masked: string | null
   role: string
   two_factor_channel: TwoFactorChannel | null
+  available_channels?: TwoFactorChannel[]
 }
 
 interface LoginChallengeResponse {
@@ -49,6 +50,7 @@ function toUser(user: UserResponse): SessionUser {
     phoneMasked: user.phone_masked,
     role: user.role,
     twoFactorChannel: user.two_factor_channel,
+    availableChannels: user.available_channels ?? [TwoFactorChannel.Email],
   }
 }
 

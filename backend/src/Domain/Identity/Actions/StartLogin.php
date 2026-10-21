@@ -44,7 +44,8 @@ final class StartLogin
 
         return new LoginChallengeData(
             challenge_id: $challenge->id,
-            preferred_channel: $user->two_factor_channel,
+            // A saved SMS preference is ignored while SMS is off (the code goes by e-mail).
+            preferred_channel: in_array($user->two_factor_channel, $user->availableTwoFactorChannels(), true) ? $user->two_factor_channel : null,
             destinations: new DataCollection(TwoFactorDestinationData::class, $this->destinations($user)),
         );
     }
@@ -58,7 +59,7 @@ final class StartLogin
     private function destinations(User $user): array
     {
         $destinations = [new TwoFactorDestinationData(TwoFactorChannel::Email, ContactMask::email($user->email))];
-        if ($user->phone) {
+        if ($user->canReceiveSms()) {
             $destinations[] = new TwoFactorDestinationData(TwoFactorChannel::Sms, ContactMask::phone($user->phone));
         }
 

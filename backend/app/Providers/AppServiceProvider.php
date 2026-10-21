@@ -81,10 +81,10 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 
-    /** The SMS "log" driver writes codes to a file: never allowed in production. */
+    /** The SMS "log" driver writes codes to a file: never allowed in production while SMS is on. */
     private function refuseUnsafeDriversInProduction(): void
     {
-        if ($this->app->isProduction() && config('sms.driver') === 'log') {
+        if ($this->app->isProduction() && config('sms.enabled') && config('sms.driver') === 'log') {
             throw new RuntimeException('SMS_DRIVER=log is not allowed in production.');
         }
     }

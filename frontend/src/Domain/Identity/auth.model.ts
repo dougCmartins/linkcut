@@ -41,6 +41,8 @@ export interface SessionUser {
   phoneMasked: string | null
   role: string
   twoFactorChannel: TwoFactorChannel | null
+  /** Channels the code can go by (SMS only when it is on in the API and the user has a phone). Missing = e-mail. */
+  availableChannels?: TwoFactorChannel[]
 }
 
 export interface Session {

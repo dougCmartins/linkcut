@@ -22,15 +22,22 @@ const status = ref<{ kind: 'saved' | 'error'; message: string } | null>(null)
 
 const current = computed(() => auth.user?.twoFactorChannel ?? null)
 
+/** SMS shows only when the API offers it (it is off while there is no SMS provider). */
+const canUseSms = computed(() => auth.user?.availableChannels?.includes(TwoFactorChannel.Sms) ?? false)
+
 const options = computed(() => [
   { value: null, id: ASK_EVERY_TIME, label: t('settings.security.askEveryTime'), detail: t('settings.security.askEveryTimeDetail'), disabled: false },
-  {
-    value: TwoFactorChannel.Sms,
-    id: TwoFactorChannel.Sms,
-    label: t('auth.channels.sms'),
-    detail: auth.user?.phoneMasked ?? t('settings.security.noPhone'),
-    disabled: !auth.user?.phoneMasked,
-  },
+  ...(canUseSms.value
+    ? [
+        {
+          value: TwoFactorChannel.Sms,
+          id: TwoFactorChannel.Sms,
+          label: t('auth.channels.sms'),
+          detail: auth.user?.phoneMasked ?? '',
+          disabled: false,
+        },
+      ]
+    : []),
   { value: TwoFactorChannel.Email, id: TwoFactorChannel.Email, label: t('auth.channels.email'), detail: auth.user?.email ?? '…', disabled: false },
 ])
 

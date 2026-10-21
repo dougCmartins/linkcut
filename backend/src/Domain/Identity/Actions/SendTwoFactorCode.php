@@ -72,7 +72,7 @@ final class SendTwoFactorCode
         if ($challenge->resend_available_at?->isFuture()) {
             throw new ResendTooSoonException;
         }
-        if ($channel === TwoFactorChannel::Sms && ! $challenge->user->phone) {
+        if ($channel === TwoFactorChannel::Sms && ! $challenge->user->canReceiveSms()) {
             throw new ChannelUnavailableException;
         }
     }

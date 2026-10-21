@@ -20,6 +20,7 @@ final class UserDataMapper
             phone_masked: $user->phone ? ContactMask::phone($user->phone) : null,
             role: $user->role,
             two_factor_channel: $user->two_factor_channel,
+            available_channels: $user->availableTwoFactorChannels(),
         );
     }
 }

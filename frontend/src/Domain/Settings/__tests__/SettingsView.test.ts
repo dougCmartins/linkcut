@@ -4,18 +4,19 @@ import SettingsView from '../SettingsView.vue'
 import { useSettingsStore } from '../settings.store'
 import { renderWithPlugins } from '@/utils/testRender'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
-import { identityRoutes } from '@/Domain/Identity/__tests__/fakeIdentityApi'
+import { USER, identityRoutes } from '@/Domain/Identity/__tests__/fakeIdentityApi'
+import { TwoFactorChannel } from '@/types/twoFactorChannel'
 import { envelope, installFakeApi } from '@/utils/testFetch'
 import { installFakeSettingsApi } from './fakeSettingsApi'
 
-function signedInSession() {
+function signedInSession(availableChannels: TwoFactorChannel[] = [TwoFactorChannel.Email, TwoFactorChannel.Sms]) {
   const now = Date.now()
   return {
     accessToken: 'access-1',
     refreshToken: 'refresh-1',
     accessExpiresAt: now + 60_000,
     refreshExpiresAt: now + 120_000,
-    user: { id: 7, tenantId: 3, name: 'Rafael', email: 'rafael@linkcut.app', phoneMasked: '+55 •• •••••-7777', role: 'owner', twoFactorChannel: null },
+    user: { id: 7, tenantId: 3, name: 'Rafael', email: 'rafael@linkcut.app', phoneMasked: '+55 •• •••••-7777', role: 'owner', twoFactorChannel: null, availableChannels },
   }
 }
 
@@ -154,6 +155,22 @@ describe('SettingsView', () => {
     expect(auth.user?.twoFactorChannel).toBe('sms')
     expect(screen.getByRole('radio', { name: /SMS/ }).getAttribute('aria-checked')).toBe('true')
     expect(screen.queryByRole('button', { name: 'Salvar' })).toBeNull()
+  })
+
+  it('hides SMS while the API has it off (code only by e-mail)', async () => {
+    // Arrange
+    api = installFakeSettingsApi(undefined, {
+      ...identityRoutes(),
+      'GET /me': () => ({ status: 200, body: { ...USER, available_channels: ['email'] } }),
+    })
+
+    // Act
+    await renderSettings('/painel/configuracoes?aba=seguranca')
+    useAuthStore().session = signedInSession([TwoFactorChannel.Email])
+
+    // Assert
+    expect(await screen.findByRole('radio', { name: /E-mail/ })).toBeTruthy()
+    expect(screen.queryByRole('radio', { name: /SMS/ })).toBeNull()
   })
 
   it('previews and saves the button style', async () => {

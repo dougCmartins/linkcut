@@ -18,5 +18,11 @@ final class UserData extends Data
         public readonly ?string $phone_masked,
         public readonly UserRole $role,
         public readonly ?TwoFactorChannel $two_factor_channel,
+        /**
+         * Channels this user can get the code by (SMS only when it is on and there is a phone).
+         *
+         * @var list<TwoFactorChannel>
+         */
+        public readonly array $available_channels,
     ) {}
 }
