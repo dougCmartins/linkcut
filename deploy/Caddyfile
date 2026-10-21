@@ -1,0 +1,28 @@
+# DOMAIN comes from .env.production. Caddy gets and renews the https certificate (Let's Encrypt) by itself.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# The API and the uploaded images (same address as the SPA: no CORS).
+	@api path /api/* /storage/* /up
+	handle @api {
+		reverse_proxy app:8080
+	}
+
+	# The SPA: real files when they exist, otherwise index.html (Vue Router handles /rafael, /painel...).
+	handle {
+		root * /srv
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		header /index.html Cache-Control "no-cache"
+		header /sw.js Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

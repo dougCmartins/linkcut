@@ -1,0 +1,34 @@
+# Production image of the API: FrankenPHP (PHP 8.3 + a real web server), no dev dependencies.
+# Used by docker-compose.prod.yml for the app, queue and scheduler services.
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
+
+FROM dunglas/frankenphp:1-php8.3
+
+RUN install-php-extensions pdo_mysql gd intl zip gmp pcntl opcache \
+    && apt-get update && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/* \
+    && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY docker/php-prod.ini "$PHP_INI_DIR/conf.d/zz-linkcut.ini"
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN groupadd --gid 1000 app \
+    && useradd --uid 1000 --gid app --create-home --shell /usr/sbin/nologin app
+
+WORKDIR /var/www/html
+COPY . /var/www/html
+COPY --from=vendor /app/vendor /var/www/html/vendor
+RUN composer dump-autoload --optimize --no-dev --no-scripts \
+    && cp docker/entrypoint.sh /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
+# FrankenPHP's own files go to a folder the "app" user can write (it serves plain HTTP; Caddy in front does https).
+ENV APP_ENV=production \
+    XDG_CONFIG_HOME=/tmp/frankenphp/config \
+    XDG_DATA_HOME=/tmp/frankenphp/data
+
+EXPOSE 8080
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["frankenphp", "php-server", "--root", "public", "--listen", ":8080"]
