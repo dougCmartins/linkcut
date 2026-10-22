@@ -1,41 +1,48 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useApiErrors } from '@/composables/useApiErrors'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { toIsoDate } from '@/utils/date'
 import ClientAppointmentCard from './ClientAppointmentCard.vue'
-import { fetchAppointments } from './client.api'
+import ClientLayout from './ClientLayout.vue'
 import type { ClientAppointment } from './client.model'
 import { useClientStore } from './client.store'
 
 /**
- * /conta: the client's appointments at every barbershop where they booked. Upcoming ones (waiting or confirmed)
- * show where to go; past ones offer "Agendar de novo". No list of other barbershops (no marketplace).
+ * /conta: the client's appointments at every barbershop where they booked, each with its logo. Upcoming ones
+ * (waiting or confirmed) show where to go and can be cancelled; past ones offer "Agendar de novo".
  */
 const { t } = useI18n()
-const router = useRouter()
+const apiErrors = useApiErrors()
 const clientStore = useClientStore()
 
-const appointments = ref<ClientAppointment[]>([])
-const isLoading = ref(true)
+const isLoading = ref(!clientStore.appointmentsLoaded)
 const failed = ref(false)
+const cancellingId = ref<number | null>(null)
+const cancelError = ref<{ id: number; message: string } | null>(null)
 
 const today = toIsoDate(new Date())
 const isUpcoming = (appointment: ClientAppointment) =>
   appointment.date >= today && (appointment.status === AppointmentStatus.Pending || appointment.status === AppointmentStatus.Confirmed)
-const upcoming = computed(() => appointments.value.filter(isUpcoming).reverse())
-const past = computed(() => appointments.value.filter((appointment) => !isUpcoming(appointment)))
-const firstName = computed(() => clientStore.client?.name.trim().split(' ')[0] ?? '')
+const upcoming = computed(() => clientStore.appointments.filter(isUpcoming).reverse())
+const past = computed(() => clientStore.appointments.filter((appointment) => !isUpcoming(appointment)))
 
-async function logout(): Promise<void> {
-  await clientStore.logout()
-  await router.replace({ name: 'client-login' })
+async function cancel(id: number): Promise<void> {
+  cancellingId.value = id
+  cancelError.value = null
+  try {
+    await clientStore.cancelAppointment(id)
+  } catch (caught) {
+    cancelError.value = { id, message: t(`errors.api.${apiErrors.messageKey(caught)}`) }
+  } finally {
+    cancellingId.value = null
+  }
 }
 
 onMounted(async () => {
   try {
-    appointments.value = await fetchAppointments()
+    await clientStore.ensureAppointments()
   } catch {
     failed.value = true
   } finally {
@@ -45,45 +52,31 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="mx-auto w-full max-w-md px-5 py-8">
-    <header class="flex items-center justify-between gap-3">
-      <div class="min-w-0">
-        <p class="text-sm text-muted">
-          {{ t('client.appointments.greeting', { name: firstName }) }}
-        </p>
-        <h1 class="text-2xl">{{ t('client.appointments.title') }}</h1>
-      </div>
-      <button type="button" class="shrink-0 text-sm font-semibold text-muted hover:text-ink" @click="logout">
-        {{ t('auth.logout') }}
-      </button>
-    </header>
-
-    <p v-if="isLoading" class="mt-8 text-sm text-muted" role="status">
-      {{ t('client.appointments.loading') }}
-    </p>
-    <p v-else-if="failed" class="mt-8 text-sm font-semibold text-danger" role="alert">
-      {{ t('client.appointments.failed') }}
-    </p>
+  <ClientLayout :title="t('client.appointments.title')">
+    <p v-if="isLoading" class="text-sm text-muted" role="status">{{ t('client.appointments.loading') }}</p>
+    <p v-else-if="failed" class="text-sm font-semibold text-danger" role="alert">{{ t('client.appointments.failed') }}</p>
     <template v-else>
-      <section class="mt-8" aria-labelledby="upcoming-title">
-        <h2 id="upcoming-title" class="mb-3 text-sm font-bold">
-          {{ t('client.appointments.upcoming') }}
-        </h2>
-        <p v-if="upcoming.length === 0" class="text-sm text-muted">
-          {{ t('client.appointments.noUpcoming') }}
-        </p>
+      <section aria-labelledby="upcoming-title">
+        <h2 id="upcoming-title" class="mb-3 text-sm font-bold">{{ t('client.appointments.upcoming') }}</h2>
+        <p v-if="upcoming.length === 0" class="text-sm text-muted">{{ t('client.appointments.noUpcoming') }}</p>
         <div class="grid gap-3">
-          <ClientAppointmentCard v-for="item in upcoming" :key="item.id" :appointment="item" is-upcoming />
+          <ClientAppointmentCard
+            v-for="item in upcoming"
+            :key="item.id"
+            :appointment="item"
+            is-upcoming
+            :is-cancelling="cancellingId === item.id"
+            :error="cancelError?.id === item.id ? cancelError.message : ''"
+            @cancel="cancel"
+          />
         </div>
       </section>
       <section v-if="past.length" class="mt-8" aria-labelledby="past-title">
-        <h2 id="past-title" class="mb-3 text-sm font-bold">
-          {{ t('client.appointments.past') }}
-        </h2>
+        <h2 id="past-title" class="mb-3 text-sm font-bold">{{ t('client.appointments.past') }}</h2>
         <div class="grid gap-3">
           <ClientAppointmentCard v-for="item in past" :key="item.id" :appointment="item" :is-upcoming="false" />
         </div>
       </section>
     </template>
-  </main>
+  </ClientLayout>
 </template>

@@ -19,5 +19,8 @@ Route::prefix('client')->group(function (): void {
     Route::middleware('auth:client')->group(function (): void {
         Route::post('logout', [ClientAuthController::class, 'logout']);
         Route::get('me', [ClientAuthController::class, 'me']);
+        Route::patch('me', [ClientAuthController::class, 'updateProfile']);
+        Route::put('me/password', [ClientAuthController::class, 'changePassword'])->middleware('throttle:client-login');
+        Route::put('me/emails', [ClientAuthController::class, 'updateEmailPreference']);
     });
 });

@@ -24,6 +24,9 @@ const emit = defineEmits<{ complete: [requestId: number] }>()
 const { t } = useI18n()
 
 const isCompleted = computed(() => props.request.status === AppointmentStatus.Completed)
+/** Cancelled by the client in the client area: stays visible (greyed out) so the barber knows the time is free. */
+const isCancelled = computed(() => props.request.status === AppointmentStatus.Cancelled)
+const isDone = computed(() => isCompleted.value || isCancelled.value)
 const distance = computed(() =>
   props.request.clientDistanceMeters === null
     ? t('dashboard.distanceUnknown')
@@ -43,7 +46,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
 <template>
   <article
     class="rounded-card p-4 ring-1 transition"
-    :class="isCompleted ? 'bg-raised/60 ring-line' : 'bg-surface ring-line shadow-soft'"
+    :class="isDone ? 'bg-raised/60 ring-line' : 'bg-surface ring-line shadow-soft'"
   >
     <div class="flex items-center gap-3">
       <span
@@ -53,11 +56,15 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
         {{ request.time }}
       </span>
       <div class="min-w-0 flex-1">
-        <h3 class="text-base break-words" :class="isCompleted ? 'text-muted' : ''">{{ request.clientName }}</h3>
+        <h3 class="text-base break-words" :class="isDone ? 'text-muted' : ''">{{ request.clientName }}</h3>
         <p class="text-sm text-muted break-words">{{ request.serviceName }}</p>
         <p class="text-xs text-muted">{{ distance }}</p>
       </div>
-      <p class="shrink-0 font-display font-extrabold tabular-nums" :class="isCompleted ? 'text-success' : 'text-accent'">
+      <p
+        v-if="!isCancelled"
+        class="shrink-0 font-display font-extrabold tabular-nums"
+        :class="isCompleted ? 'text-success' : 'text-accent'"
+      >
         {{ price }}
       </p>
     </div>
@@ -68,6 +75,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       </svg>
       {{ t('dashboard.agenda.completed') }}
     </p>
+    <p v-else-if="isCancelled" class="mt-3 text-sm font-bold text-muted">{{ t('dashboard.agenda.cancelled') }}</p>
     <BaseButton
       v-else
       class="mt-4"
@@ -84,7 +92,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       {{ t('dashboard.agenda.complete') }}
     </BaseButton>
     <a
-      v-if="!isCompleted"
+      v-if="!isDone"
       :href="remindUrl"
       target="_blank"
       rel="noopener noreferrer"

@@ -89,6 +89,8 @@ const lastCompleted = useUndoWindow<{ id: number; priceInCents: number }>()
 const agendaError = ref('')
 
 const agenda = computed(() => agendaStore.todayAgenda)
+/** Cancelled by the client: shown, but not counted in "x de y concluídos". */
+const activeAgendaCount = computed(() => agenda.value.filter((request) => request.status !== AppointmentStatus.Cancelled).length)
 const completedCount = computed(
   () => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length,
 )
@@ -233,7 +235,7 @@ async function undo(): Promise<void> {
       <div class="flex items-center justify-between gap-3">
         <h2 id="today-agenda-title" class="text-xl">{{ t('dashboard.agenda.title') }}</h2>
         <span v-if="agenda.length" class="text-xs font-bold text-muted">
-          {{ t('dashboard.agenda.progress', { done: completedCount, total: agenda.length }) }}
+          {{ t('dashboard.agenda.progress', { done: completedCount, total: activeAgendaCount }) }}
         </span>
       </div>
       <ul v-if="agenda.length" class="mt-4 grid gap-3">

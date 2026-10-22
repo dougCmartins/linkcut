@@ -16,7 +16,7 @@ final class ProfileSettings extends Model
 
     /** Enough to reach the barbershop (client area and e-mails). */
     public const CONTACT_COLUMNS = [
-        'id', 'tenant_id', 'name', 'whatsapp_number', 'address_zip_code', 'address_street', 'address_number', 'address_complement',
+        'id', 'tenant_id', 'name', 'avatar_image_id', 'whatsapp_number', 'address_zip_code', 'address_street', 'address_number', 'address_complement',
         'address_district', 'address_city', 'address_state', 'latitude', 'longitude',
     ];
 

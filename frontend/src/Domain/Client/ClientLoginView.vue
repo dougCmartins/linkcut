@@ -60,6 +60,9 @@ async function submit(): Promise<void> {
   </AuthCardLayout>
 
   <AuthCardLayout v-else :title="t('client.login.title')" :subtitle="t('client.login.subtitle')">
+    <p v-if="route.query.conta === 'excluida'" class="mb-5 rounded-card bg-raised px-4 py-3 text-sm font-semibold ring-1 ring-line" role="status">
+      {{ t('client.profile.deleted') }}
+    </p>
     <p v-if="error" class="mb-5 rounded-card bg-danger/10 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-danger/40" role="alert">
       {{ error }}
     </p>

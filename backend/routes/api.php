@@ -16,3 +16,4 @@ require base_path('src/Domain/Orchestrator/AnswerBookingRequest/Routes/api.php')
 require base_path('src/Domain/Notification/Routes/api.php');
 require base_path('src/Domain/Client/Routes/api.php');
 require base_path('src/Domain/Orchestrator/ClientAppointments/Routes/api.php');
+require base_path('src/Domain/Orchestrator/ClientAccount/Routes/api.php');

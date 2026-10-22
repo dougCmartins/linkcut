@@ -9,6 +9,7 @@ use Domain\Client\Actions\FindOrCreateClient;
 use Domain\Client\Data\ClientContactData;
 use Domain\Client\Data\ClientData;
 use Domain\Client\Support\ClientLinks;
+use Domain\Client\Support\PhoneNumber;
 use Domain\Notification\Actions\NotifyTenant;
 use Domain\Notification\Data\PushMessageData;
 use Domain\Notification\Data\TenantPushData;
@@ -68,11 +69,11 @@ final class RequestBooking
         $client = $this->findOrCreateClient->handle(new ClientContactData(
             name: trim($data->client_name),
             email: $data->client_email,
-            phone: self::digits($data->client_whatsapp),
+            phone: PhoneNumber::digits($data->client_whatsapp),
         ));
         $request = $this->createBookingRequest->handle(new NewBookingRequestData(
             client_name: trim($data->client_name),
-            client_whatsapp: self::digits($data->client_whatsapp),
+            client_whatsapp: PhoneNumber::digits($data->client_whatsapp),
             service_id: $service->id,
             service_name: $service->name,
             duration_minutes: $service->duration_minutes,
@@ -143,13 +144,5 @@ final class RequestBooking
         }
 
         return Distance::meters($data->client_latitude, $data->client_longitude, $address->latitude, $address->longitude);
-    }
-
-    /** Same storage as the barber's own WhatsApp: digits only, without the country code. */
-    private static function digits(string $phone): string
-    {
-        $digits = preg_replace('/\D/', '', $phone) ?? '';
-
-        return strlen($digits) > 11 && str_starts_with($digits, '55') ? substr($digits, 2) : $digits;
     }
 }

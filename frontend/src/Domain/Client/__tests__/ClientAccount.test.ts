@@ -32,7 +32,7 @@ function signIn(): void {
     refreshToken: body.refresh_token,
     accessExpiresAt: now + 60_000,
     refreshExpiresAt: now + 120_000,
-    client: { id: 11, name: 'Ana Souza', email: 'ana@example.com', phone: '11912345678', hasAccount: true },
+    client: { id: 11, name: 'Ana Souza', email: 'ana@example.com', phone: '11912345678', hasAccount: true, emailsEnabled: true },
   }
 }
 

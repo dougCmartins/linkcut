@@ -25,6 +25,7 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.BarbershopAddressMissing]: 'barbershopAddressMissing',
   [ApiErrorCode.SlugUnavailable]: 'slugUnavailable',
   [ApiErrorCode.EmailAlreadyRegistered]: 'emailAlreadyRegistered',
+  [ApiErrorCode.CancellationTooLate]: 'cancellationTooLate',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'
@@ -49,9 +50,15 @@ export function useApiErrors() {
     return typeof value === 'number' ? value : null
   }
 
+  /** A VALIDATION_FAILED error names this field (e.g. a wrong current password). */
+  function hasFieldError(caught: unknown, field: string): boolean {
+    const errors = caught instanceof ApiError ? caught.envelope?.errors : null
+    return Boolean(errors && !Array.isArray(errors) && errors[field]?.length)
+  }
+
   function requestId(caught: unknown): string | null {
     return caught instanceof ApiError ? caught.requestId : null
   }
 
-  return { errorCode, messageKey, hasErrorCode, attemptsLeft, requestId }
+  return { errorCode, messageKey, hasErrorCode, hasFieldError, attemptsLeft, requestId }
 }

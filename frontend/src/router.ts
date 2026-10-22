@@ -53,6 +53,18 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Domain/Client/ClientAppointmentsView.vue'),
     meta: { requiresClient: true },
   },
+  {
+    path: '/conta/barbearias',
+    name: 'client-barbershops',
+    component: () => import('@/Domain/Client/ClientBarbershopsView.vue'),
+    meta: { requiresClient: true },
+  },
+  {
+    path: '/conta/perfil',
+    name: 'client-profile',
+    component: () => import('@/Domain/Client/ClientProfileView.vue'),
+    meta: { requiresClient: true },
+  },
   { path: '/conta/entrar', name: 'client-login', component: () => import('@/Domain/Client/ClientLoginView.vue') },
   { path: '/conta/finalizar', name: 'client-register', component: () => import('@/Domain/Client/ClientRegisterView.vue') },
   {

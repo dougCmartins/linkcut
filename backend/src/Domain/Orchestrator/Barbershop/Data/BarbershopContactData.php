@@ -19,5 +19,7 @@ final class BarbershopContactData extends Data
         public readonly string $whatsapp_url,
         /** The public page (book again). */
         public readonly string $booking_url,
+        /** The barbershop's photo or logo (null = none: the SPA shows its initials). */
+        public readonly ?string $avatar_url = null,
     ) {}
 }

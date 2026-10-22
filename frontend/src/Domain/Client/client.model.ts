@@ -16,6 +16,8 @@ export interface ClientProfile {
   phone: string
   /** Completed the sign-up (has a password). */
   hasAccount: boolean
+  /** Gets the reminders and invitations by e-mail (off after the opt-out). */
+  emailsEnabled: boolean
 }
 
 /** The client-area session (separate from the barber's). Times are epoch milliseconds. */
@@ -39,6 +41,8 @@ export interface BarbershopContact {
   address: string
   mapsUrl: string
   whatsappUrl: string
+  /** Photo or logo of the barbershop (null: its initials are shown). */
+  avatarUrl: string | null
 }
 
 /** A booking in the client area, at any barbershop where the client booked. */
@@ -48,6 +52,7 @@ export interface ClientAppointment {
   /** "YYYY-MM-DD" and "HH:mm", in the barbershop's timezone. */
   date: string
   time: string
+  endTime: string
   status: AppointmentStatus
   barbershop: BarbershopContact
 }
