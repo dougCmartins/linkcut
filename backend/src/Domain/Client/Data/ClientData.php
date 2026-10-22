@@ -15,5 +15,7 @@ final class ClientData extends Data
         public readonly string $phone,
         /** Completed the sign-up (has a password). */
         public readonly bool $has_account,
+        /** Gets the reminders and invitations by e-mail (false after the opt-out). */
+        public readonly bool $emails_enabled = true,
     ) {}
 }

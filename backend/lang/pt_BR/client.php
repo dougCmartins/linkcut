@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 return [
+    // Shown to the barber in place of the name of a client who deleted the account (LGPD).
+    'deleted_name' => 'Cliente removido',
     'code_mail' => [
         'greeting' => 'Olá!',
         'expires' => 'O código vale por :minutes minutos.',

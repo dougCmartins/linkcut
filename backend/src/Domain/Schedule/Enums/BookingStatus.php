@@ -14,6 +14,14 @@ enum BookingStatus: string
     case Confirmed = 'confirmed';
     case Rejected = 'rejected';
     case Completed = 'completed';
+    /** The client cancelled from the client area: the time is free again. */
+    case Cancelled = 'cancelled';
+
+    /** The client can still cancel these (until the cutoff before the time). */
+    public function isCancellableByClient(): bool
+    {
+        return $this === self::Pending || $this === self::Confirmed;
+    }
 
     /** @return list<self> */
     public static function blocking(): array

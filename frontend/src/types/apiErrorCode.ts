@@ -28,6 +28,7 @@ export const ApiErrorCode = {
   BarbershopAddressMissing: 'BARBERSHOP_ADDRESS_MISSING',
   SlugUnavailable: 'SLUG_UNAVAILABLE',
   EmailAlreadyRegistered: 'EMAIL_ALREADY_REGISTERED',
+  CancellationTooLate: 'CANCELLATION_TOO_LATE',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

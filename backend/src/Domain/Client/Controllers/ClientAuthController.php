@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Client\Controllers;
 
+use Domain\Client\Actions\ChangeClientPassword;
 use Domain\Client\Actions\CompleteClientRegistration;
 use Domain\Client\Actions\LoginClient;
 use Domain\Client\Actions\LogoutClient;
@@ -11,10 +12,15 @@ use Domain\Client\Actions\RefreshClientSession;
 use Domain\Client\Actions\ResetClientPassword;
 use Domain\Client\Actions\SendClientCode;
 use Domain\Client\Actions\ShowAuthenticatedClient;
+use Domain\Client\Actions\UpdateClientEmailPreference;
+use Domain\Client\Actions\UpdateClientProfile;
 use Domain\Client\Data\ClientCodeRequestData;
 use Domain\Client\Data\ClientData;
+use Domain\Client\Data\ClientEmailPreferenceData;
 use Domain\Client\Data\ClientLoginData;
+use Domain\Client\Data\ClientPasswordChangeData;
 use Domain\Client\Data\ClientPasswordData;
+use Domain\Client\Data\ClientProfileInputData;
 use Domain\Client\Data\ClientRefreshData;
 use Domain\Client\Data\ClientSessionData;
 use Domain\Client\Data\CodeSentData;
@@ -57,5 +63,22 @@ final class ClientAuthController
     public function me(ShowAuthenticatedClient $action): ClientData
     {
         return $action->handle();
+    }
+
+    public function updateProfile(ClientProfileInputData $data, UpdateClientProfile $action): ClientData
+    {
+        return $action->handle($data);
+    }
+
+    public function changePassword(ClientPasswordChangeData $data, ChangeClientPassword $action): Response
+    {
+        $action->handle($data);
+
+        return response()->noContent();
+    }
+
+    public function updateEmailPreference(ClientEmailPreferenceData $data, UpdateClientEmailPreference $action): ClientData
+    {
+        return $action->handle($data);
     }
 }

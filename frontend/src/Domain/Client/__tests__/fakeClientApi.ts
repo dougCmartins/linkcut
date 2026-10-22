@@ -33,6 +33,7 @@ export const APPOINTMENTS = [
       maps_url: 'https://www.google.com/maps/search/?api=1&query=-23.5578%2C-46.6609',
       whatsapp_url: 'https://wa.me/5511999998888',
       booking_url: 'http://localhost:5173/navalha',
+      avatar_url: '/storage/images/navalha.webp',
     },
   },
   {

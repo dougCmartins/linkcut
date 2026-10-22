@@ -86,4 +86,16 @@ describe('TodayAgendaCard', () => {
     // Assert
     expect(screen.queryByRole('link', { name: /no WhatsApp/ })).toBeNull()
   })
+
+  it('a time cancelled by the client shows it is free, with no actions', () => {
+    // Arrange & Act
+    renderWithPlugins(TodayAgendaCard, {
+      props: { request: { ...request, status: AppointmentStatus.Cancelled }, priceInCents: 5000, isBusy: false },
+    })
+
+    // Assert
+    expect(screen.getByText('Cancelado pelo cliente: horário liberado')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: completeName })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Lembrar Lucas Andrade no WhatsApp' })).toBeNull()
+  })
 })

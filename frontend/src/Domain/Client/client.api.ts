@@ -10,6 +10,7 @@ interface ClientBody {
   email: string
   phone: string
   has_account: boolean
+  emails_enabled?: boolean
 }
 
 interface SessionBody {
@@ -25,6 +26,7 @@ interface AppointmentBody {
   service_name: string
   date: string
   starts_at: string
+  ends_at: string
   status: AppointmentStatus
   barbershop: {
     name: string
@@ -32,6 +34,7 @@ interface AppointmentBody {
     address: string
     maps_url: string
     whatsapp_url: string
+    avatar_url?: string | null
   }
 }
 
@@ -41,6 +44,7 @@ const toClient = (body: ClientBody): ClientProfile => ({
   email: body.email,
   phone: body.phone,
   hasAccount: body.has_account,
+  emailsEnabled: body.emails_enabled ?? true,
 })
 
 const toSession = (body: SessionBody, now = Date.now()): ClientSession => ({
@@ -56,6 +60,7 @@ const toAppointment = (body: AppointmentBody): ClientAppointment => ({
   serviceName: body.service_name,
   date: body.date,
   time: body.starts_at,
+  endTime: body.ends_at,
   status: body.status,
   barbershop: {
     name: body.barbershop.name,
@@ -63,6 +68,7 @@ const toAppointment = (body: AppointmentBody): ClientAppointment => ({
     address: body.barbershop.address,
     mapsUrl: body.barbershop.maps_url,
     whatsappUrl: body.barbershop.whatsapp_url,
+    avatarUrl: body.barbershop.avatar_url ?? null,
   },
 })
 
@@ -119,4 +125,34 @@ export async function fetchAppointments(): Promise<ClientAppointment[]> {
     auth: 'client',
   })
   return data.map(toAppointment)
+}
+
+/** Only the client's own appointment, waiting or confirmed, until the cutoff before the time (CANCELLATION_TOO_LATE). */
+export async function cancelAppointment(id: number): Promise<void> {
+  await http<void>(`/client/appointments/${id}/cancel`, { method: 'POST', auth: 'client' })
+}
+
+/** "Minha conta": name and WhatsApp (as typed; the API keeps the digits). */
+export async function updateProfile(input: { name: string; phone: string }): Promise<ClientProfile> {
+  const { data } = await http<ClientBody>('/client/me', { method: 'PATCH', auth: 'client', body: input })
+  return toClient(data)
+}
+
+/** A wrong current password answers VALIDATION_FAILED on `current_password`. */
+export async function changePassword(input: { currentPassword: string; password: string }): Promise<void> {
+  await http<void>('/client/me/password', {
+    method: 'PUT',
+    auth: 'client',
+    body: { current_password: input.currentPassword, password: input.password },
+  })
+}
+
+export async function updateEmailPreference(enabled: boolean): Promise<ClientProfile> {
+  const { data } = await http<ClientBody>('/client/me/emails', { method: 'PUT', auth: 'client', body: { enabled } })
+  return toClient(data)
+}
+
+/** LGPD: deletes the account after the password (the barbershops keep the history without the personal data). */
+export async function deleteAccount(password: string): Promise<void> {
+  await http<void>('/client/me', { method: 'DELETE', auth: 'client', body: { password } })
 }

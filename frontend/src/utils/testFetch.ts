@@ -22,8 +22,13 @@ export type FakeHandler = (call: FakeCall) => { status: number; body?: unknown; 
 
 export const TEST_API_URL = 'http://api.test/api'
 
-export function envelope(code: string, status: number, data: Record<string, unknown> | null = null) {
-  return { status, body: { data, message: code, code, status_code: status, errors: [], request_id: 'req-test' } }
+export function envelope(
+  code: string,
+  status: number,
+  data: Record<string, unknown> | null = null,
+  errors: Record<string, string[]> | [] = [],
+) {
+  return { status, body: { data, message: code, code, status_code: status, errors, request_id: 'req-test' } }
 }
 
 function matchRoute(routes: Record<string, FakeHandler>, method: string, pathname: string) {

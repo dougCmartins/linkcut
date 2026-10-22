@@ -20,7 +20,7 @@ final class ShowTodayAgenda
     {
         $requests = BookingRequest::query()
             ->where('date', $this->clock->today()->toDateString())
-            ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed])
+            ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed, BookingStatus::Cancelled])
             ->chronological()
             ->get();
 

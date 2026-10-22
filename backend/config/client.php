@@ -19,4 +19,7 @@ return [
 
     // The single "complete your sign-up" e-mail goes to whoever booked at least this long ago.
     'invite_after_hours' => 2,
+
+    // The client cancels from the client area until this long before the time (after that, only by WhatsApp).
+    'cancel_until_hours' => (int) env('CLIENT_CANCEL_UNTIL_HOURS', 2),
 ];

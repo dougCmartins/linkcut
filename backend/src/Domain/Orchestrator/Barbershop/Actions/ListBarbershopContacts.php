@@ -13,7 +13,7 @@ use Domain\Tenant\Data\TenantData;
 use Domain\Tenant\Data\TenantIdsData;
 
 /**
- * Name, address, map, WhatsApp and page of several barbershops (Tenant + Settings), in two queries
+ * Name, address, map, WhatsApp and page of several barbershops (Tenant + Settings), in three queries
  * whatever their number: the client area and the e-mails never read one barbershop at a time.
  */
 final class ListBarbershopContacts
@@ -49,6 +49,7 @@ final class ListBarbershopContacts
             maps_url: $address ? self::mapsUrl($address, $formatted) : '',
             whatsapp_url: $whatsapp !== '' ? 'https://wa.me/55'.$whatsapp : '',
             booking_url: rtrim((string) config('app.frontend_url'), '/').'/'.$tenant->slug,
+            avatar_url: $profile?->avatar_url,
         );
     }
 

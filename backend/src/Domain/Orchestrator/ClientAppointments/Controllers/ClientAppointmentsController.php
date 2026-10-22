@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\ClientAppointments\Controllers;
 
+use Domain\Orchestrator\ClientAppointments\Actions\CancelClientAppointment;
 use Domain\Orchestrator\ClientAppointments\Actions\ListClientAppointments;
 use Domain\Orchestrator\ClientAppointments\Data\ClientAppointmentData;
+use Domain\Orchestrator\ClientAppointments\Data\ClientAppointmentIdData;
+use Illuminate\Http\Response;
 use Spatie\LaravelData\DataCollection;
 
 final class ClientAppointmentsController
@@ -14,5 +17,12 @@ final class ClientAppointmentsController
     public function index(ListClientAppointments $action): DataCollection
     {
         return $action->handle();
+    }
+
+    public function cancel(int $appointment, CancelClientAppointment $action): Response
+    {
+        $action->handle(ClientAppointmentIdData::from(ClientAppointmentIdData::validate(['id' => $appointment])));
+
+        return response()->noContent();
     }
 }

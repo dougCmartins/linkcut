@@ -17,6 +17,7 @@ final class ClientDataMapper
             email: $client->email,
             phone: $client->phone,
             has_account: $client->hasAccount(),
+            emails_enabled: $client->emails_opted_out_at === null,
         );
     }
 }

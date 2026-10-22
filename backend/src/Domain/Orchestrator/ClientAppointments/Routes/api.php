@@ -7,4 +7,5 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:client')->prefix('client')->group(function (): void {
     Route::get('appointments', [ClientAppointmentsController::class, 'index']);
+    Route::post('appointments/{appointment}/cancel', [ClientAppointmentsController::class, 'cancel'])->whereNumber('appointment');
 });
