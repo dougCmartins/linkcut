@@ -36,7 +36,7 @@ onMounted(() => void tenantStore.ensureLoaded())
       <BaseButton variant="primary" elevated block :disabled="!url" @click="copy">
         {{ copied ? t('settings.publicLink.copied') : t('settings.publicLink.copy') }}
       </BaseButton>
-      <BaseButton v-if="path" variant="secondary" block :to="path">{{ t('settings.publicLink.view') }}</BaseButton>
+      <BaseButton v-if="url" variant="secondary" block :href="url">{{ t('settings.publicLink.view') }}</BaseButton>
     </div>
     <BaseButton v-if="url" variant="ghost" block @click="isSharing = true">{{ t('settings.publicLink.share') }}</BaseButton>
     <ShareSheet v-if="isSharing" :url="url" :name="tenantStore.tenant?.name ?? ''" @close="isSharing = false" />
