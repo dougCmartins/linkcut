@@ -136,7 +136,7 @@ async function undo(): Promise<void> {
           <time :datetime="toIsoDate(today)">{{ todayLabel }}</time>
         </p>
         <h1 class="text-xl leading-tight break-words">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
-        <RouterLink v-if="publicPath" :to="publicPath" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
+        <RouterLink v-if="publicPath" :to="publicPath" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
       </div>
       <RouterLink
         to="/painel/configuracoes"

@@ -49,13 +49,14 @@ describe('DashboardView', () => {
     vi.unstubAllEnvs()
   })
 
-  it('links to the public page of the barbershop by its slug', async () => {
+  it('links to the public page of the barbershop by its slug, in a new tab', async () => {
     // Arrange & Act
     renderWithPlugins(DashboardView)
 
     // Assert
     const link = await screen.findByRole('link', { name: /Ver minha página/ })
     expect(link.getAttribute('href')).toBe('/rafael')
+    expect(link.getAttribute('target')).toBe('_blank')
   })
 
   it("shows today's date and that the numbers are month to date", () => {

@@ -15,13 +15,16 @@ describe('PublicLinkCard', () => {
     vi.unstubAllGlobals()
   })
 
-  it('shows the public link of the barbershop and opens the page', () => {
+  it('shows the public link of the barbershop and opens the page in a new tab', () => {
     // Arrange & Act
     renderCard()
 
     // Assert
     expect(screen.getByTestId('public-link').textContent?.trim()).toBe(`${window.location.origin}/rafael`)
-    expect(screen.getByRole('link', { name: 'Ver minha página' }).getAttribute('href')).toBe('/rafael')
+    const view = screen.getByRole('link', { name: 'Ver minha página' })
+    expect(view.getAttribute('href')).toBe(`${window.location.origin}/rafael`)
+    expect(view.getAttribute('target')).toBe('_blank')
+    expect(view.getAttribute('rel')).toContain('noopener')
   })
 
   it('copies the link to paste in the Instagram bio', async () => {
