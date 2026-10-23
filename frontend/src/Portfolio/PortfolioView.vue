@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { usePageMeta } from '@/composables/usePageMeta'
-import { computed } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ShareButton from '@/components/ui/ShareButton.vue'
+import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import SmartImage from '@/components/ui/SmartImage.vue'
 import AboutCard from './AboutCard.vue'
 import WorkGallery from './WorkGallery.vue'
@@ -20,6 +22,9 @@ usePageMeta(
   () => (name.value ? t('portfolio.metaTitle', { name: name.value }) : ''),
   () => portfolio.value?.quote || portfolio.value?.story || '',
 )
+const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet.vue'))
+const isSharing = ref(false)
+const pageUrl = computed(() => `${window.location.origin}/${publicPage.slug}/portfolio`)
 const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index) => ({ id: String(index), ...photo })))
 </script>
 
@@ -38,7 +43,16 @@ const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index)
           <path d="m15 18-6-6 6-6" />
         </svg>
       </RouterLink>
+      <ShareButton class="absolute top-4 left-16" @click="isSharing = true" />
     </div>
+    <ShareSheet
+      v-if="isSharing"
+      :url="pageUrl"
+      :name="name"
+      :image-url="portfolio.coverUrl || publicPage.page?.profile.avatarUrl"
+      :title="t('share.titlePortfolio')"
+      @close="isSharing = false"
+    />
 
     <div class="mx-auto -mt-24 flex w-full max-w-md flex-col gap-10 px-4">
       <AboutCard :name="name" :portfolio="portfolio" />
@@ -48,6 +62,7 @@ const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index)
         :title="t('portfolio.galleryTitle')"
         :subtitle="t('portfolio.gallerySubtitle')"
       />
+      <PrivacyLinks />
     </div>
 
     <StickyBookingBar @book="bookingStore.openModal()" />

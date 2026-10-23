@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PaletteToggle from '@/components/ui/PaletteToggle.vue'
+import { useConsentStore } from '@/Legal/consent.store'
 import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
@@ -12,6 +13,10 @@ import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
 
 // Loaded only when "Agendar" opens: the rest of the public page does not wait for the booking code.
 const BookingModal = defineAsyncComponent(() => import('@/Domain/Schedule/BookingModal.vue'))
+
+// The privacy notice downloads only when it has to show (first visit, or "Preferências de cookies").
+const CookieBanner = defineAsyncComponent(() => import('@/Legal/CookieBanner.vue'))
+const consent = useConsentStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -73,4 +78,5 @@ function closeBooking(): void {
   <PaletteToggle v-if="route.meta.isPublic" class="fixed top-4 right-4 z-40" />
   <RouterView />
   <BookingModal v-if="bookingStore.isModalOpen && publicPageStore.bookingOptions" @close="closeBooking" />
+  <CookieBanner v-if="!consent.hasDecided || consent.isPanelOpen" />
 </template>

@@ -8,6 +8,19 @@
 		reverse_proxy app:8080
 	}
 
+	# Link previews: WhatsApp, Facebook, X... read the HTML and do not run JavaScript, so a barbershop's page
+	# (/rafael, /rafael/portfolio) goes to the API, which answers with its name, bio and photo (Open Graph).
+	# People always get the SPA below.
+	@previewBots {
+		header_regexp User-Agent (?i)(whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterest)
+		path_regexp page ^/([a-z0-9]+(?:-[a-z0-9]+)*)(/portfolio)?/?$
+		not path /painel* /conta* /entrar* /cadastrar* /privacidade*
+	}
+	handle @previewBots {
+		rewrite * /api/og/{re.page.1}{re.page.2}
+		reverse_proxy app:8080
+	}
+
 	# The SPA: real files when they exist, otherwise index.html (Vue Router handles /rafael, /painel...).
 	handle {
 		root * /srv

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
@@ -12,5 +13,6 @@ const { t } = useI18n()
     <p class="text-muted">{{ t('home.tagline') }}</p>
     <BaseButton class="mt-4" variant="primary" size="lg" elevated to="/cadastrar">{{ t('home.signUp') }}</BaseButton>
     <BaseButton variant="secondary" size="lg" to="/entrar">{{ t('home.login') }}</BaseButton>
+    <PrivacyLinks class="mt-10" />
   </main>
 </template>

@@ -10,7 +10,10 @@ export default defineConfig({
     tailwindcss(),
     // Messages are compiled at build time, so the browser gets the small runtime-only vue-i18n (no message compiler).
     VueI18nPlugin({
-      include: [fileURLToPath(new URL('./src/i18n/pt-BR.ts', import.meta.url))],
+      include: [
+        fileURLToPath(new URL('./src/i18n/pt-BR.ts', import.meta.url)),
+        fileURLToPath(new URL('./src/i18n/privacyPolicy.pt-BR.ts', import.meta.url)),
+      ],
       runtimeOnly: true,
       compositionOnly: true,
       fullInstall: false,

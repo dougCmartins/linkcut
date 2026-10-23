@@ -177,6 +177,10 @@ onBeforeUnmount(() => {
       <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!isAccountValid || isBusy">
         {{ t('signUp.sendCode') }}
       </BaseButton>
+      <p class="text-center text-xs text-muted">
+        {{ t('privacy.notice.signUp') }}
+        <RouterLink to="/privacidade" class="font-semibold underline" target="_blank">{{ t('privacy.links.policy') }}</RouterLink>
+      </p>
     </form>
 
     <form v-else-if="step === 'code'" class="grid grid-cols-1 gap-5" novalidate @submit.prevent="confirmCode">

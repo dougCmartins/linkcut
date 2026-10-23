@@ -308,6 +308,10 @@ onBeforeUnmount(() => {
           <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!canSubmit">
             {{ t('booking.submit') }}
           </BaseButton>
+          <p class="mt-2 text-center text-xs text-muted">
+            {{ t('privacy.notice.booking') }}
+            <RouterLink to="/privacidade" class="font-semibold underline" target="_blank">{{ t('privacy.links.policy') }}</RouterLink>
+          </p>
         </div>
       </form>
     </section>
