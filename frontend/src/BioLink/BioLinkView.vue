@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { usePageMeta } from '@/composables/usePageMeta'
-import { computed } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import ShareButton from '@/components/ui/ShareButton.vue'
+import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import SmartImage from '@/components/ui/SmartImage.vue'
 import SocialLinks from '@/components/ui/SocialLinks.vue'
 import { useBookingStore } from '@/Domain/Schedule/booking.store'
@@ -21,6 +23,10 @@ usePageMeta(
   () => profile.value?.name ?? '',
   () => profile.value?.bio || (profile.value ? t('bioLink.metaDescription', { name: profile.value.name }) : ''),
 )
+// The share sheet loads only when opened (keeps the public page light).
+const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet.vue'))
+const isSharing = ref(false)
+const pageUrl = computed(() => `${window.location.origin}/${publicPage.slug}`)
 const whatsappUrl = computed(() =>
   profile.value ? buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage) : '',
 )
@@ -34,6 +40,9 @@ const whatsappUrl = computed(() =>
       <SmartImage v-if="profile.backgroundUrl" :src="profile.backgroundUrl" alt="" class="size-full scale-105 object-cover opacity-60 blur-[2px]" />
       <div class="absolute inset-0 [background:var(--hero-overlay)]" />
     </div>
+
+    <ShareButton class="absolute top-4 left-4 z-10" @click="isSharing = true" />
+    <ShareSheet v-if="isSharing" :url="pageUrl" :name="profile.name" :image-url="profile.avatarUrl" @close="isSharing = false" />
 
     <div class="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center px-5 pt-20 pb-10">
       <header class="flex flex-col items-center text-center">
@@ -67,6 +76,7 @@ const whatsappUrl = computed(() =>
         <RouterLink to="/painel" class="text-xs font-semibold tracking-wide text-muted transition hover:text-ink">
           {{ t('bioLink.poweredBy') }}
         </RouterLink>
+        <PrivacyLinks />
       </footer>
     </div>
   </main>

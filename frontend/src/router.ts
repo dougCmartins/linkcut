@@ -72,6 +72,7 @@ export const routes: RouteRecordRaw[] = [
     name: 'client-opt-out',
     component: () => import('@/Domain/Client/ClientOptOutView.vue'),
   },
+  { path: '/privacidade', name: 'privacy', component: () => import('@/Legal/PrivacyView.vue') },
   // Public pages of each barbershop, by slug. Kept after the fixed paths above.
   { path: '/:slug', name: 'bio-link', component: () => import('@/BioLink/BioLinkView.vue'), meta: { isPublic: true } },
   {

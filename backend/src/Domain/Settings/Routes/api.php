@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Domain\Settings\Controllers\PublicPageController;
 use Domain\Settings\Controllers\SettingsController;
+use Domain\Settings\Controllers\ShareCardController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:api', 'tenant'])->prefix('settings')->group(function (): void {
@@ -19,4 +20,10 @@ Route::middleware(['auth:api', 'tenant'])->prefix('settings')->group(function ()
 Route::middleware(['throttle:public', 'tenant.slug'])->prefix('public/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {
     Route::get('/', [PublicPageController::class, 'show']);
     Route::get('booking-options', [PublicPageController::class, 'bookingOptions']);
+});
+
+// Link previews (Open Graph) for crawlers that do not run JavaScript; deploy/Caddyfile routes them here.
+Route::middleware(['throttle:public', 'tenant.slug'])->prefix('og/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {
+    Route::get('/', [ShareCardController::class, 'bioLink']);
+    Route::get('portfolio', [ShareCardController::class, 'portfolio']);
 });

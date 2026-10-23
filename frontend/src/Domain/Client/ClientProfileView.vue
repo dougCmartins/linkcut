@@ -8,6 +8,7 @@ import TextField from '@/components/ui/TextField.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { isValidBrazilianPhone } from '@/utils/phone'
+import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import ClientLayout from './ClientLayout.vue'
 import { CLIENT_LOGIN_ROUTE } from './client.guard'
 import { useClientStore } from './client.store'
@@ -163,6 +164,12 @@ const feedbackClass = (feedback: Feedback) => (feedback?.kind === 'success' ? 't
             {{ passwordFeedback.message }}
           </p>
         </form>
+      </BaseCard>
+
+      <BaseCard class="grid grid-cols-1 gap-3 p-5">
+        <h2 class="text-base">{{ t('client.profile.privacyTitle') }}</h2>
+        <p class="text-sm text-muted">{{ t('client.profile.privacyText') }}</p>
+        <PrivacyLinks class="!justify-start" />
       </BaseCard>
 
       <BaseCard class="grid grid-cols-1 gap-3 p-5">

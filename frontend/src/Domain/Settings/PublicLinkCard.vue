@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
@@ -8,12 +8,12 @@ import SettingsCard from './SettingsCard.vue'
 /** The barbershop's public link, ready to copy (or share) and paste in the Instagram bio. */
 const { t } = useI18n()
 const tenantStore = useTenantStore()
+const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet.vue'))
 
 const copied = ref(false)
+const isSharing = ref(false)
 const path = computed(() => (tenantStore.tenant ? `/${tenantStore.tenant.slug}` : ''))
 const url = computed(() => (path.value ? `${window.location.origin}${path.value}` : ''))
-/** Phones open their own share sheet (Instagram, WhatsApp…); desktops only copy. */
-const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
 async function copy(): Promise<void> {
   try {
@@ -21,14 +21,6 @@ async function copy(): Promise<void> {
     copied.value = true
   } catch {
     copied.value = false
-  }
-}
-
-async function share(): Promise<void> {
-  try {
-    await navigator.share({ url: url.value })
-  } catch {
-    // Closed by the barber: nothing to do.
   }
 }
 
@@ -46,7 +38,8 @@ onMounted(() => void tenantStore.ensureLoaded())
       </BaseButton>
       <BaseButton v-if="path" variant="secondary" block :to="path">{{ t('settings.publicLink.view') }}</BaseButton>
     </div>
-    <BaseButton v-if="canShare && url" variant="ghost" block @click="share">{{ t('settings.publicLink.share') }}</BaseButton>
+    <BaseButton v-if="url" variant="ghost" block @click="isSharing = true">{{ t('settings.publicLink.share') }}</BaseButton>
+    <ShareSheet v-if="isSharing" :url="url" :name="tenantStore.tenant?.name ?? ''" @close="isSharing = false" />
     <p class="text-xs text-muted" role="status">{{ copied ? t('settings.publicLink.pasteHint') : t('settings.publicLink.hint') }}</p>
   </SettingsCard>
 </template>

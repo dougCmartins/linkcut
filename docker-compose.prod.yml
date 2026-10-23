@@ -26,6 +26,9 @@ services:
       dockerfile: deploy/web.Dockerfile
       args:
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        VITE_PRIVACY_CONTROLLER: ${VITE_PRIVACY_CONTROLLER:-}
+        VITE_PRIVACY_DOCUMENT: ${VITE_PRIVACY_DOCUMENT:-}
+        VITE_PRIVACY_EMAIL: ${VITE_PRIVACY_EMAIL:-}
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN}
