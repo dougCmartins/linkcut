@@ -1,11 +1,20 @@
 # Production on a VPS: make prod-up (reads .env.production; see docs/deploy-vps.md).
 # Only Caddy (web) is public, on ports 80 and 443. The API, the queue, the scheduler and MySQL stay inside.
+# Sized for a 2 GB VPS (+2 GB swap): memory limits per service and logs capped at 50 MB each.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 x-app: &app
   build:
     context: ./backend
     dockerfile: Dockerfile.prod
   image: linkcut-app
   restart: unless-stopped
+  logging: *logging
   environment: &app-env
     # MySQL access (the rest of the settings comes from .env.production, mounted as the app's .env).
     DB_HOST: mysql
@@ -30,6 +39,8 @@ services:
         VITE_PRIVACY_DOCUMENT: ${VITE_PRIVACY_DOCUMENT:-}
         VITE_PRIVACY_EMAIL: ${VITE_PRIVACY_EMAIL:-}
     restart: unless-stopped
+    logging: *logging
+    mem_limit: 128m
     environment:
       DOMAIN: ${DOMAIN}
     ports:
@@ -46,6 +57,7 @@ services:
   # Migrations, keys and setup run here on every start (docker/entrypoint.sh); healthy once it serves requests.
   app:
     <<: *app
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8080/up') === false ? 1 : 0);"]
       interval: 10s
@@ -58,7 +70,8 @@ services:
     environment:
       <<: *app-env
       RUN_SETUP: "false"
-    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=5", "--max-time=3600"]
+    mem_limit: 256m
+    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=5", "--max-time=3600", "--memory=192", "--sleep=3"]
     depends_on:
       app:
         condition: service_healthy
@@ -68,6 +81,7 @@ services:
     environment:
       <<: *app-env
       RUN_SETUP: "false"
+    mem_limit: 192m
     command: ["php", "artisan", "schedule:work"]
     depends_on:
       app:
@@ -76,6 +90,8 @@ services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
+    logging: *logging
+    mem_limit: 768m
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
@@ -83,6 +99,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./deploy/mysql.cnf:/etc/mysql/conf.d/linkcut.cnf:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\""]
       interval: 5s

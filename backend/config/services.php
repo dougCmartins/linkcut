@@ -2,6 +2,11 @@
 
 return [
 
+    // Check-in URL of the uptime monitor for the scheduler and the queue (e.g. https://hc-ping.com/<uuid>); empty = off.
+    'heartbeat' => [
+        'url' => env('HEARTBEAT_URL', ''),
+    ],
+
     // Push notifications (Web Push, VAPID). Keys: php artisan notifications:vapid-keys
     'webpush' => [
         'public_key' => env('VAPID_PUBLIC_KEY', ''),

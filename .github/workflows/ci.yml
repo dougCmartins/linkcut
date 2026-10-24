@@ -1,0 +1,66 @@
+# Runs on every pull request and on main: the same checks a contributor runs locally.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Laravel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, intl, zip, gmp, pdo_sqlite, sodium
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+      - name: Tests
+        run: php artisan test
+      - name: Known vulnerabilities in dependencies
+        run: composer audit --no-dev
+
+  frontend:
+    name: Frontend (Vue)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-fund
+      - name: Types
+        run: npm run typecheck
+      - name: Tests
+        run: npx vitest run
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: /api
+      - name: Known vulnerabilities in production dependencies
+        run: npm audit --omit=dev --audit-level=high
