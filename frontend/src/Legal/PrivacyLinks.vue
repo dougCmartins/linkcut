@@ -2,9 +2,10 @@
 import { useI18n } from 'vue-i18n'
 import { useConsentStore } from './consent.store'
 
-/** "Privacidade · Preferências de cookies": the footer of the public pages. */
+/** "Privacidade · Preferências de cookies · © linkcut": the footer of the public pages. */
 const { t } = useI18n()
 const consent = useConsentStore()
+const year = new Date().getFullYear()
 </script>
 
 <template>
@@ -14,5 +15,7 @@ const consent = useConsentStore()
     <button type="button" class="font-semibold transition hover:text-ink" @click="consent.openPreferences()">
       {{ t('privacy.links.preferences') }}
     </button>
+    <span aria-hidden="true">·</span>
+    <span>{{ t('privacy.links.copyright', { year }) }}</span>
   </p>
 </template>

@@ -99,3 +99,16 @@ Tudo o que as telas públicas mostram vem das **Configurações** (requisitos em
 As cores ficam em um único arquivo, `frontend/src/styles/core.css`: 6 paletas, cada uma com versão clara e escura, mais uma cor personalizada opcional. O visitante pode alternar claro/escuro nas páginas públicas pelo botão no canto superior direito.
 
 Sem Docker: `cd frontend && npm install && npm run dev` (a API em `VITE_API_URL`, veja `frontend/.env.example`).
+
+## Licença
+
+O código está público **para leitura e estudo** (portfólio), mas o linkcut é um produto. Ele é licenciado pela [PolyForm Strict 1.0.0](LICENSE):
+
+- ✅ ler, estudar e rodar o código para fins **não comerciais** (estudo pessoal, avaliação técnica, pesquisa);
+- ❌ usar comercialmente (por exemplo, oferecer o sistema para barbearias ou rodar uma barbearia com ele);
+- ❌ alterar o código ou redistribuí-lo.
+
+Para uma licença comercial ou parceria, fale com o autor: [@dougCmartins](https://github.com/dougCmartins).
+
+© 2026 Douglas Martins. As bibliotecas usadas (Laravel, Vue e outras) seguem as licenças delas.
+

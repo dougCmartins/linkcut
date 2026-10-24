@@ -683,6 +683,7 @@ export default {
     links: {
       policy: 'Política de Privacidade',
       preferences: 'Preferências de cookies',
+      copyright: '© {year} linkcut',
     },
     banner: {
       label: 'Aviso de privacidade',
