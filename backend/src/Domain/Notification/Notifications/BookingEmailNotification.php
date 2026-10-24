@@ -7,6 +7,7 @@ namespace Domain\Notification\Notifications;
 use Carbon\CarbonImmutable;
 use Domain\Notification\Data\BookingEmailData;
 use Domain\Notification\Enums\BookingEmailKind;
+use Domain\Notification\Support\PlainText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,7 +35,7 @@ final class BookingEmailNotification extends Notification implements ShouldBeEnc
         $data = $this->data;
         $key = "client_mail.{$data->kind->value}";
         $replace = [
-            'name' => $data->client_name,
+            'name' => PlainText::name($data->client_name),
             'barbershop' => $data->barbershop_name,
             'service' => $data->service_name,
             'date' => CarbonImmutable::parse($data->date)->format('d/m'),

@@ -8,6 +8,8 @@ return [
         'length' => 6,
         'ttl_minutes' => (int) env('CLIENT_CODE_TTL_MINUTES', 15),
         'max_attempts' => 5,
+        // Wrong codes per account per day, across resends (a new code does not give new guesses).
+        'daily_max_failures' => 10,
         'resend_after_seconds' => (int) env('CLIENT_CODE_RESEND_AFTER_SECONDS', 30),
     ],
 

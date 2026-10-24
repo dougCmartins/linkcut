@@ -21,6 +21,12 @@ final class ClientAccountTest extends TestCase
     use RefreshDatabase;
     use ScheduleFixtures;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->preparePassport();
+    }
+
     public function test_the_client_changes_name_and_whatsapp(): void
     {
         // Arrange
@@ -57,7 +63,7 @@ final class ClientAccountTest extends TestCase
 
         // Assert
         $wrong->assertUnprocessable();
-        $right->assertNoContent();
+        $right->assertOk()->assertJsonStructure(['access_token', 'refresh_token']);
         $this->assertTrue(Hash::check('novasenha1', $client->refresh()->password));
     }
 

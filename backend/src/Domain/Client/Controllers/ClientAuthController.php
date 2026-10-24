@@ -70,11 +70,9 @@ final class ClientAuthController
         return $action->handle($data);
     }
 
-    public function changePassword(ClientPasswordChangeData $data, ChangeClientPassword $action): Response
+    public function changePassword(ClientPasswordChangeData $data, ChangeClientPassword $action): ClientSessionData
     {
-        $action->handle($data);
-
-        return response()->noContent();
+        return $action->handle($data);
     }
 
     public function updateEmailPreference(ClientEmailPreferenceData $data, UpdateClientEmailPreference $action): ClientData

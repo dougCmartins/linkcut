@@ -125,4 +125,33 @@ final class TenantScopeTest extends TestCase
         $this->assertSame(['b'], $insideLabels);
         $this->assertSame($this->tenantA->id, $this->currentTenant()->id());
     }
+
+    public function test_updating_or_deleting_a_row_of_another_tenant_is_refused(): void
+    {
+        // Arrange: a row of tenant B loaded without the scope, while tenant A is the current one.
+        $this->currentTenant()->set($this->tenantA->id);
+        $foreign = TenantProbe::withoutTenantScope()->where('label', 'b')->firstOrFail();
+
+        // Act
+        $updated = rescue(fn () => $foreign->update(['label' => 'hacked']), fn ($error) => $error, report: false);
+        $deleted = rescue(fn () => $foreign->delete(), fn ($error) => $error, report: false);
+
+        // Assert
+        $this->assertInstanceOf(TenantMismatchException::class, $updated);
+        $this->assertInstanceOf(TenantMismatchException::class, $deleted);
+        $this->assertSame('b', TenantProbe::withoutTenantScope()->whereKey($foreign->id)->value('label'));
+    }
+
+    public function test_jobs_without_a_tenant_can_still_update_by_id(): void
+    {
+        // Arrange: scheduled jobs and the client area have no current tenant and filter by ids on purpose.
+        $this->currentTenant()->forget();
+        $row = TenantProbe::withoutTenantScope()->where('label', 'b')->firstOrFail();
+
+        // Act
+        $row->update(['label' => 'reminded']);
+
+        // Assert
+        $this->assertSame('reminded', $row->fresh()->label);
+    }
 }

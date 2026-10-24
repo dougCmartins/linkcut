@@ -17,6 +17,8 @@ return [
     'sign_up' => [
         'code_ttl_minutes' => 15,
         'max_attempts' => 5,
+        // Wrong codes per e-mail per day, across resends.
+        'daily_max_failures' => 10,
         'resend_after_seconds' => 30,
     ],
 

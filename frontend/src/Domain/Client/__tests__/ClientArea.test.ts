@@ -150,6 +150,21 @@ describe('client area 2.0', () => {
     expect(await screen.findByText('Senha atual incorreta.')).toBeTruthy()
   })
 
+  it('changing the password keeps this device signed in with the new session', async () => {
+    // Arrange
+    installFakeClientApi({ 'PUT /client/me/password': () => ({ status: 200, body: clientSessionBody('client-access-new', 'client-refresh-new') }) })
+    await renderSignedIn(ClientProfileView, '/conta/perfil')
+
+    // Act
+    await fireEvent.update(screen.getByLabelText('Senha atual'), 'segredo123')
+    await fireEvent.update(screen.getByLabelText('Nova senha'), 'novasenha1')
+    await fireEvent.click(screen.getByRole('button', { name: 'Trocar senha' }))
+
+    // Assert
+    expect(await screen.findByText('Senha alterada. Os outros aparelhos foram desconectados.')).toBeTruthy()
+    expect(useClientStore().session?.refreshToken).toBe('client-refresh-new')
+  })
+
   it('deletes the account with the password and forgets the session', async () => {
     // Arrange
     const { calls } = installFakeClientApi({ 'DELETE /client/me': () => ({ status: 204 }) })

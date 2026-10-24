@@ -67,18 +67,22 @@ final class AppServiceProvider extends ServiceProvider
         // Public pages by slug (bio link, portfolio, booking options) and image uploads.
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
         // Client area: codes by e-mail and sign-in (per e-mail and per visitor).
+        // Per e-mail too (not only per visitor): changing IP does not give more codes or guesses for one account.
         RateLimiter::for('client-codes', fn (Request $request) => [
             Limit::perMinute(3)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perHour(20)->by($request->ip()),
+            Limit::perHour(6)->by('client-codes-email:'.mb_strtolower((string) $request->input('email'))),
         ]);
         RateLimiter::for('client-login', fn (Request $request) => [
             Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perMinute(20)->by($request->ip()),
+            Limit::perHour(20)->by('client-login-email:'.mb_strtolower((string) ($request->input('email') ?? $request->user('client')?->email))),
         ]);
         // Barber sign-up: codes per e-mail and visitor; finishing and checking links per visitor.
         RateLimiter::for('sign-up-codes', fn (Request $request) => [
             Limit::perMinute(3)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perHour(20)->by($request->ip()),
+            Limit::perHour(6)->by('sign-up-codes-email:'.mb_strtolower((string) $request->input('email'))),
         ]);
         RateLimiter::for('sign-up', fn (Request $request) => [
             Limit::perMinute(10)->by($request->ip()),
