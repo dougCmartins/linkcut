@@ -12,6 +12,10 @@ export default {
     signUp: 'Criar minha página grátis',
   },
   signUp: {
+    terms: {
+      accept: 'Li e aceito os',
+      and: 'e a',
+    },
     steps: {
       account: { title: 'Crie sua conta', subtitle: 'Sua página de agendamentos fica pronta em poucos minutos.' },
       code: { title: 'Confirme seu e-mail', subtitle: 'Digite o código de 6 números que enviamos.' },
@@ -61,8 +65,10 @@ export default {
     switchLabel: 'Avisos de novos pedidos neste aparelho',
     switchDescription: 'Uma notificação a cada pedido de agendamento.',
     unsupported: 'Este navegador não recebe notificações. Use o Chrome, o Edge ou o Firefox atualizados.',
-    needsInstall: 'No iPhone, os avisos funcionam pelo app na Tela de Início: toque em Compartilhar → "Adicionar à Tela de Início", abra o linkcut por lá e ative.',
-    blocked: 'As notificações estão bloqueadas para o linkcut. Libere nas configurações do navegador (ícone de cadeado ao lado do endereço) e volte aqui.',
+    needsInstall:
+      'No iPhone, os avisos funcionam pelo app na Tela de Início: toque em Compartilhar → "Adicionar à Tela de Início", abra o linkcut por lá e ative.',
+    blocked:
+      'As notificações estão bloqueadas para o linkcut. Libere nas configurações do navegador (ícone de cadeado ao lado do endereço) e volte aqui.',
   },
   publicPage: {
     loading: 'Carregando…',
@@ -124,7 +130,7 @@ export default {
     whatsappLabel: 'WhatsApp',
     whatsappPlaceholder: '(11) 91234-5678',
     emailLabel: 'E-mail',
-    emailPlaceholder: 'voce{\'@\'}email.com',
+    emailPlaceholder: "voce{'@'}email.com",
     emailHint: 'Enviamos a confirmação e o lembrete por e-mail.',
     submit: 'Solicitar Agendamento',
     successTitle: 'Solicitação enviada!',
@@ -179,7 +185,8 @@ export default {
       noRevenue: 'Ainda não há faturamento no mês, então a margem fica em 0%.',
       healthy: 'Acima de {threshold}% é saudável para barbearias.',
       noExpenses: 'Nenhuma despesa entrou no mês até agora. Cadastre seus custos em Despesas para a margem ser real.',
-      notMarkup: 'A margem é calculada sobre o que você cobra, por isso nunca passa de 100%. Não confunda com markup, que é calculado sobre o custo.',
+      notMarkup:
+        'A margem é calculada sobre o que você cobra, por isso nunca passa de 100%. Não confunda com markup, que é calculado sobre o custo.',
     },
     agenda: {
       title: 'Agenda de hoje',
@@ -298,8 +305,8 @@ export default {
     },
     security: {
       pushTitle: 'Avisos',
-    pushDescription: 'Valem só para este aparelho. Ative em cada celular ou computador onde quiser receber.',
-    twoFactorTitle: 'Verificação em duas etapas',
+      pushDescription: 'Valem só para este aparelho. Ative em cada celular ou computador onde quiser receber.',
+      twoFactorTitle: 'Verificação em duas etapas',
       twoFactorDescription: 'Onde enviar o código quando você entra no painel.',
       askEveryTime: 'Perguntar sempre',
       askEveryTimeDetail: 'Escolher o canal a cada login',
@@ -371,9 +378,27 @@ export default {
       locating: 'Pegando a localização…',
       pointSet: 'Ponto no mapa definido. A distância dos clientes é medida a partir dele.',
       pointOnSave: 'Ao salvar, vamos encontrar este endereço no mapa.',
-      pointMissing: 'Não encontramos este endereço no mapa. Toque em "Estou na barbearia" quando estiver lá, para medir a distância dos clientes.',
+      pointMissing:
+        'Não encontramos este endereço no mapa. Toque em "Estou na barbearia" quando estiver lá, para medir a distância dos clientes.',
       locationDenied: 'A localização foi bloqueada. Libere nas configurações do navegador para usar este botão.',
       locationUnavailable: 'Não foi possível pegar a localização deste aparelho.',
+    },
+    account: {
+      title: 'Seus dados',
+      description: 'Baixe tudo da sua barbearia ou exclua a conta (LGPD).',
+      export: 'Baixar meus dados (JSON)',
+      exporting: 'Preparando…',
+      deleteTitle: 'Excluir barbearia',
+      deleteText:
+        'Apaga para sempre a sua página, agenda, clientes da agenda, financeiro, fotos e acessos. Baixe seus dados antes. Não dá para desfazer.',
+      deleteOpen: 'Excluir minha barbearia',
+      password: 'Sua senha',
+      slugLabel: 'Digite o link da página para confirmar: {slug}',
+      deleteConfirm: 'Excluir definitivamente',
+      deleteKeep: 'Voltar',
+      wrongPassword: 'Senha incorreta.',
+      wrongSlug: 'O link digitado não confere.',
+      deleted: 'Sua barbearia foi excluída, com todos os dados.',
     },
     publicLink: {
       title: 'Link da sua página',
@@ -511,7 +536,7 @@ export default {
       code: { title: 'Digite o código', subtitle: 'O código tem 6 números e vale por 5 minutos.' },
     },
     email: 'E-mail',
-    emailPlaceholder: 'voce{\'@\'}email.com',
+    emailPlaceholder: "voce{'@'}email.com",
     password: 'Senha',
     showPassword: 'Mostrar senha',
     hidePassword: 'Esconder senha',
@@ -636,7 +661,9 @@ export default {
       passwordChanged: 'Senha alterada. Os outros aparelhos foram desconectados.',
       wrongPassword: 'Senha atual incorreta.',
       privacyTitle: 'Privacidade',
-      privacyText: 'Veja como tratamos seus dados e mude suas escolhas de cookies quando quiser.',
+      privacyText: 'Veja como tratamos seus dados, baixe uma cópia deles e mude suas escolhas de cookies quando quiser.',
+      export: 'Baixar meus dados (JSON)',
+      exporting: 'Preparando…',
       deleteTitle: 'Excluir conta',
       deleteText:
         'Seus dados pessoais saem de todas as barbearias. Elas mantêm só o registro do atendimento, sem seu nome nem contato. Não dá para desfazer.',
@@ -677,11 +704,11 @@ export default {
   },
   privacy: {
     notice: {
-      booking: 'Seus dados vão só para a barbearia e para os avisos do seu horário.',
-      signUp: 'Ao criar a conta você concorda com a',
+      booking: 'Seus dados vão para a barbearia e para os avisos do seu horário, e criam sua área de cliente (a senha é opcional).',
     },
     links: {
       policy: 'Política de Privacidade',
+      terms: 'Termos de Uso',
       preferences: 'Preferências de cookies',
       copyright: '© {year} linkcut',
     },
@@ -695,10 +722,12 @@ export default {
       customize: 'Personalizar',
       save: 'Salvar escolhas',
       necessary: 'Necessários',
-      necessaryHint: 'Manter você conectado, lembrar o tema claro/escuro e registrar erros sem dados pessoais. Sem eles o app não funciona.',
+      necessaryHint:
+        'Manter você conectado, lembrar o tema claro/escuro e registrar erros sem dados pessoais. Sem eles o app não funciona.',
       alwaysOn: 'Sempre ativos',
       performance: 'Desempenho',
-      performanceHint: 'Medir a velocidade das telas e gravar o momento de um erro (com textos e imagens ocultos) para corrigirmos mais rápido.',
+      performanceHint:
+        'Medir a velocidade das telas e gravar o momento de um erro (com textos e imagens ocultos) para corrigirmos mais rápido.',
     },
   },
   share: {

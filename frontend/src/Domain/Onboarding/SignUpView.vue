@@ -32,7 +32,7 @@ const auth = useAuthStore()
 const apiErrors = useApiErrors()
 
 const step = ref<Step>('account')
-const form = reactive({ name: '', email: '', password: '', code: '', barbershopName: '', slug: '' })
+const form = reactive({ name: '', email: '', password: '', code: '', barbershopName: '', slug: '', acceptTerms: false })
 const isBusy = ref(false)
 const error = ref('')
 const resendAvailableAt = ref(0)
@@ -97,7 +97,9 @@ function editSlug(value: string): void {
 }
 
 const slugMessage = computed(() => (slugStatus.value === 'idle' ? '' : t(`signUp.slug.${slugStatus.value}`)))
-const canFinish = computed(() => form.barbershopName.trim().length >= NAME_MIN_LENGTH && slugStatus.value === 'available' && !isBusy.value)
+const canFinish = computed(
+  () => form.barbershopName.trim().length >= NAME_MIN_LENGTH && slugStatus.value === 'available' && form.acceptTerms && !isBusy.value,
+)
 
 async function run(action: () => Promise<void>): Promise<void> {
   isBusy.value = true
@@ -145,6 +147,7 @@ function finish(): Promise<void> {
       code: form.code,
       barbershopName: form.barbershopName.trim(),
       slug: form.slug,
+      acceptTerms: form.acceptTerms,
     })
     auth.startSession(session)
     await router.replace({ name: 'onboarding' })
@@ -177,10 +180,6 @@ onBeforeUnmount(() => {
       <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!isAccountValid || isBusy">
         {{ t('signUp.sendCode') }}
       </BaseButton>
-      <p class="text-center text-xs text-muted">
-        {{ t('privacy.notice.signUp') }}
-        <RouterLink to="/privacidade" class="font-semibold underline" target="_blank">{{ t('privacy.links.policy') }}</RouterLink>
-      </p>
     </form>
 
     <form v-else-if="step === 'code'" class="grid grid-cols-1 gap-5" novalidate @submit.prevent="confirmCode">
@@ -230,6 +229,16 @@ onBeforeUnmount(() => {
           </button>
         </p>
       </div>
+      <label class="flex items-start gap-3 text-sm leading-relaxed">
+        <input v-model="form.acceptTerms" type="checkbox" class="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
+        <span>
+          {{ t('signUp.terms.accept') }}
+          <RouterLink to="/termos" target="_blank" class="font-semibold underline">{{ t('privacy.links.terms') }}</RouterLink>
+          {{ t('signUp.terms.and') }}
+          <RouterLink to="/privacidade" target="_blank" class="font-semibold underline">{{ t('privacy.links.policy') }}</RouterLink
+          >.
+        </span>
+      </label>
       <BaseButton type="submit" variant="primary" size="lg" elevated block :disabled="!canFinish">
         {{ isBusy ? t('auth.checking') : t('signUp.finish') }}
       </BaseButton>

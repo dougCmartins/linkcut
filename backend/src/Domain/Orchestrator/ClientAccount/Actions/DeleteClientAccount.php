@@ -35,7 +35,7 @@ final class DeleteClientAccount
         $client = auth('client')->user();
 
         DB::transaction(function () use ($client): void {
-            $bookingIds = $this->anonymizeBookings->handle(new ClientBookingsQueryData(client_id: $client->id));
+            $bookingIds = $this->anonymizeBookings->handle(new ClientBookingsQueryData(client_id: $client->id, email: $client->email));
             $this->anonymizeRevenue->handle(new BookingRequestIdsData(ids: $bookingIds));
             $this->deleteClient->handle(new ClientIdData(client_id: $client->id));
         });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AccountDataCard from './AccountDataCard.vue'
 import SettingsCard from './SettingsCard.vue'
 import PushSwitch from '@/Domain/Notification/PushSwitch.vue'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
@@ -26,7 +27,13 @@ const current = computed(() => auth.user?.twoFactorChannel ?? null)
 const canUseSms = computed(() => auth.user?.availableChannels?.includes(TwoFactorChannel.Sms) ?? false)
 
 const options = computed(() => [
-  { value: null, id: ASK_EVERY_TIME, label: t('settings.security.askEveryTime'), detail: t('settings.security.askEveryTimeDetail'), disabled: false },
+  {
+    value: null,
+    id: ASK_EVERY_TIME,
+    label: t('settings.security.askEveryTime'),
+    detail: t('settings.security.askEveryTimeDetail'),
+    disabled: false,
+  },
   ...(canUseSms.value
     ? [
         {
@@ -38,7 +45,13 @@ const options = computed(() => [
         },
       ]
     : []),
-  { value: TwoFactorChannel.Email, id: TwoFactorChannel.Email, label: t('auth.channels.email'), detail: auth.user?.email ?? '…', disabled: false },
+  {
+    value: TwoFactorChannel.Email,
+    id: TwoFactorChannel.Email,
+    label: t('auth.channels.email'),
+    detail: auth.user?.email ?? '…',
+    disabled: false,
+  },
 ])
 
 async function choose(option: (typeof options.value)[number]): Promise<void> {
@@ -77,11 +90,25 @@ onMounted(() => {
           @click="choose(option)"
         >
           <span class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface" aria-hidden="true">
-            <svg v-if="option.id === TwoFactorChannel.Sms" class="size-5 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <svg
+              v-if="option.id === TwoFactorChannel.Sms"
+              class="size-5 text-success"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
               <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
               <path d="M10 18.5h4" />
             </svg>
-            <svg v-else-if="option.id === TwoFactorChannel.Email" class="size-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <svg
+              v-else-if="option.id === TwoFactorChannel.Email"
+              class="size-5 text-accent"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
               <rect x="3" y="5" width="18" height="14" rx="2.5" />
               <path d="m4 7 8 6 8-6" />
             </svg>
@@ -117,5 +144,6 @@ onMounted(() => {
     <SettingsCard :title="t('settings.security.pushTitle')" :description="t('settings.security.pushDescription')">
       <PushSwitch />
     </SettingsCard>
+    <AccountDataCard />
   </div>
 </template>

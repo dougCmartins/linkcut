@@ -10,3 +10,8 @@ export function downloadBlob(filename: string, blob: Blob): void {
   link.remove()
   URL.revokeObjectURL(url)
 }
+
+/** Saves data as a JSON file ("Baixar meus dados"). */
+export function downloadJson(filename: string, data: unknown): void {
+  downloadBlob(filename, new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+}

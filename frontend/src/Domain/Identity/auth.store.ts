@@ -173,6 +173,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Ends the session in this browser only (the account no longer exists on the server). */
+  function forget(): void {
+    setSession(null)
+    restart()
+  }
+
   /** Opens a session obtained elsewhere (the sign-up answers with one: the e-mail was just confirmed). */
   function startSession(next: Session): void {
     setSession(next)
@@ -219,6 +225,7 @@ export const useAuthStore = defineStore('auth', () => {
     restart,
     ensureSession,
     logout,
+    forget,
     startSession,
     refreshProfile,
     updateTwoFactorChannel,

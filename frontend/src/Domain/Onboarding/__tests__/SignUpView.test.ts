@@ -21,6 +21,10 @@ async function fillAccountAndCode(code = SIGN_UP_CODE): Promise<void> {
   await fireEvent.paste(firstBox!, { clipboardData: { getData: () => code } })
 }
 
+async function acceptTerms(): Promise<void> {
+  await fireEvent.click(screen.getByRole('checkbox', { name: /Li e aceito os/ }))
+}
+
 describe('SignUpView', () => {
   beforeEach(() => {
     sessionStorage.clear()
@@ -44,6 +48,7 @@ describe('SignUpView', () => {
     expect((screen.getByLabelText('Link da sua página') as HTMLInputElement).value).toBe('barbearia-do-marcos')
     await vi.advanceTimersByTimeAsync(500)
     await screen.findByText('Este link está livre.')
+    await acceptTerms()
     await fireEvent.click(screen.getByRole('button', { name: 'Criar minha página' }))
 
     // Assert
@@ -55,6 +60,7 @@ describe('SignUpView', () => {
       code: SIGN_UP_CODE,
       barbershop_name: 'Barbearia do Marcos',
       slug: 'barbearia-do-marcos',
+      accept_terms: true,
     })
     expect(useAuthStore().session?.accessToken).toBe('new-access')
   })
@@ -100,6 +106,7 @@ describe('SignUpView', () => {
     await fireEvent.update(await screen.findByLabelText('Nome da barbearia'), 'Barbearia do Marcos')
     await vi.advanceTimersByTimeAsync(500)
     await screen.findByText('Este link está livre.')
+    await acceptTerms()
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: 'Criar minha página' }))
@@ -108,5 +115,25 @@ describe('SignUpView', () => {
     expect(await screen.findByText('Código incorreto. Você tem mais 4 tentativa(s).')).toBeTruthy()
     expect(screen.getByText('Confirme seu e-mail')).toBeTruthy()
     expect(useAuthStore().session).toBeNull()
+  })
+
+  it('the page is only created after accepting the terms', async () => {
+    // Arrange
+    installFakeOnboardingApi()
+    await renderSignUp()
+    await fillAccountAndCode()
+    await fireEvent.update(await screen.findByLabelText('Nome da barbearia'), 'Barbearia do Marcos')
+    await vi.advanceTimersByTimeAsync(500)
+    await screen.findByText('Este link está livre.')
+    const finish = screen.getByRole('button', { name: 'Criar minha página' }) as HTMLButtonElement
+    const disabledBefore = finish.disabled
+
+    // Act
+    await acceptTerms()
+
+    // Assert
+    expect(disabledBefore).toBe(true)
+    expect(finish.disabled).toBe(false)
+    expect(screen.getByRole('link', { name: 'Termos de Uso' }).getAttribute('href')).toBe('/termos')
   })
 })

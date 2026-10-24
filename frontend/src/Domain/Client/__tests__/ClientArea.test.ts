@@ -7,6 +7,7 @@ import { useClientStore } from '../client.store'
 import { APPOINTMENTS, CLIENT, clientSessionBody, installFakeClientApi } from './fakeClientApi'
 import { envelope, type FakeCall } from '@/utils/testFetch'
 import { renderWithPlugins } from '@/utils/testRender'
+import * as download from '@/utils/download'
 
 async function renderSignedIn(component: Parameters<typeof renderWithPlugins>[0], path: string) {
   const rendered = renderWithPlugins(component, {}, () => {
@@ -119,7 +120,10 @@ describe('client area 2.0', () => {
   it('saves name and WhatsApp in "Minha conta"', async () => {
     // Arrange
     const { calls } = installFakeClientApi({
-      'PATCH /client/me': (call: FakeCall) => ({ status: 200, body: { ...CLIENT, name: call.body?.name, phone: '11988887777', emails_enabled: true } }),
+      'PATCH /client/me': (call: FakeCall) => ({
+        status: 200,
+        body: { ...CLIENT, name: call.body?.name, phone: '11988887777', emails_enabled: true },
+      }),
     })
     await renderSignedIn(ClientProfileView, '/conta/perfil')
 
@@ -152,7 +156,9 @@ describe('client area 2.0', () => {
 
   it('changing the password keeps this device signed in with the new session', async () => {
     // Arrange
-    installFakeClientApi({ 'PUT /client/me/password': () => ({ status: 200, body: clientSessionBody('client-access-new', 'client-refresh-new') }) })
+    installFakeClientApi({
+      'PUT /client/me/password': () => ({ status: 200, body: clientSessionBody('client-access-new', 'client-refresh-new') }),
+    })
     await renderSignedIn(ClientProfileView, '/conta/perfil')
 
     // Act
@@ -181,5 +187,20 @@ describe('client area 2.0', () => {
     expect(calls.at(-1)).toMatchObject({ method: 'DELETE', path: '/client/me', body: { password: 'segredo123' } })
     expect(useClientStore().session).toBeNull()
     expect(localStorage.getItem('linkcut.client-session')).toBeNull()
+  })
+
+  it('"Baixar meus dados" downloads the account and appointments as JSON', async () => {
+    // Arrange
+    const exported = { client: { email: 'ana@example.com' }, appointments: [] }
+    installFakeClientApi({ 'GET /client/me/export': () => ({ status: 200, body: exported }) })
+    const save = vi.spyOn(download, 'downloadJson').mockImplementation(() => undefined)
+    await renderSignedIn(ClientProfileView, '/conta/perfil')
+
+    // Act
+    await fireEvent.click(await screen.findByRole('button', { name: /Baixar meus dados/ }))
+
+    // Assert
+    await vi.waitFor(() => expect(save).toHaveBeenCalledWith('linkcut-meus-dados.json', exported))
+    save.mockRestore()
   })
 })

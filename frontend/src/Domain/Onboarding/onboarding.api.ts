@@ -11,6 +11,8 @@ export interface SignUpInput {
   code: string
   barbershopName: string
   slug: string
+  /** "Li e aceito os Termos de Uso e a Política de Privacidade". */
+  acceptTerms: boolean
 }
 
 export interface SlugAvailability {
@@ -42,6 +44,7 @@ export async function signUp(input: SignUpInput): Promise<Session> {
       code: input.code,
       barbershop_name: input.barbershopName,
       slug: input.slug,
+      accept_terms: input.acceptTerms,
     },
   })
   return toSession(data)

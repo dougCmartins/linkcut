@@ -7,7 +7,9 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 import TextField from '@/components/ui/TextField.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 import { useApiErrors } from '@/composables/useApiErrors'
+import { downloadJson } from '@/utils/download'
 import { isValidBrazilianPhone } from '@/utils/phone'
+import { exportMyData } from './client.api'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import ClientLayout from './ClientLayout.vue'
 import { CLIENT_LOGIN_ROUTE } from './client.guard'
@@ -45,7 +47,10 @@ async function saveProfile(): Promise<void> {
     await clientStore.updateProfile({ name: profile.name.trim(), phone: profile.phone })
     profileFeedback.value = { kind: 'success', message: t('client.profile.saved') }
   } catch (caught) {
-    profileFeedback.value = { kind: 'error', message: apiErrors.hasFieldError(caught, 'phone') ? t('client.profile.phoneInvalid') : errorOf(caught) }
+    profileFeedback.value = {
+      kind: 'error',
+      message: apiErrors.hasFieldError(caught, 'phone') ? t('client.profile.phoneInvalid') : errorOf(caught),
+    }
   } finally {
     profileBusy.value = false
   }
@@ -86,6 +91,21 @@ async function changePassword(): Promise<void> {
     passwordFeedback.value = { kind: 'error', message: wrong ? t('client.profile.wrongPassword') : errorOf(caught) }
   } finally {
     passwordBusy.value = false
+  }
+}
+
+// "Baixar meus dados" (LGPD portability)
+const isExporting = ref(false)
+const exportError = ref('')
+async function exportData(): Promise<void> {
+  isExporting.value = true
+  exportError.value = ''
+  try {
+    downloadJson('linkcut-meus-dados.json', await exportMyData())
+  } catch (caught) {
+    exportError.value = errorOf(caught)
+  } finally {
+    isExporting.value = false
   }
 }
 
@@ -149,7 +169,12 @@ const feedbackClass = (feedback: Feedback) => (feedback?.kind === 'success' ? 't
       <BaseCard class="grid grid-cols-1 gap-4 p-5">
         <h2 class="text-base">{{ t('client.profile.passwordTitle') }}</h2>
         <form class="grid grid-cols-1 gap-4" novalidate @submit.prevent="changePassword">
-          <TextField v-model="password.current" :label="t('client.profile.currentPassword')" type="password" autocomplete="current-password" />
+          <TextField
+            v-model="password.current"
+            :label="t('client.profile.currentPassword')"
+            type="password"
+            autocomplete="current-password"
+          />
           <TextField
             v-model="password.next"
             :label="t('client.profile.newPassword')"
@@ -169,6 +194,10 @@ const feedbackClass = (feedback: Feedback) => (feedback?.kind === 'success' ? 't
       <BaseCard class="grid grid-cols-1 gap-3 p-5">
         <h2 class="text-base">{{ t('client.profile.privacyTitle') }}</h2>
         <p class="text-sm text-muted">{{ t('client.profile.privacyText') }}</p>
+        <BaseButton variant="secondary" block :disabled="isExporting" @click="exportData">
+          {{ isExporting ? t('client.profile.exporting') : t('client.profile.export') }}
+        </BaseButton>
+        <p v-if="exportError" class="text-sm font-semibold text-danger" role="alert">{{ exportError }}</p>
         <PrivacyLinks class="!justify-start" />
       </BaseCard>
 

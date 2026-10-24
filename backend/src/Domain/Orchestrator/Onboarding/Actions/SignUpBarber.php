@@ -48,6 +48,7 @@ final class SignUpBarber
                 name: $data->name,
                 email: $data->email,
                 password: $data->password,
+                terms_version: (string) config('legal.terms_version'),
             ));
             $this->currentTenant->run(
                 $tenant->id,

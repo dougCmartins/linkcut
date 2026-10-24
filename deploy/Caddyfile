@@ -2,6 +2,21 @@
 {$DOMAIN} {
 	encode zstd gzip
 
+	# Access log required by the Marco Civil da Internet (art. 15): IP, date/time, method, path and status, kept
+	# 6 months, in the caddy_data volume. Headers (tokens, cookies, user agent) are left out (LGPD: minimum data).
+	log {
+		output file /data/access.log {
+			roll_size 20MiB
+			roll_keep 500
+			roll_keep_for 4320h
+		}
+		format filter {
+			request>headers delete
+			request>tls delete
+			resp_headers delete
+		}
+	}
+
 	# The API and the uploaded images (same address as the SPA: no CORS).
 	@api path /api/* /storage/* /up
 	handle @api {
