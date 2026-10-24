@@ -54,6 +54,13 @@ async function submitCode(code: string): Promise<void> {
       LinkCut
     </RouterLink>
 
+    <p
+      v-if="route.query.conta === 'excluida'"
+      class="mb-4 rounded-card bg-raised px-4 py-3 text-sm font-semibold ring-1 ring-line"
+      role="status"
+    >
+      {{ t('settings.account.deleted') }}
+    </p>
     <BaseCard floating class="p-6">
       <ol class="mb-5 flex gap-1.5" :aria-label="t('auth.progress')">
         <li

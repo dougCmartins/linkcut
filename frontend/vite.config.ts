@@ -13,6 +13,7 @@ export default defineConfig({
       include: [
         fileURLToPath(new URL('./src/i18n/pt-BR.ts', import.meta.url)),
         fileURLToPath(new URL('./src/i18n/privacyPolicy.pt-BR.ts', import.meta.url)),
+        fileURLToPath(new URL('./src/i18n/termsOfUse.pt-BR.ts', import.meta.url)),
       ],
       runtimeOnly: true,
       compositionOnly: true,

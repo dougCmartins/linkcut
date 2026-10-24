@@ -112,6 +112,40 @@ final class ClientAccountTest extends TestCase
         $this->postJson('/api/client/login', ['email' => $client->email, 'password' => 'segredo123'])->assertUnauthorized();
     }
 
+    public function test_the_client_downloads_the_account_and_every_appointment(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $client = $this->signedInClient();
+        $this->bookingRequest($owner, '2026-10-21', '10:00', BookingStatus::Confirmed, attributes: ['client_id' => $client->id]);
+
+        // Act
+        $response = $this->get('/api/client/me/export', ['Accept' => 'application/json']);
+
+        // Assert
+        $response->assertOk()->assertHeader('Content-Disposition', 'attachment; filename="linkcut-meus-dados.json"')
+            ->assertJsonPath('account.email', $client->email)
+            ->assertJsonPath('appointments.0.barbershop.slug', 'rafael')
+            ->assertJsonStructure(['exported_at']);
+    }
+
+    public function test_deleting_also_anonymizes_old_bookings_made_with_the_same_e_mail_before_the_account(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $client = $this->signedInClient();
+        $old = $this->bookingRequest($owner, '2026-09-01', '10:00', BookingStatus::Completed, attributes: ['client_email' => $client->email, 'client_id' => null]);
+        $stranger = $this->bookingRequest($owner, '2026-09-02', '10:00', BookingStatus::Completed, attributes: ['client_email' => 'outra@example.com', 'client_id' => null]);
+
+        // Act
+        $this->deleteJson('/api/client/me', ['password' => 'segredo123'])->assertNoContent();
+
+        // Assert
+        $this->assertSame('Cliente removido', BookingRequest::withoutTenantScope()->findOrFail($old->id)->client_name);
+        $this->assertSame('', BookingRequest::withoutTenantScope()->findOrFail($old->id)->client_email);
+        $this->assertSame('Ana Souza', BookingRequest::withoutTenantScope()->findOrFail($stranger->id)->client_name);
+    }
+
     private function signedInClient(): Client
     {
         $client = Client::factory()->registered()->create(['name' => 'Ana Souza', 'phone' => '11912345678']);

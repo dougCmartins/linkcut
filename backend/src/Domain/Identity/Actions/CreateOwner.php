@@ -28,6 +28,8 @@ final class CreateOwner
                 'email' => $email,
                 'password' => $data->password,
                 'email_verified_at' => now(),
+                'terms_accepted_at' => now(),
+                'terms_version' => $data->terms_version,
             ]);
         } catch (UniqueConstraintViolationException) {
             throw new EmailAlreadyRegisteredException;

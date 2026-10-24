@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\Onboarding\Data;
 
+use Spatie\LaravelData\Attributes\Validation\Accepted;
 use Spatie\LaravelData\Attributes\Validation\Email;
 use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Attributes\Validation\Min;
@@ -29,5 +30,8 @@ final class SignUpData extends Data
         /** linkcut.app/{slug} */
         #[Required, StringType, Min(3), Max(40), Regex('/^[a-z0-9]+(?:-[a-z0-9]+)*$/')]
         public readonly string $slug,
+        /** "Li e aceito os Termos de Uso e a Política de Privacidade" (required). */
+        #[Accepted]
+        public readonly bool $accept_terms = false,
     ) {}
 }

@@ -53,6 +53,7 @@ final class SignUpTest extends TestCase
             'code' => $code,
             'barbershop_name' => 'Barbearia do Marcos',
             'slug' => 'barbearia-do-marcos',
+            'accept_terms' => true,
             ...$overrides,
         ];
     }
@@ -71,6 +72,8 @@ final class SignUpTest extends TestCase
         $user = User::query()->sole();
         $this->assertSame('marcos@example.com', $user->email);
         $this->assertSame('owner', $user->role->value);
+        $this->assertNotNull($user->terms_accepted_at);
+        $this->assertSame(config('legal.terms_version'), $user->terms_version);
         $tenant = Tenant::query()->sole();
         $this->assertSame('barbearia-do-marcos', $tenant->slug);
         $this->assertNull($tenant->onboarded_at);
@@ -167,5 +170,18 @@ final class SignUpTest extends TestCase
         // Assert
         $response->assertSuccessful()->assertJsonPath('onboarded', true);
         $this->assertNotNull(Tenant::query()->sole()->onboarded_at);
+    }
+
+    public function test_the_terms_must_be_accepted(): void
+    {
+        // Arrange
+        $this->postJson('/api/sign-up/code', ['email' => 'marcos@example.com'])->assertCreated();
+
+        // Act
+        $response = $this->postJson('/api/sign-up', $this->payload($this->codeSentTo('marcos@example.com'), ['accept_terms' => false]));
+
+        // Assert
+        $response->assertUnprocessable()->assertJsonValidationErrors('accept_terms');
+        $this->assertSame(0, User::query()->count());
     }
 }

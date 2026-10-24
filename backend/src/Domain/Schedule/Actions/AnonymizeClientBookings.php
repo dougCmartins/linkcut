@@ -17,7 +17,12 @@ final class AnonymizeClientBookings
     /** @return list<int> */
     public function handle(ClientBookingsQueryData $data): array
     {
-        $bookings = BookingRequest::withoutTenantScope()->where('client_id', $data->client_id);
+        $bookings = BookingRequest::withoutTenantScope()->where(function ($query) use ($data): void {
+            $query->where('client_id', $data->client_id);
+            if ($data->email !== null && $data->email !== '') {
+                $query->orWhere(fn ($old) => $old->whereNull('client_id')->where('client_email', mb_strtolower($data->email)));
+            }
+        });
         $ids = (clone $bookings)->pluck('id')->all();
         $bookings->update([
             'client_name' => __('client.deleted_name'),

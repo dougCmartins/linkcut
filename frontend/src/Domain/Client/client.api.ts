@@ -160,3 +160,9 @@ export async function updateEmailPreference(enabled: boolean): Promise<ClientPro
 export async function deleteAccount(password: string): Promise<void> {
   await http<void>('/client/me', { method: 'DELETE', auth: 'client', body: { password } })
 }
+
+/** LGPD portability: the account and every appointment, as the API exports them. */
+export async function exportMyData(): Promise<unknown> {
+  const { data } = await http<unknown>('/client/me/export', { auth: 'client' })
+  return data
+}
