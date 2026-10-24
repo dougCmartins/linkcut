@@ -27,7 +27,7 @@ jobs:
           php-version: '8.3'
           extensions: gd, intl, zip, gmp, pdo_sqlite, sodium
           coverage: none
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.composer/cache
           key: composer-${{ hashFiles('backend/composer.lock') }}
