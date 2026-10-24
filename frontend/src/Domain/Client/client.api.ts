@@ -138,13 +138,17 @@ export async function updateProfile(input: { name: string; phone: string }): Pro
   return toClient(data)
 }
 
-/** A wrong current password answers VALIDATION_FAILED on `current_password`. */
-export async function changePassword(input: { currentPassword: string; password: string }): Promise<void> {
-  await http<void>('/client/me/password', {
+/**
+ * A wrong current password answers VALIDATION_FAILED on `current_password`. On success every other session ends
+ * and this device gets a new one.
+ */
+export async function changePassword(input: { currentPassword: string; password: string }): Promise<ClientSession> {
+  const { data } = await http<SessionBody>('/client/me/password', {
     method: 'PUT',
     auth: 'client',
     body: { current_password: input.currentPassword, password: input.password },
   })
+  return toSession(data)
 }
 
 export async function updateEmailPreference(enabled: boolean): Promise<ClientProfile> {

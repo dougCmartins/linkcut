@@ -129,4 +129,20 @@ final class ImageUploadTest extends TestCase
         $this->assertFalse(Image::withoutTenantScope()->whereKey($unused)->exists());
         Storage::disk(Image::DISK)->assertMissing($unusedPath);
     }
+
+    public function test_an_image_with_too_many_pixels_is_refused_before_it_is_decoded(): void
+    {
+        // Arrange: a tiny file that claims to be 9000 × 9000 (81 MP), which would need GBs of RAM to decode.
+        Passport::actingAs(User::factory()->create());
+        $header = "\x89PNG\r\n\x1a\n".pack('N', 13).'IHDR'.pack('NNCCCCC', 9000, 9000, 8, 2, 0, 0, 0);
+        $png = $header.pack('N', crc32(substr($header, 12))).pack('N', 0).'IEND'.pack('N', crc32('IEND'));
+        $file = UploadedFile::fake()->createWithContent('bomba.png', $png);
+
+        // Act
+        $response = $this->post('/api/settings/images', ['file' => $file], ['Accept' => 'application/json']);
+
+        // Assert
+        $response->assertUnprocessable();
+        $this->assertSame(0, Image::withoutTenantScope()->count());
+    }
 }

@@ -59,7 +59,6 @@ Na primeira vez, leva alguns minutos para montar tudo. Depois, abra `https://seu
 - **Criar a sua barbearia:** em `https://seudominio.com.br/cadastrar`.
 - **Link para a bio do Instagram:** em Configurações → Link → **Copiar link**.
 - **Ver se está tudo bem:** `make prod-logs`.
-- **Opcional:** `make prod-seed` cria as barbearias de demonstração (login `rafael@linkcut.app` / `linkcut123`). Não use num ambiente com clientes reais.
 
 ## 6. E-mail de verdade (Brevo)
 1. Crie a conta em brevo.com.
@@ -101,7 +100,6 @@ As migrations do banco rodam sozinhas. O `make prod-up` sempre recria os contain
 | `make prod-logs` | Mostra os logs ao vivo |
 | `make prod-down` | Para tudo (os dados ficam guardados) |
 | `make prod-backup` | Cópia do banco |
-| `make prod-seed` | Dados de demonstração (opcional) |
 
 ## Como funciona (para referência)
 - **`web` (Caddy):** serve o app já compilado, cuida do `https` e repassa `/api` e `/storage` para a API.

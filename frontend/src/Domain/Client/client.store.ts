@@ -126,8 +126,9 @@ export const useClientStore = defineStore('client', () => {
     keepProfile(await clientApi.updateEmailPreference(enabled))
   }
 
+  /** The other devices are signed out; this one keeps going with the new session. */
   async function changePassword(input: { currentPassword: string; password: string }): Promise<void> {
-    await clientApi.changePassword(input)
+    setSession(await clientApi.changePassword(input))
   }
 
   /** LGPD: after the API confirms, nothing of the client stays in this browser. */

@@ -5,6 +5,8 @@ declare(strict_types=1);
 // E-mails to the client about bookings (Notification domain).
 return [
     'greeting' => 'Olá, :name!',
+    // When the name typed at booking has nothing left after removing links and symbols.
+    'default_name' => 'cliente',
     'details' => '**:service** · :date às :time · :barbershop',
     'address' => 'Endereço: :address',
     'directions' => 'Como chegar',

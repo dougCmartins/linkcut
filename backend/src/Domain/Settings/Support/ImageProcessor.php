@@ -19,9 +19,16 @@ final class ImageProcessor
 
     public const WEBP_QUALITY = 85;
 
+    /** 40 megapixels (e.g. 8000 × 5000): above that, decoding alone would exhaust the PHP memory. */
+    public const MAX_PIXELS = 40_000_000;
+
     /** @return array{path: string, mime: string, size: int, width: int, height: int} */
     public static function storeAsWebp(UploadedFile $file, int $tenantId, string $disk): array
     {
+        $size = @getimagesize($file->getRealPath());
+        if (! $size || $size[0] * $size[1] > self::MAX_PIXELS) {
+            throw new InvalidImageException;
+        }
         $source = @imagecreatefromstring((string) file_get_contents($file->getRealPath()));
         if (! $source) {
             throw new InvalidImageException;

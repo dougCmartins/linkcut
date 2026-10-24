@@ -633,7 +633,7 @@ export default {
       currentPassword: 'Senha atual',
       newPassword: 'Nova senha',
       changePassword: 'Trocar senha',
-      passwordChanged: 'Senha alterada.',
+      passwordChanged: 'Senha alterada. Os outros aparelhos foram desconectados.',
       wrongPassword: 'Senha atual incorreta.',
       privacyTitle: 'Privacidade',
       privacyText: 'Veja como tratamos seus dados e mude suas escolhas de cookies quando quiser.',

@@ -34,6 +34,17 @@ trait BelongsToTenant
                 throw new TenantMismatchException;
             }
         });
+
+        // Saving or deleting a loaded model: it must belong to the current tenant (when one is set; scheduled jobs
+        // and the client area work without one and filter by ids on purpose).
+        $guard = function (self $model): void {
+            $current = app(CurrentTenant::class);
+            if ($current->has() && (int) $model->getOriginal('tenant_id', $model->tenant_id) !== $current->id()) {
+                throw new TenantMismatchException;
+            }
+        };
+        static::updating($guard);
+        static::deleting($guard);
     }
 
     /**

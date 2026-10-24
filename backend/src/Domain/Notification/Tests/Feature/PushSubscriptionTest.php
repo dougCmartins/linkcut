@@ -115,4 +115,20 @@ final class PushSubscriptionTest extends TestCase
         // Assert
         $response->assertUnauthorized();
     }
+
+    public function test_only_the_browsers_push_services_are_accepted(): void
+    {
+        // Arrange
+        Passport::actingAs(User::factory()->create());
+
+        // Act
+        $foreign = $this->postJson('/api/notifications/push/subscriptions', $this->subscription('https://attacker.example/collect'));
+        $apple = $this->postJson('/api/notifications/push/subscriptions', $this->subscription('https://web.push.apple.com/QGuQyavXu'));
+        $windows = $this->postJson('/api/notifications/push/subscriptions', $this->subscription('https://wns2-par02p.notify.windows.com/w/?token=abc'));
+
+        // Assert
+        $foreign->assertUnprocessable();
+        $apple->assertSuccessful();
+        $windows->assertSuccessful();
+    }
 }

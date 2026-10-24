@@ -14,6 +14,7 @@ use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
  * Demo data (idempotent). Two tenants, so tenant isolation can be checked by hand.
@@ -23,6 +24,10 @@ final class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Demo accounts have a known password: never in production.
+        if (app()->isProduction()) {
+            throw new RuntimeException('The demo seeder does not run in production (demo accounts have a known password).');
+        }
         DB::transaction(function (): void {
             $rafael = $this->tenantWithOwner('Rafael Barber', 'rafael', 'Rafael Costa', 'rafael@linkcut.app', '+5511988887777');
             $navalha = $this->tenantWithOwner('Navalha Norte', 'navalha-norte', 'Bruno Lima', 'bruno@navalhanorte.app', null);
