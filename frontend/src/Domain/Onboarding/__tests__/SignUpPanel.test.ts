@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, screen } from '@testing-library/vue'
-import SignUpView from '../SignUpView.vue'
+import { fireEvent, screen, within } from '@testing-library/vue'
+import BarberAuthView from '@/Home/BarberAuthView.vue'
 import { SIGN_UP_CODE, installFakeOnboardingApi } from './fakeOnboardingApi'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { renderWithPlugins } from '@/utils/testRender'
 
 async function renderSignUp() {
-  const rendered = renderWithPlugins(SignUpView)
+  const rendered = renderWithPlugins(BarberAuthView)
   await rendered.router.push('/cadastrar')
   await rendered.router.isReady()
+  // The panel of each mode is loaded on demand.
+  await vi.dynamicImportSettled()
   return rendered
 }
 
@@ -25,7 +27,7 @@ async function acceptTerms(): Promise<void> {
   await fireEvent.click(screen.getByRole('checkbox', { name: /Li e aceito os/ }))
 }
 
-describe('SignUpView', () => {
+describe('SignUpPanel (on /cadastrar)', () => {
   beforeEach(() => {
     sessionStorage.clear()
     vi.useFakeTimers({ shouldAdvanceTime: true })
@@ -134,6 +136,7 @@ describe('SignUpView', () => {
     // Assert
     expect(disabledBefore).toBe(true)
     expect(finish.disabled).toBe(false)
-    expect(screen.getByRole('link', { name: 'Termos de Uso' }).getAttribute('href')).toBe('/termos')
+    const termsLabel = screen.getByRole('checkbox', { name: /Li e aceito os/ }).closest('label') as HTMLElement
+    expect(within(termsLabel).getByRole('link', { name: 'Termos de Uso' }).getAttribute('href')).toBe('/termos')
   })
 })

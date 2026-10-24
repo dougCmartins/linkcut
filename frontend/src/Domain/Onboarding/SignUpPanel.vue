@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import AuthCardLayout from '@/components/ui/AuthCardLayout.vue'
+import AuthHeading from '@/components/ui/AuthHeading.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import OtpInput from '@/components/ui/OtpInput.vue'
 import TextField from '@/components/ui/TextField.vue'
@@ -14,7 +14,7 @@ import { checkSlug, sendSignUpCode, signUp } from './onboarding.api'
 import { SLUG_MAX_LENGTH, isReservedSlug, isValidSlug, slugify } from './slug'
 
 /**
- * /cadastrar: open sign-up in three steps. The account (name, e-mail, password) → the code sent to the e-mail →
+ * Open sign-up (on /, /cadastrar), in three steps. The account (name, e-mail, password) → the code sent to the e-mail →
  * the barbershop name and its link (linkcut.app/<slug>, checked while typing). The API checks the code at the end
  * and answers with the session, so the barber goes straight to the setup wizard.
  */
@@ -162,7 +162,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AuthCardLayout :title="t(`signUp.steps.${step}.title`)" :subtitle="t(`signUp.steps.${step}.subtitle`)">
+  <section>
+    <AuthHeading :title="t(`signUp.steps.${step}.title`)" :subtitle="t(`signUp.steps.${step}.subtitle`)" />
     <p v-if="error" class="mb-5 rounded-card bg-danger/10 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-danger/40" role="alert">
       {{ error }}
     </p>
@@ -245,10 +246,7 @@ onBeforeUnmount(() => {
       <button type="button" class="text-sm font-semibold text-muted hover:text-ink" @click="step = 'code'">{{ t('signUp.back') }}</button>
     </form>
 
-    <template #footer>
-      <RouterLink :to="{ name: 'login' }" class="mt-6 text-center text-sm font-semibold text-muted hover:text-ink">
-        {{ t('signUp.haveAccount') }}
-      </RouterLink>
-    </template>
-  </AuthCardLayout>
+    <!-- "Já tem conta? Entrar", only before the e-mail code is asked. -->
+    <slot v-if="step === 'account'" name="switch" />
+  </section>
 </template>

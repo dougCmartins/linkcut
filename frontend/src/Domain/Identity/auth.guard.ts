@@ -37,7 +37,8 @@ export function installAuthGuard(router: Router): void {
       if (tenant?.onboarded && to.name === ONBOARDING_ROUTE) return HOME_AFTER_LOGIN
     }
 
-    if (to.name === LOGIN_ROUTE && auth.hasValidAccess()) {
+    // Signed in already: the entrance (/, /cadastrar, /entrar) goes on to the dashboard.
+    if (to.meta.authMode && auth.hasValidAccess()) {
       return safeRedirect(to.query.redirect)
     }
 

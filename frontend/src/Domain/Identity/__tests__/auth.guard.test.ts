@@ -19,7 +19,15 @@ function signIn(): void {
     refreshToken: 'refresh',
     accessExpiresAt: now + 60_000,
     refreshExpiresAt: now + 120_000,
-    user: { id: 7, tenantId: 3, name: 'Rafael Costa', email: 'rafael@linkcut.app', phoneMasked: null, role: 'owner', twoFactorChannel: null },
+    user: {
+      id: 7,
+      tenantId: 3,
+      name: 'Rafael Costa',
+      email: 'rafael@linkcut.app',
+      phoneMasked: null,
+      role: 'owner',
+      twoFactorChannel: null,
+    },
   }
 }
 
@@ -104,6 +112,21 @@ describe('auth guard', () => {
     await router.push('/entrar')
 
     // Assert
+    expect(router.currentRoute.value.path).toBe('/painel')
+  })
+
+  it('sends a signed-in barber from the entrance (/ and /cadastrar) to the dashboard', async () => {
+    // Arrange
+    const router = createTestRouter()
+    signIn()
+
+    // Act
+    await router.push('/')
+    const fromHome = router.currentRoute.value.path
+    await router.push('/cadastrar')
+
+    // Assert
+    expect(fromHome).toBe('/painel')
     expect(router.currentRoute.value.path).toBe('/painel')
   })
 

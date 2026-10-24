@@ -9,13 +9,21 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     /** Client-area page: needs the client's session (see Domain/Client/client.guard.ts). */
     requiresClient?: boolean
+    /** linkcut's entrance (/, /cadastrar, /entrar): one page, the mode picks the form and the photo. */
+    authMode?: 'sign-up' | 'login'
+    /** The client's entrance (/conta/entrar, /conta/finalizar): same idea. */
+    clientAuthMode?: 'login' | 'register'
   }
 }
 
+const BarberAuthView = () => import('@/Home/BarberAuthView.vue')
+const ClientAuthView = () => import('@/Domain/Client/ClientAuthView.vue')
+
 export const routes: RouteRecordRaw[] = [
-  { path: '/', name: 'home', component: () => import('@/Home/HomeView.vue') },
-  { path: '/entrar', name: 'login', component: () => import('@/Domain/Identity/LoginView.vue') },
-  { path: '/cadastrar', name: 'sign-up', component: () => import('@/Domain/Onboarding/SignUpView.vue') },
+  // One component for the three: switching keeps the page and only swaps the form and the photo.
+  { path: '/', name: 'home', component: BarberAuthView, meta: { authMode: 'sign-up' } },
+  { path: '/cadastrar', name: 'sign-up', component: BarberAuthView, meta: { authMode: 'sign-up' } },
+  { path: '/entrar', name: 'login', component: BarberAuthView, meta: { authMode: 'login' } },
   {
     path: '/painel/boas-vindas',
     name: 'onboarding',
@@ -65,8 +73,8 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Domain/Client/ClientProfileView.vue'),
     meta: { requiresClient: true },
   },
-  { path: '/conta/entrar', name: 'client-login', component: () => import('@/Domain/Client/ClientLoginView.vue') },
-  { path: '/conta/finalizar', name: 'client-register', component: () => import('@/Domain/Client/ClientRegisterView.vue') },
+  { path: '/conta/entrar', name: 'client-login', component: ClientAuthView, meta: { clientAuthMode: 'login' } },
+  { path: '/conta/finalizar', name: 'client-register', component: ClientAuthView, meta: { clientAuthMode: 'register' } },
   {
     path: '/conta/lembretes-desativados',
     name: 'client-opt-out',

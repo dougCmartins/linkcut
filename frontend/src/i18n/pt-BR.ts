@@ -5,11 +5,29 @@ export default {
     dark: 'Escuro',
     light: 'Claro',
   },
-  home: {
-    title: 'linkcut',
-    tagline: 'Link na bio, portfólio e agenda para barbeiros.',
-    login: 'Entrar no painel',
-    signUp: 'Criar minha página grátis',
+  authPage: {
+    photos: {
+      signUp: 'Fachada de uma barbearia LinkCut à noite, com o letreiro aceso',
+      login: 'Interior de uma barbearia, com cadeiras de couro e espelhos iluminados',
+    },
+    barber: {
+      signUpMeta: 'Crie sua página grátis',
+      loginMeta: 'Entrar no painel',
+      description: 'Link na bio, portfólio e agenda online para barbeiros. Crie sua página grátis em poucos minutos.',
+      haveAccount: 'Já tem conta?',
+      login: 'Entrar',
+      noAccount: 'Ainda não tem conta?',
+      signUp: 'Criar minha página grátis',
+    },
+    client: {
+      login: { title: 'Entre na sua conta', subtitle: 'Use o e-mail do seu agendamento para ver seus horários.' },
+      register: { title: 'Crie sua senha', subtitle: 'Use o e-mail do seu agendamento: enviamos um código para confirmar.' },
+      reset: { title: 'Criar nova senha', subtitle: 'Enviamos um código para o seu e-mail.' },
+      haveAccount: 'Já tem senha?',
+      loginAction: 'Entrar',
+      firstAccess: 'Primeiro acesso?',
+      registerAction: 'Criar minha senha',
+    },
   },
   signUp: {
     terms: {
@@ -17,7 +35,7 @@ export default {
       and: 'e a',
     },
     steps: {
-      account: { title: 'Crie sua conta', subtitle: 'Sua página de agendamentos fica pronta em poucos minutos.' },
+      account: { title: 'Crie sua página grátis', subtitle: 'Link na bio, portfólio e agenda para barbeiros, pronto em poucos minutos.' },
       code: { title: 'Confirme seu e-mail', subtitle: 'Digite o código de 6 números que enviamos.' },
       barbershop: { title: 'Sua barbearia', subtitle: 'O nome aparece na sua página; o link é o endereço dela.' },
     },
@@ -37,7 +55,6 @@ export default {
     },
     finish: 'Criar minha página',
     back: 'Voltar',
-    haveAccount: 'Já tenho conta: entrar',
   },
   onboarding: {
     progress: 'Etapas da configuração',
@@ -531,7 +548,7 @@ export default {
   auth: {
     progress: 'Etapas do acesso',
     steps: {
-      credentials: { title: 'Entrar no painel', subtitle: 'Acesse com o e-mail e a senha da sua conta.' },
+      credentials: { title: 'Entre no seu painel', subtitle: 'Acesse com o e-mail e a senha da sua conta.' },
       channel: { title: 'Confirme que é você', subtitle: 'Escolha onde quer receber o código de verificação.' },
       code: { title: 'Digite o código', subtitle: 'O código tem 6 números e vale por 5 minutos.' },
     },
@@ -556,8 +573,6 @@ export default {
     resendIn: 'Reenviar em {seconds}s',
     changeChannel: 'Usar outro canal',
     useOtherAccount: 'Entrar com outra conta',
-    backToPublic: 'Voltar para a página pública',
-    noAccount: 'Ainda não tem conta? Cadastre sua barbearia',
     logout: 'Sair',
     demoHint: 'Conta de demonstração (seed): {email} / {password}.',
     useDemo: 'Preencher',
@@ -581,21 +596,11 @@ export default {
       registration: 'Criar senha e entrar',
       password: 'Salvar nova senha e entrar',
     },
-    register: {
-      title: 'Finalize seu cadastro',
-      subtitle: 'Confirme seu e-mail com um código e crie sua senha.',
-      haveAccount: 'Já tenho senha: entrar',
-    },
     login: {
-      title: 'Meus horários',
-      subtitle: 'Entre com o e-mail que você usou ao agendar.',
       submit: 'Entrar',
       forgot: 'Esqueci minha senha',
-      noAccount: 'Ainda sem senha? Use o link "Finalizar cadastro" que enviamos no e-mail do agendamento.',
     },
     reset: {
-      title: 'Criar nova senha',
-      subtitle: 'Enviamos um código para o seu e-mail.',
       back: 'Voltar para o login',
     },
     optOut: {

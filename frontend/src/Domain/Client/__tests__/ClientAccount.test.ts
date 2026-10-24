@@ -2,8 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import ClientRegisterView from '../ClientRegisterView.vue'
-import ClientLoginView from '../ClientLoginView.vue'
+import ClientAuthView from '../ClientAuthView.vue'
 import ClientAppointmentsView from '../ClientAppointmentsView.vue'
 import { installClientGuard } from '../client.guard'
 import { useClientStore } from '../client.store'
@@ -50,7 +49,7 @@ describe('client area', () => {
   it('completes the sign-up with the code from the e-mail and opens "Meus horários"', async () => {
     // Arrange
     const { calls } = installFakeClientApi()
-    const { router } = await renderAt(ClientRegisterView, '/conta/finalizar?email=ana%40example.com')
+    const { router } = await renderAt(ClientAuthView, '/conta/finalizar?email=ana%40example.com')
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }))
@@ -68,7 +67,7 @@ describe('client area', () => {
   it('a wrong code says how many attempts are left', async () => {
     // Arrange
     installFakeClientApi()
-    await renderAt(ClientRegisterView, '/conta/finalizar?email=ana%40example.com')
+    await renderAt(ClientAuthView, '/conta/finalizar?email=ana%40example.com')
     await fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }))
 
     // Act
@@ -84,7 +83,7 @@ describe('client area', () => {
   it('signs in with e-mail and password and goes back to the page asked for', async () => {
     // Arrange
     installFakeClientApi()
-    const { router } = await renderAt(ClientLoginView, '/conta/entrar?redirect=/conta')
+    const { router } = await renderAt(ClientAuthView, '/conta/entrar?redirect=/conta')
 
     // Act
     await fireEvent.update(screen.getByLabelText('E-mail'), 'ana@example.com')
@@ -101,7 +100,7 @@ describe('client area', () => {
   it('"Esqueci minha senha" sets a new password with a code', async () => {
     // Arrange
     const { calls } = installFakeClientApi()
-    const { router } = await renderAt(ClientLoginView, '/conta/entrar')
+    const { router } = await renderAt(ClientAuthView, '/conta/entrar')
     await fireEvent.update(screen.getByLabelText('E-mail'), 'ana@example.com')
 
     // Act

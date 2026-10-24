@@ -10,11 +10,17 @@ const year = new Date().getFullYear()
 
 <template>
   <p class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-semibold text-muted">
-    <RouterLink to="/privacidade" class="transition hover:text-ink">{{ t('privacy.links.policy') }}</RouterLink>
+    <RouterLink to="/privacidade" class="inline-flex min-h-6 items-center transition hover:text-ink">{{
+      t('privacy.links.policy')
+    }}</RouterLink>
     <span aria-hidden="true">·</span>
-    <RouterLink to="/termos" class="transition hover:text-ink">{{ t('privacy.links.terms') }}</RouterLink>
+    <RouterLink to="/termos" class="inline-flex min-h-6 items-center transition hover:text-ink">{{ t('privacy.links.terms') }}</RouterLink>
     <span aria-hidden="true">·</span>
-    <button type="button" class="font-semibold transition hover:text-ink" @click="consent.openPreferences()">
+    <button
+      type="button"
+      class="inline-flex min-h-6 items-center font-semibold transition hover:text-ink"
+      @click="consent.openPreferences()"
+    >
       {{ t('privacy.links.preferences') }}
     </button>
     <span aria-hidden="true">·</span>
