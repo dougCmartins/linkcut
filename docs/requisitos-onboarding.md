@@ -4,7 +4,13 @@
 
 ## 1. Regras
 
-### Cadastro (`/cadastrar`)
+### Entrada (`/`, `/cadastrar`, `/entrar`)
+- As três rotas abrem **a mesma tela**: o formulário à esquerda e uma foto à direita (só em telas largas; o celular não baixa a foto).
+- A `/` e a `/cadastrar` abrem em "Criar minha página grátis", com "Já tem conta? Entrar" embaixo. A `/entrar` abre no login, com "Ainda não tem conta? Criar minha página grátis".
+- Trocar de modo muda só o formulário e a foto (fachada para criar, interior para entrar), sem recarregar a página. O endereço acompanha o modo e o "Voltar" do navegador funciona. O `?redirect=` é mantido.
+- Barbeiro já conectado que abre uma dessas rotas vai direto para o `/painel`.
+
+### Cadastro
 | ID | Regra |
 |---|---|
 | RF-O1 | **Passo 1, a conta:** nome, e-mail e senha (mínimo 8 caracteres). "Continuar" envia um código de 6 números para o e-mail. |

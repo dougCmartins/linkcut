@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
-import LoginView from '../LoginView.vue'
+import BarberAuthView from '@/Home/BarberAuthView.vue'
 import { useAuthStore } from '../auth.store'
 import { renderWithPlugins } from '@/utils/testRender'
 import { installFakeIdentityApi, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
@@ -8,9 +8,11 @@ import { installFakeIdentityApi, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
 const EMAIL = 'rafael@linkcut.app'
 
 async function renderLogin(path = '/entrar?redirect=/painel/configuracoes') {
-  const rendered = renderWithPlugins(LoginView)
+  const rendered = renderWithPlugins(BarberAuthView)
   await rendered.router.push(path)
   await rendered.router.isReady()
+  // The panel of each mode is loaded on demand.
+  await vi.dynamicImportSettled()
   return rendered
 }
 
@@ -25,7 +27,7 @@ async function pasteCode(code: string): Promise<void> {
   await fireEvent.paste(firstBox!, { clipboardData: { getData: () => code } })
 }
 
-describe('LoginView', () => {
+describe('BarberLoginPanel (on /entrar)', () => {
   beforeEach(() => {
     sessionStorage.clear()
     localStorage.clear()

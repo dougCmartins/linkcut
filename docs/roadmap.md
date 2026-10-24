@@ -14,19 +14,20 @@ O que o barbeiro precisa para usar a plataforma sozinho no dia a dia.
 | 7 ✅ | **Performance** | Fontes no próprio app, modal de agendamento sob demanda, i18n pré-compilado e SEO (#22). No backend: índices, sem N+1 e caches de produção (#23). [Detalhes](performance.md). |
 | 8 ✅ | **Área do cliente 2.0, compartilhar e privacidade** | Logos, menu, "Minhas barbearias", "Minha conta", **cancelamento pelo cliente** e "Adicionar à agenda" (#24). Compartilhar a página com prévia nos apps e aviso de cookies da LGPD (#25). "Ver minha página" abre em nova aba (#26). |
 | 9 ✅ | **Pronto para operar** | Licença PolyForm Strict (#27). Segurança: limite de tentativas de código por e-mail, CSP e cabeçalhos, sessões, uploads (#28). Operação: backup completo cifrado com restauração testada, alertas, limites de memória e logs, limpeza agendada, CI e Laravel 12 (#29). LGPD: Termos de Uso com cláusula de operador, aceite no cadastro, exclusão e exportação da conta do barbeiro, exportação do cliente, registros de acesso e [procedimento de incidentes](incidentes.md). |
+| 10 ✅ | **Tela única de entrar e criar conta** | No estilo do Linktree: formulário à esquerda e foto à direita, que troca com o modo. A `/` abre em "Criar minha página grátis", com "Já tem conta? Entrar" embaixo; a troca muda só o formulário e a foto, sem recarregar. O mesmo para o cliente (`/conta/entrar` e `/conta/finalizar`). A página de apresentação antiga saiu: a venda do produto vai para um site próprio depois. |
 
 ## Fase B: negócio (depois da fundação)
 
 | Etapa | O quê | Observação |
 |---|---|---|
-| 10 | **Módulos pagos visíveis e bloqueados** | Os módulos pagos aparecem no painel, mas desativados, com um aviso que incentiva a assinar o plano. |
-| 11 | **Billing (assinatura)** | Planos, teste grátis, cobrança recorrente por um gateway de pagamento, e bloqueio de quem não paga (usa o "tenant inativo" que já existe). |
-| 12 | **Bilíngue** | A interface em mais um idioma além do pt-BR. O i18n já existe; falta escolher o idioma e traduzir. |
-| 13 | **Painel admin** | Hoje já existem os comandos `tenant:list`, `tenant:deactivate` e `tenant:activate`. O painel visual é para o dono da plataforma: barbearias, assinantes, inadimplência, métricas gerais e MRR. |
+| 11 | **Módulos pagos visíveis e bloqueados** | Os módulos pagos aparecem no painel, mas desativados, com um aviso que incentiva a assinar o plano. |
+| 12 | **Billing (assinatura)** | Planos, teste grátis, cobrança recorrente por um gateway de pagamento, e bloqueio de quem não paga (usa o "tenant inativo" que já existe). |
+| 13 | **Bilíngue** | A interface em mais um idioma além do pt-BR. O i18n já existe; falta escolher o idioma e traduzir. |
+| 14 | **Painel admin** | Hoje já existem os comandos `tenant:list`, `tenant:deactivate` e `tenant:activate`. O painel visual é para o dono da plataforma: barbearias, assinantes, inadimplência, métricas gerais e MRR. |
 
 ## Módulos pagos (só com plano ativo)
 
-Ideias guardadas para depois do billing. Cada módulo só funciona com a assinatura em dia. Antes disso, aparece bloqueado com o convite para assinar (Etapa 10). Ideias de planos e preços: [ideias de cobrança](ideias-cobranca.md).
+Ideias guardadas para depois do billing. Cada módulo só funciona com a assinatura em dia. Antes disso, aparece bloqueado com o convite para assinar (Etapa 11). Ideias de planos e preços: [ideias de cobrança](ideias-cobranca.md).
 
 | Módulo | O que faz |
 |---|---|
