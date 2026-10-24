@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Domain\Identity\Models;
 
 use Domain\Identity\Enums\TwoFactorChannel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 final class TwoFactorChallenge extends Model
 {
     use HasUlids;
+    use MassPrunable;
 
     protected $fillable = [
         'user_id', 'channel', 'code_hash', 'code_expires_at', 'expires_at',
@@ -51,5 +54,11 @@ final class TwoFactorChallenge extends Model
     public function isLocked(): bool
     {
         return $this->attempts >= (int) config('identity.two_factor.max_attempts');
+    }
+
+    /** Expired for more than a day: deleted by the daily "model:prune" (LGPD: kept only while useful). */
+    public function prunable(): Builder
+    {
+        return self::query()->where('expires_at', '<', now()->subDay());
     }
 }

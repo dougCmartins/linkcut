@@ -2,10 +2,20 @@
 
 declare(strict_types=1);
 
+use App\Observability\Heartbeat;
+use Domain\Client\Models\ClientEmailCode;
+use Domain\Client\Models\ClientRefreshToken;
+use Domain\Identity\Models\RefreshToken;
+use Domain\Identity\Models\SignUpCode;
+use Domain\Identity\Models\TwoFactorChallenge;
 use Domain\Orchestrator\ClientEmails\Actions\InviteClientsToRegister;
 use Domain\Orchestrator\ClientEmails\Actions\SendBookingReminders;
 use Domain\Settings\Actions\PruneUnusedImages;
 use Domain\Settings\Data\PruneImagesData;
+use Domain\Tenant\Actions\ListTenantsForAdmin;
+use Domain\Tenant\Actions\SetTenantActive;
+use Domain\Tenant\Data\TenantActivationData;
+use Domain\Tenant\Data\TenantData;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Laravel\Passport\ClientRepository;
@@ -67,3 +77,33 @@ Artisan::command('notifications:vapid-keys {--show : Print new keys instead of w
     file_put_contents($env, rtrim($cleaned)."\n\n{$lines}\n");
     $this->info('VAPID keys written to .env.');
 })->purpose('Create the Web Push (VAPID) keys, if missing');
+
+// ---------- Housekeeping (LGPD: data is kept only while it is useful) ----------
+// Expired codes, 2FA challenges and refresh tokens; expired Passport tokens; old failed jobs.
+Schedule::command('model:prune', ['--model' => [
+    ClientEmailCode::class, ClientRefreshToken::class, RefreshToken::class, SignUpCode::class, TwoFactorChallenge::class,
+]])->dailyAt('03:10');
+Schedule::command('passport:purge --expired')->dailyAt('03:20');
+Schedule::command('queue:prune-failed', ['--hours' => 720])->dailyAt('03:40');
+Schedule::command('queue:prune-batches', ['--hours' => 720])->dailyAt('03:45');
+
+// The scheduler and the queue are alive: an external monitor alerts when the ping stops (HEARTBEAT_URL).
+Schedule::job(new Heartbeat)->everyFiveMinutes();
+
+// ---------- Minimal admin (until the admin panel) ----------
+Artisan::command('tenant:list', function (ListTenantsForAdmin $list): void {
+    $rows = collect($list->handle()->all())->map(fn (TenantData $tenant): array => [
+        $tenant->id, $tenant->slug, $tenant->name, $tenant->active ? 'sim' : 'NÃO', $tenant->onboarded ? 'sim' : 'não',
+    ]);
+    $this->table(['id', 'slug', 'nome', 'ativa', 'onboarding'], $rows->all());
+})->purpose('List every barbershop (active and onboarding)');
+
+Artisan::command('tenant:deactivate {slug}', function (SetTenantActive $setActive, string $slug): void {
+    $tenant = $setActive->handle(new TenantActivationData(slug: $slug, active: false));
+    $this->info("Barbearia {$tenant->slug} desativada: página pública em 404 e login bloqueado.");
+})->purpose('Deactivate a barbershop (public page 404, sign-in refused)');
+
+Artisan::command('tenant:activate {slug}', function (SetTenantActive $setActive, string $slug): void {
+    $tenant = $setActive->handle(new TenantActivationData(slug: $slug, active: true));
+    $this->info("Barbearia {$tenant->slug} ativada.");
+})->purpose('Activate a barbershop again');

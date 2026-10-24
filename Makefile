@@ -19,7 +19,7 @@ export LAN_IP
 
 .DEFAULT_GOAL := help
 .PHONY: help up start stop down restart setup ip check-docker check-node permissions reset-web logs migrate seed fresh \
-	test pint shell-api test-web typecheck build shell-web prod-check prod-up prod-down prod-logs prod-backup
+	test pint shell-api test-web typecheck build shell-web prod-check prod-up prod-down prod-logs prod-backup prod-restore
 
 help: ## Lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  make %-12s %s\n", $$1, $$2}'
@@ -127,9 +127,8 @@ prod-down: prod-check ## [VPS] Para a produção (os dados ficam guardados)
 prod-logs: prod-check ## [VPS] Mostra os logs
 	$(PROD) logs -f --tail=100
 
-prod-backup: prod-check ## [VPS] Cópia do banco em backups/ (agende no cron)
-	@mkdir -p backups
-	$(PROD) exec -T mysql sh -c 'exec mysqldump -uroot -p"$$MYSQL_ROOT_PASSWORD" --single-transaction --routines "$$MYSQL_DATABASE"' \
-		| gzip > backups/linkcut-$$(date +%Y-%m-%d-%H%M).sql.gz
-	@ls -1t backups | head -1
-	@find backups -name 'linkcut-*.sql.gz' -mtime +14 -delete
+prod-backup: prod-check ## [VPS] Backup cifrado: banco + imagens + chaves + .env (agende no cron)
+	@PROD="$(PROD)" sh deploy/backup.sh
+
+prod-restore: prod-check ## [VPS] Restaura um backup: make prod-restore FILE=backups/linkcut-....tar.gz.enc
+	@PROD="$(PROD)" FILE="$(FILE)" sh deploy/restore.sh
