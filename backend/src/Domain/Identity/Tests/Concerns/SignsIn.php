@@ -6,15 +6,22 @@ namespace Domain\Identity\Tests\Concerns;
 
 use Domain\Identity\Models\User;
 use Domain\Identity\Notifications\TwoFactorCodeNotification;
+use Domain\Tenant\Models\Tenant;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
 
 /** Helpers for the sign-in steps: password → code sent → code read from the faked notification. */
 trait SignsIn
 {
+    /** The page the barber signs in from: /<slug>/entrar of their own barbershop. */
+    protected function slugOf(User $user): string
+    {
+        return (string) Tenant::query()->whereKey($user->tenant_id)->value('slug');
+    }
+
     protected function startLogin(User $user, string $password = 'password'): string
     {
-        return $this->postJson('/api/login', ['email' => $user->email, 'password' => $password])
+        return $this->postJson('/api/login', ['email' => $user->email, 'password' => $password, 'slug' => $this->slugOf($user)])
             ->assertCreated()
             ->json('challenge_id');
     }

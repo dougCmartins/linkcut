@@ -1,18 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
-import BarberAuthView from '@/Home/BarberAuthView.vue'
+import BarberPageLoginView from '@/Home/BarberPageLoginView.vue'
+import { installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 import { useAuthStore } from '../auth.store'
 import { renderWithPlugins } from '@/utils/testRender'
-import { installFakeIdentityApi, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
+import { identityRoutes, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
+
+/** The barbershop's public page (theme, name) and the sign-in API, like on /rafael/entrar. */
+function installFakeIdentityApi(options: { preferredChannel?: string | null } = {}) {
+  return installFakeSettingsApi(undefined, identityRoutes(options))
+}
 
 const EMAIL = 'rafael@linkcut.app'
 
-async function renderLogin(path = '/entrar?redirect=/painel/configuracoes') {
-  const rendered = renderWithPlugins(BarberAuthView)
+async function renderLogin(path = '/rafael/entrar?redirect=/painel/configuracoes') {
+  const rendered = renderWithPlugins(BarberPageLoginView)
   await rendered.router.push(path)
   await rendered.router.isReady()
-  // The panel of each mode is loaded on demand.
-  await vi.dynamicImportSettled()
+  await screen.findByLabelText('E-mail')
   return rendered
 }
 
@@ -27,7 +32,7 @@ async function pasteCode(code: string): Promise<void> {
   await fireEvent.paste(firstBox!, { clipboardData: { getData: () => code } })
 }
 
-describe('BarberLoginPanel (on /entrar)', () => {
+describe('BarberLoginPanel (on /rafael/entrar)', () => {
   beforeEach(() => {
     sessionStorage.clear()
     localStorage.clear()
@@ -89,7 +94,7 @@ describe('BarberLoginPanel (on /entrar)', () => {
     // Assert
     expect(screen.getByText('Informe um e-mail válido.')).toBeTruthy()
     expect(screen.getByText('A senha tem pelo menos 8 caracteres.')).toBeTruthy()
-    expect(calls).toHaveLength(0)
+    expect(calls.filter((call) => call.path === '/login')).toHaveLength(0)
   })
 
   it('shows a generic error for wrong credentials', async () => {
@@ -106,8 +111,9 @@ describe('BarberLoginPanel (on /entrar)', () => {
 
   it('shows a clear message when the server cannot be reached', async () => {
     // Arrange
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    installFakeIdentityApi()
     await renderLogin()
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
 
     // Act
     await submitCredentials(EMAIL, PASSWORD)
@@ -148,6 +154,20 @@ describe('BarberLoginPanel (on /entrar)', () => {
     // Assert
     expect(await screen.findByText('Código incorreto. Você tem mais 4 tentativa(s).')).toBeTruthy()
     expect(auth.session).toBeNull()
+  })
+
+  it('sends the page of the barbershop with the credentials and shows its name', async () => {
+    // Arrange
+    const { calls } = installFakeIdentityApi({ preferredChannel: 'email' })
+    await renderLogin()
+
+    // Act
+    await submitCredentials(EMAIL, PASSWORD)
+
+    // Assert
+    await screen.findByText(/Enviamos um código por e-mail/)
+    expect(calls.find((call) => call.path === '/login')?.body).toEqual({ email: EMAIL, password: PASSWORD, slug: 'rafael' })
+    expect(screen.getByText('Rafael Costa')).toBeTruthy()
   })
 })
 

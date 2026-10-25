@@ -220,4 +220,17 @@ describe('DashboardView', () => {
     const link = await screen.findByRole('link', { name: (name) => name === expectedLabel })
     expect(link.getAttribute('href')).toBe('/painel/despesas')
   })
+
+  it('"Sair" goes back to the sign-in page of the barbershop', async () => {
+    // Arrange
+    const { router } = renderWithPlugins(DashboardView)
+    await screen.findByRole('link', { name: /Ver minha página/ })
+    await vi.waitFor(() => expect(screen.getByRole('link', { name: /Ver minha página/ }).getAttribute('href')).toBe('/rafael'))
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
+
+    // Assert
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/rafael/entrar'))
+  })
 })

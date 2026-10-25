@@ -55,6 +55,19 @@ describe('auth guard', () => {
     vi.unstubAllEnvs()
   })
 
+  it('sends a barber without session to the sign-in page of their barbershop when this device knows it', async () => {
+    // Arrange
+    localStorage.setItem('linkcut.last-slug', 'rafael')
+    const router = createTestRouter()
+
+    // Act
+    await router.push('/painel')
+
+    // Assert
+    expect(router.currentRoute.value.fullPath).toBe('/rafael/entrar?redirect=/painel')
+    localStorage.removeItem('linkcut.last-slug')
+  })
+
   it('sends a new barbershop to the setup wizard until it is done', async () => {
     // Arrange
     installFakeApi({ 'GET /tenant': () => ({ status: 200, body: { id: 3, name: 'Nova', slug: 'nova', onboarded: false } }) })

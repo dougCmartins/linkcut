@@ -6,7 +6,6 @@ use Domain\Identity\Controllers\AuthController;
 use Domain\Identity\Controllers\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('two-factor/send', [TwoFactorController::class, 'send'])->middleware('throttle:two-factor');
 Route::post('token/refresh', [AuthController::class, 'refresh'])->middleware('throttle:refresh');
 

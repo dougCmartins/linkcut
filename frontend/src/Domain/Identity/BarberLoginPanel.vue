@@ -11,7 +11,8 @@ import { LoginStep, type Credentials, type TwoFactorChannel } from './auth.model
 import { useAuthStore } from './auth.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 
-/** Barber sign-in (on /entrar): e-mail and password, then the code of the second step. */
+/** Barber sign-in on the barbershop's own page (/<slug>/entrar): e-mail and password, then the code. */
+const props = defineProps<{ slug: string }>()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -31,7 +32,7 @@ const stepTitle = computed(() => t(`auth.steps.${auth.step}.title`))
 const stepSubtitle = computed(() => t(`auth.steps.${auth.step}.subtitle`))
 
 function submitCredentials(credentials: Credentials): void {
-  void auth.submitCredentials(credentials)
+  void auth.submitCredentials(credentials, props.slug)
 }
 
 function chooseChannel(channel: TwoFactorChannel): void {

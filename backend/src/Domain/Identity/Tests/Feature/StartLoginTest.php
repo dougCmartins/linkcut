@@ -7,12 +7,14 @@ namespace Domain\Identity\Tests\Feature;
 use Domain\Identity\Enums\TwoFactorChannel;
 use Domain\Identity\Models\TwoFactorChallenge;
 use Domain\Identity\Models\User;
+use Domain\Identity\Tests\Concerns\SignsIn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class StartLoginTest extends TestCase
 {
     use RefreshDatabase;
+    use SignsIn;
 
     public function test_right_password_opens_a_challenge_with_masked_destinations(): void
     {
@@ -24,7 +26,7 @@ final class StartLoginTest extends TestCase
         ]);
 
         // Act
-        $response = $this->postJson('/api/login', ['email' => 'rafael@linkcut.app', 'password' => 'password']);
+        $response = $this->postJson('/api/login', ['email' => 'rafael@linkcut.app', 'password' => 'password', 'slug' => $this->slugOf($user)]);
 
         // Assert
         $response->assertCreated();
@@ -41,7 +43,7 @@ final class StartLoginTest extends TestCase
         $user = User::factory()->withoutPhone()->create();
 
         // Act
-        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password']);
+        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password', 'slug' => $this->slugOf($user)]);
 
         // Assert
         $response->assertJsonCount(1, 'destinations');
@@ -54,8 +56,8 @@ final class StartLoginTest extends TestCase
         $user = User::factory()->create();
 
         // Act
-        $wrongPassword = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'wrong-password']);
-        $unknownEmail = $this->postJson('/api/login', ['email' => 'nobody@linkcut.app', 'password' => 'password']);
+        $wrongPassword = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'wrong-password', 'slug' => $this->slugOf($user)]);
+        $unknownEmail = $this->postJson('/api/login', ['email' => 'nobody@linkcut.app', 'password' => 'password', 'slug' => $this->slugOf($user)]);
 
         // Assert
         foreach ([$wrongPassword, $unknownEmail] as $response) {
@@ -86,14 +88,32 @@ final class StartLoginTest extends TestCase
         // Arrange
         $user = User::factory()->create();
         foreach (range(1, 5) as $attempt) {
-            $this->postJson('/api/login', ['email' => $user->email, 'password' => 'wrong-'.$attempt]);
+            $this->postJson('/api/login', ['email' => $user->email, 'password' => 'wrong-'.$attempt, 'slug' => $this->slugOf($user)]);
         }
 
         // Act
-        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password']);
+        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password', 'slug' => $this->slugOf($user)]);
 
         // Assert
         $response->assertStatus(429);
         $response->assertJsonPath('code', 'TOO_MANY_REQUESTS');
+    }
+
+    public function test_signing_in_on_another_barbershops_page_fails_like_a_wrong_password(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        // Act
+        $otherPage = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password', 'slug' => $this->slugOf($other)]);
+        $unknownPage = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password', 'slug' => 'nao-existe']);
+
+        // Assert
+        foreach ([$otherPage, $unknownPage] as $response) {
+            $response->assertUnauthorized();
+            $response->assertJsonPath('code', 'INVALID_CREDENTIALS');
+        }
+        $this->assertSame(0, TwoFactorChallenge::query()->count());
     }
 }

@@ -15,6 +15,13 @@ return [
         'intro' => 'Use este código para confirmar seu e-mail e criar a página da sua barbearia:',
         'ignore' => 'Se não foi você, ignore este e-mail: nenhuma conta é criada sem o código.',
     ],
+    'login_link_mail' => [
+        'subject' => 'Seu link de entrada no linkcut',
+        'intro' => 'Você pediu o link para entrar no painel da :barbershop.',
+        'action' => 'Entrar no painel',
+        'tip' => 'Dica: salve este link nos favoritos ou adicione o app à tela inicial do celular.',
+        'ignore' => 'Se não foi você, ignore este e-mail. Ninguém entra sem a sua senha e o código.',
+    ],
     'account_exists_mail' => [
         'subject' => 'Você já tem uma conta no linkcut',
         'intro' => 'Alguém tentou criar uma conta com este e-mail, mas ele já tem uma. Para acessar seu painel, é só entrar.',

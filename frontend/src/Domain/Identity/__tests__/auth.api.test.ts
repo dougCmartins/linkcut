@@ -13,10 +13,10 @@ describe('auth api', () => {
     const { calls } = installFakeIdentityApi({ preferredChannel: 'sms' })
 
     // Act
-    const challenge = await login({ email: 'rafael@linkcut.app', password: PASSWORD })
+    const challenge = await login({ email: 'rafael@linkcut.app', password: PASSWORD }, 'rafael')
 
     // Assert
-    expect(calls[0]?.body).toEqual({ email: 'rafael@linkcut.app', password: PASSWORD })
+    expect(calls[0]?.body).toEqual({ email: 'rafael@linkcut.app', password: PASSWORD, slug: 'rafael' })
     expect(challenge).toEqual({
       challengeId: '01jchallenge',
       preferredChannel: 'sms',

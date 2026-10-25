@@ -9,10 +9,10 @@ import { usePageMeta } from '@/composables/usePageMeta'
 
 /**
  * linkcut's own entrance (/, /cadastrar, /entrar): one page where "Criar conta" comes first and "Entrar" is one
- * click away. The three routes share this component, so switching only swaps the form and the photo.
+ * click away. Barbers sign in on their own page (/<slug>/entrar); here "Entrar" sends them its link. The three routes share this component, so switching only swaps the form and the photo.
  */
 // Only the form of the current mode is downloaded; the other one comes when the barber switches.
-const BarberLoginPanel = defineAsyncComponent(() => import('@/Domain/Identity/BarberLoginPanel.vue'))
+const FindPagePanel = defineAsyncComponent(() => import('@/Domain/Identity/FindPagePanel.vue'))
 const SignUpPanel = defineAsyncComponent(() => import('@/Domain/Onboarding/SignUpPanel.vue'))
 
 const { t } = useI18n()
@@ -33,7 +33,7 @@ usePageMeta(
 
 <template>
   <AuthSplitLayout :photo="photo" :photo-key="isLogin ? 'login' : 'sign-up'">
-    <BarberLoginPanel v-if="isLogin">
+    <FindPagePanel v-if="isLogin">
       <template #switch>
         <AuthSwitch
           :question="t('authPage.barber.noAccount')"
@@ -41,7 +41,7 @@ usePageMeta(
           :to="{ name: 'sign-up', query: keptQuery }"
         />
       </template>
-    </BarberLoginPanel>
+    </FindPagePanel>
     <SignUpPanel v-else>
       <template #switch>
         <AuthSwitch

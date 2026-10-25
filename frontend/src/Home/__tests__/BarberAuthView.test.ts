@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import BarberAuthView from '../BarberAuthView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
+import { installFakeApi } from '@/utils/testFetch'
 
 async function renderAt(path: string) {
   const rendered = renderWithPlugins(BarberAuthView)
@@ -74,5 +75,30 @@ describe('BarberAuthView', () => {
 
     // Assert
     expect(signUpLink.getAttribute('href')).toBe('/cadastrar?redirect=/painel/historico')
+  })
+
+  it('"Entrar" e-mails the sign-in link of the barber\'s own page (same answer for any e-mail)', async () => {
+    // Arrange
+    const { calls } = installFakeApi({ 'POST /login/link': () => ({ status: 202, body: { sent: true } }) })
+    await renderAt('/entrar')
+
+    // Act
+    await fireEvent.update(screen.getByLabelText('E-mail'), 'rafael@linkcut.app')
+    await fireEvent.click(screen.getByRole('button', { name: 'Enviar meu link de entrada' }))
+
+    // Assert
+    expect(await screen.findByText(/Se rafael@linkcut.app tiver uma barbearia/)).toBeTruthy()
+    expect(calls.at(-1)).toMatchObject({ method: 'POST', path: '/login/link', body: { email: 'rafael@linkcut.app' } })
+  })
+
+  it('offers the page this device signed in from last', async () => {
+    // Arrange
+    localStorage.setItem('linkcut.last-slug', 'rafael')
+
+    // Act
+    await renderAt('/entrar')
+
+    // Assert
+    expect(screen.getByRole('link', { name: /Continuar em .*\/rafael/ }).getAttribute('href')).toBe('/rafael/entrar')
   })
 })
