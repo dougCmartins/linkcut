@@ -20,6 +20,9 @@ export interface RequestRow {
   ends_at: string
   status: 'pending' | 'confirmed' | 'rejected' | 'completed'
   client_distance_meters: number | null
+  service_ids?: number[]
+  price_in_cents?: number | null
+  client_notes?: string | null
 }
 
 /** Corte (id 1, 45 min, R$ 50) and Barba (id 2, 30 min, R$ 40), as in the Settings fixture. */
@@ -96,7 +99,7 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
 
   const routes: Record<string, FakeHandler> = {
     [`GET /public/${SLUG}/availability`]: ({ query }: FakeCall) => {
-      const serviceId = Number(query.get('service_id') ?? 2)
+      const serviceId = Number(query.getAll('service_ids[]')[0] ?? 2)
       const days = Array.from({ length: 7 }, (_, index) => {
         const date = addDays(today, index)
         const isSunday = new Date(`${date}T12:00`).getDay() === 0
@@ -112,7 +115,8 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
         client_name: string
         client_whatsapp: string
         client_email: string
-        service_id: number
+        service_ids: number[]
+        client_notes: string | null
         date: string
         time: string
         client_latitude: number | null
@@ -124,7 +128,7 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
         id: nextId++,
         client_name: input.client_name,
         client_whatsapp: input.client_whatsapp,
-        service_id: input.service_id,
+        service_id: input.service_ids[0],
         date: input.date,
         starts_at: input.time,
         // The real API measures it from the barbershop; any shared location is 3.2 km away here.

@@ -62,7 +62,7 @@ final class NewBookingPushTest extends TestCase
 
         // Act
         $this->postJson('/api/public/rafael/booking-requests', [
-            'client_name' => 'Ana Souza', 'client_whatsapp' => '11912345678', 'client_email' => 'joao@example.com', 'service_id' => $this->serviceId($owner, 'Corte'),
+            'client_name' => 'Ana Souza', 'client_whatsapp' => '11912345678', 'client_email' => 'joao@example.com', 'service_ids' => [$this->serviceId($owner, 'Corte')],
             'date' => '2026-10-20', 'time' => '10:00',
         ])->assertCreated();
 
@@ -83,7 +83,7 @@ final class NewBookingPushTest extends TestCase
 
         // Act
         $this->postJson('/api/public/rafael/booking-requests', [
-            'client_name' => 'Ana Souza', 'client_whatsapp' => '11912345678', 'client_email' => 'joao@example.com', 'service_id' => $this->serviceId($owner, 'Corte'),
+            'client_name' => 'Ana Souza', 'client_whatsapp' => '11912345678', 'client_email' => 'joao@example.com', 'service_ids' => [$this->serviceId($owner, 'Corte')],
             'date' => '2026-10-25', 'time' => '10:00',
         ])->assertStatus(409);
 

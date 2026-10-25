@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * "Concluir atendimento", in one transaction: Schedule marks it concluded (confirmed and today only),
- * Settings gives the service's current price and cost, Finance records them, frozen, in the history.
+ * Settings gives the services' costs (and the price, when it was not frozen at booking), Finance records them,
+ * frozen, in the history.
  */
 final class CompleteAppointment
 {
@@ -29,21 +30,25 @@ final class CompleteAppointment
     {
         return DB::transaction(function () use ($id): CompletedAppointmentData {
             $request = $this->markCompleted->handle($id);
-            $service = $this->showService->handle(new ServiceIdData(service_id: $request->service_id));
+            // Every service of the visit ("Corte + Barba"); cost and, for older bookings, price are today's.
+            $services = collect($request->service_ids ?? [$request->service_id])
+                ->map(fn (int $serviceId) => $this->showService->handle(new ServiceIdData(service_id: $serviceId)));
+            $priceInCents = $request->price_in_cents ?? (int) $services->sum('price_in_cents');
+            $costInCents = (int) $services->sum('cost_in_cents');
             $this->recordRevenue->handle(new RecordRevenueData(
                 booking_request_id: $request->id,
                 date: $request->date,
                 time: $request->starts_at,
                 client_name: $request->client_name,
-                service_name: $request->service_name,
-                price_in_cents: $service->price_in_cents,
-                cost_in_cents: $service->cost_in_cents,
+                service_name: mb_substr($request->service_name, 0, 60),
+                price_in_cents: $priceInCents,
+                cost_in_cents: $costInCents,
             ));
 
             return new CompletedAppointmentData(
                 request: $request,
-                price_in_cents: $service->price_in_cents,
-                cost_in_cents: $service->cost_in_cents,
+                price_in_cents: $priceInCents,
+                cost_in_cents: $costInCents,
             );
         });
     }

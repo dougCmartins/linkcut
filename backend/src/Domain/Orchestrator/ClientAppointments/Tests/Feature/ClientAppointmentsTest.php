@@ -111,7 +111,7 @@ final class ClientAppointmentsTest extends TestCase
         $this->assertSame(BookingStatus::Cancelled, BookingRequest::withoutTenantScope()->findOrFail($booking->id)->status);
         Bus::assertDispatched(SendPushToTenant::class, fn (SendPushToTenant $job): bool => $job->data->tenant_id === $rafael->tenant_id
             && $job->data->message->title === 'Horário cancelado pelo cliente');
-        $times = collect($this->getJson('/api/public/rafael/availability?service_id='.$this->serviceId($rafael, 'Corte'))->json('days'))
+        $times = collect($this->getJson('/api/public/rafael/availability?service_ids[]='.$this->serviceId($rafael, 'Corte'))->json('days'))
             ->firstWhere('date', '2026-10-20')['times'];
         $this->assertContains('10:00', $times);
     }

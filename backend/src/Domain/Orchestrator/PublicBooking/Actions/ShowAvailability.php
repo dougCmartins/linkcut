@@ -27,7 +27,7 @@ final class ShowAvailability
     public function handle(AvailabilityQueryData $data): AvailabilityData
     {
         $options = $this->showBookingOptions->handle();
-        $service = AvailableTimes::service($options, $data->service_id);
+        $service = AvailableTimes::services($options, array_map('intval', $data->service_ids ?? []));
 
         $now = $this->clock->now();
         $today = $now->startOfDay();

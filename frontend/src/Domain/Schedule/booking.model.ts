@@ -21,6 +21,12 @@ export interface BookingRequest {
   clientDistanceMeters: number | null
   /** Price that went into the revenue when it was concluded. */
   completedPriceInCents?: number
+  /** Every service of the visit ("Corte + Barba"); the first is `serviceId`. */
+  serviceIds: string[]
+  /** Total frozen when booking (null for bookings made before several services existed). */
+  priceInCents: number | null
+  /** The client's note to the barber. */
+  clientNotes: string | null
 }
 
 /** What the client sends from the booking modal. */
@@ -29,7 +35,10 @@ export interface BookingRequestInput {
   clientWhatsapp: string
   /** Gets the answer and the reminder; also the client's account (client area). */
   clientEmail: string
-  serviceId: string
+  /** One or more services, done one after the other (times and prices add up). */
+  serviceIds: string[]
+  /** Optional note to the barber. */
+  clientNotes?: string
   date: string
   time: string
   /** Only when the client shared the location (used to compute the distance; never stored). */

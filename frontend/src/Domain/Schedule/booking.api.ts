@@ -16,6 +16,9 @@ interface BookingRequestBody {
   ends_at: string
   status: AppointmentStatus
   client_distance_meters: number | null
+  service_ids?: number[] | null
+  price_in_cents?: number | null
+  client_notes?: string | null
 }
 
 const toRequest = (body: BookingRequestBody): BookingRequest => ({
@@ -29,15 +32,18 @@ const toRequest = (body: BookingRequestBody): BookingRequest => ({
   time: body.starts_at,
   status: body.status,
   clientDistanceMeters: body.client_distance_meters ?? null,
+  serviceIds: (body.service_ids ?? [body.service_id]).map(String),
+  priceInCents: body.price_in_cents ?? null,
+  clientNotes: body.client_notes ?? null,
 })
 
 const publicPath = (slug: string) => `/public/${encodeURIComponent(slug)}`
 
 /* Visitor (no session) */
 
-/** Free times of every day of the booking window, for a service (or the shortest one). */
-export async function fetchAvailability(slug: string, serviceId: string | null): Promise<AvailableDay[]> {
-  const query = serviceId ? `?service_id=${encodeURIComponent(serviceId)}` : ''
+/** Free times of every day of the booking window, for the chosen services together (or the shortest one). */
+export async function fetchAvailability(slug: string, serviceIds: string[]): Promise<AvailableDay[]> {
+  const query = serviceIds.length ? `?${serviceIds.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&')}` : ''
   const { data } = await http<{ days: AvailableDay[] }>(`${publicPath(slug)}/availability${query}`, { auth: false })
   return data.days
 }
@@ -51,7 +57,8 @@ export async function createBookingRequest(slug: string, input: BookingRequestIn
       client_name: input.clientName,
       client_whatsapp: input.clientWhatsapp,
       client_email: input.clientEmail,
-      service_id: Number(input.serviceId),
+      service_ids: input.serviceIds.map(Number),
+      client_notes: input.clientNotes?.trim() || null,
       date: input.date,
       time: input.time,
       client_latitude: input.clientLocation?.latitude ?? null,

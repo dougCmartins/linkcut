@@ -83,7 +83,7 @@ final class QueryBudgetTest extends TestCase
             'client_name' => 'João Silva',
             'client_whatsapp' => '(11) 91234-5678',
             'client_email' => 'joao@example.com',
-            'service_id' => $this->serviceId($owner, 'Corte'),
+            'service_ids' => [$this->serviceId($owner, 'Corte')],
             'date' => '2026-10-20',
             'time' => '10:00',
         ];

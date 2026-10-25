@@ -45,6 +45,26 @@ final class CompleteAppointmentTest extends TestCase
         $this->assertSame(['15:00', 'Ana Souza', 'Corte', 5500], [$history['time'], $history['client_name'], $history['service_name'], $history['price_in_cents']]);
     }
 
+    public function test_a_visit_with_several_services_uses_the_price_frozen_at_booking_and_sums_the_costs(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $ids = [$this->serviceId($owner, 'Corte'), $this->serviceId($owner, 'Barba')];
+        $request = $this->bookingRequest($owner, '2026-10-19', '15:00', BookingStatus::Confirmed, attributes: [
+            'service_ids' => $ids, 'service_name' => 'Corte + Barba', 'price_in_cents' => 9000,
+        ]);
+        app(CurrentTenant::class)->run($owner->tenant_id, fn () => Service::query()->whereKey($ids)->update(['price_in_cents' => 99900]));
+        $this->actingAsOwner($owner);
+
+        // Act
+        $response = $this->postJson("/api/schedule/requests/{$request->id}/complete");
+
+        // Assert
+        $response->assertJsonPath('price_in_cents', 9000);
+        $response->assertJsonPath('cost_in_cents', 1000);
+        $this->getJson('/api/finance/month-to-date')->assertJsonPath('revenue_in_cents', 9000);
+    }
+
     public function test_undo_takes_it_out_of_the_revenue_and_back_to_confirmed(): void
     {
         // Arrange

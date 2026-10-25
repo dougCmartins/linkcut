@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fromMinutes, toMinutes } from './time'
+import { fromMinutes, toMinutes, formatDuration } from './time'
 
 describe('toMinutes / fromMinutes', () => {
   it('converts a clock time to minutes since midnight', () => {
@@ -22,5 +22,18 @@ describe('toMinutes / fromMinutes', () => {
 
     // Assert
     expect(time).toBe('09:05')
+  })
+})
+
+describe('formatDuration', () => {
+  it('shows minutes, whole hours and hours with minutes', () => {
+    // Arrange
+    const lengths = [45, 60, 75, 125]
+
+    // Act
+    const labels = lengths.map(formatDuration)
+
+    // Assert
+    expect(labels).toEqual(['45 min', '1h', '1h15', '2h05'])
   })
 })

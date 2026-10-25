@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Domain\Orchestrator\PublicBooking\Data;
 
 use Domain\Settings\Support\WhatsappNumberRule;
+use Spatie\LaravelData\Attributes\Validation\ArrayType;
 use Spatie\LaravelData\Attributes\Validation\Between;
 use Spatie\LaravelData\Attributes\Validation\DateFormat;
 use Spatie\LaravelData\Attributes\Validation\Email;
-use Spatie\LaravelData\Attributes\Validation\IntegerType;
 use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Attributes\Validation\Min;
 use Spatie\LaravelData\Attributes\Validation\Nullable;
@@ -30,8 +30,9 @@ final class BookingRequestInputData extends Data
         /** Where the client gets the answer and the reminder; also the client's account. */
         #[Required, StringType, Email, Max(120)]
         public readonly string $client_email,
-        #[Required, IntegerType, Min(1)]
-        public readonly int $service_id,
+        /** @var list<int> one or more services, done one after the other (times and prices add up) */
+        #[Required, ArrayType, Min(1), Max(5)]
+        public readonly array $service_ids,
         #[Required, DateFormat('Y-m-d')]
         public readonly string $date,
         #[Required, DateFormat('H:i')]
@@ -41,5 +42,14 @@ final class BookingRequestInputData extends Data
         public readonly ?float $client_latitude,
         #[Nullable, Numeric, Between(-180, 180), RequiredWith('client_latitude')]
         public readonly ?float $client_longitude,
+        /** A note for the barber ("cabelo cacheado", "vou com meu filho"). */
+        #[Nullable, StringType, Max(300)]
+        public readonly ?string $client_notes = null,
     ) {}
+
+    /** @return array<string, list<string>> */
+    public static function rules(): array
+    {
+        return ['service_ids.*' => ['integer', 'min:1', 'distinct']];
+    }
 }

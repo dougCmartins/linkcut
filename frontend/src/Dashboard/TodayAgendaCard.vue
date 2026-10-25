@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import ClientNote from './ClientNote.vue'
 import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { formatDistance } from '@/utils/address'
@@ -44,10 +45,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
 </script>
 
 <template>
-  <article
-    class="rounded-card p-4 ring-1 transition"
-    :class="isDone ? 'bg-raised/60 ring-line' : 'bg-surface ring-line shadow-soft'"
-  >
+  <article class="rounded-card p-4 ring-1 transition" :class="isDone ? 'bg-raised/60 ring-line' : 'bg-surface ring-line shadow-soft'">
     <div class="flex items-center gap-3">
       <span
         class="flex h-12 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-sm font-extrabold tabular-nums"
@@ -69,6 +67,7 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       </p>
     </div>
 
+    <ClientNote v-if="!isDone" :note="request.clientNotes" />
     <p v-if="isCompleted" class="mt-3 flex items-center gap-1.5 text-sm font-bold text-success">
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
         <path d="m5 12.5 4.5 4.5L19 7.5" />
