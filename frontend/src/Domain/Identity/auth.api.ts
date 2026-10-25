@@ -66,8 +66,9 @@ export function toSession(session: SessionResponse, now = Date.now()): Session {
 }
 
 /** Step 1: e-mail and password. Wrong e-mail or password give the same error (no account discovery). */
-export async function login(credentials: Credentials): Promise<LoginChallenge> {
-  const response = await http<LoginChallengeResponse>('/login', { method: 'POST', body: credentials, auth: false })
+/** Step 1, on the barbershop's own page: only its barbers get past the password. */
+export async function login(credentials: Credentials, slug: string): Promise<LoginChallenge> {
+  const response = await http<LoginChallengeResponse>('/login', { method: 'POST', body: { ...credentials, slug }, auth: false })
   return {
     challengeId: response.data.challenge_id,
     preferredChannel: response.data.preferred_channel,
@@ -123,4 +124,9 @@ export async function fetchMe(): Promise<SessionUser> {
 export async function updateTwoFactorChannel(channel: TwoFactorChannel | null): Promise<SessionUser> {
   const response = await http<UserResponse>('/me/two-factor-channel', { method: 'PATCH', body: { channel } })
   return toUser(response.data)
+}
+
+/** "Encontrar minha página": e-mails the barber the sign-in link of their page (same answer for any e-mail). */
+export async function sendLoginLink(email: string): Promise<void> {
+  await http('/login/link', { method: 'POST', body: { email }, auth: false })
 }

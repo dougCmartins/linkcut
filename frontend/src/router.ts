@@ -90,6 +90,13 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Portfolio/PortfolioView.vue'),
     meta: { isPublic: true },
   },
+  // The barbershop's own sign-in, with its theme (only its barbers get in).
+  {
+    path: '/:slug/entrar',
+    name: 'barber-login',
+    component: () => import('@/Home/BarberPageLoginView.vue'),
+    meta: { isPublic: true, authMode: 'login' },
+  },
   // Opens the booking modal on top of the portfolio, as its own history entry.
   {
     path: '/:slug/portfolio/agendar',

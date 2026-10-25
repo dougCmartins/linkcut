@@ -17,18 +17,22 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\LaravelData\DataCollection;
 
-/** Step 1 of sign-in: checks the password and opens a 2FA challenge (no session yet). */
+/**
+ * Step 1 of sign-in: checks the password and opens a 2FA challenge (no session yet). Only the barbershop whose page
+ * the login was opened from is accepted (`$tenantId`): a wrong page fails like a wrong password, so nobody learns
+ * which e-mails exist.
+ */
 final class StartLogin
 {
     /** Compared when the e-mail does not exist, so both failures take the same time. */
     private static ?string $dummyHash = null;
 
-    public function handle(LoginData $data): LoginChallengeData
+    public function handle(LoginData $data, ?int $tenantId): LoginChallengeData
     {
         $user = User::query()->where('email', mb_strtolower($data->email))->first();
         $passwordMatches = Hash::check($data->password, $user?->password ?? self::dummyHash());
 
-        if (! $user || ! $passwordMatches) {
+        if (! $user || ! $passwordMatches || $user->tenant_id !== $tenantId) {
             Log::channel('security')->warning('login_failed', ['email' => ContactMask::email($data->email)]);
             throw new InvalidCredentialsException;
         }

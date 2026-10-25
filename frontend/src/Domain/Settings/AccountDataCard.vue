@@ -53,6 +53,7 @@ async function remove(): Promise<void> {
   try {
     await deleteBarbershop({ password: password.value, slugConfirmation: slugConfirmation.value })
     auth.forget()
+    tenantStore.forgetPage()
     await router.replace({ path: '/entrar', query: { conta: 'excluida' } })
   } catch (caught) {
     deleteError.value = apiErrors.hasFieldError(caught, 'password')

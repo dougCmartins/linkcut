@@ -7,6 +7,7 @@ namespace Domain\Orchestrator\BarbershopAccount\Tests\Feature;
 use Domain\Client\Models\Client;
 use Domain\Finance\Models\RevenueEntry;
 use Domain\Identity\Models\User;
+use Domain\Identity\Tests\Concerns\SignsIn;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Schedule\Models\BookingRequest;
 use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
@@ -24,6 +25,7 @@ final class BarbershopAccountTest extends TestCase
 {
     use RefreshDatabase;
     use ScheduleFixtures;
+    use SignsIn;
 
     protected function setUp(): void
     {
@@ -104,6 +106,6 @@ final class BarbershopAccountTest extends TestCase
         Storage::disk(Image::DISK)->assertExists("tenants/{$other->tenant_id}/images/foto.webp");
         $this->assertNotNull($client->fresh());
         $this->app['auth']->forgetGuards();
-        $this->postJson('/api/login', ['email' => $owner->email, 'password' => 'password'])->assertUnauthorized();
+        $this->postJson('/api/login', ['email' => $owner->email, 'password' => 'password', 'slug' => 'rafael'])->assertUnauthorized();
     }
 }

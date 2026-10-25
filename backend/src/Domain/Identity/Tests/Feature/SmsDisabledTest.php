@@ -31,7 +31,7 @@ final class SmsDisabledTest extends TestCase
         $user = User::factory()->create(['phone' => '+5511988887777', 'two_factor_channel' => TwoFactorChannel::Sms]);
 
         // Act
-        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password']);
+        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password', 'slug' => $this->slugOf($user)]);
 
         // Assert
         $response->assertCreated()->assertJsonCount(1, 'destinations')->assertJsonPath('destinations.0.channel', 'email');

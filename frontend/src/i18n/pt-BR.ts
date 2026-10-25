@@ -5,6 +5,19 @@ export default {
     dark: 'Escuro',
     light: 'Claro',
   },
+  findPage: {
+    title: 'Entre no seu painel',
+    subtitle: 'Cada barbearia entra pela sua própria página. Digite o e-mail da sua conta e enviamos o link.',
+    continueOn: 'Continuar em {address}',
+    send: 'Enviar meu link de entrada',
+    sent: 'Pronto! Se {email} tiver uma barbearia, o link de entrada chega em instantes. Veja também a caixa de spam.',
+  },
+  barberLogin: {
+    metaTitle: 'Entrar no painel · {name}',
+    photoAlt: 'Foto da {name}',
+    notYours: 'Não é a sua barbearia?',
+    findMine: 'Encontrar minha página',
+  },
   authPage: {
     photos: {
       signUp: 'Fachada de uma barbearia LinkCut à noite, com o letreiro aceso',

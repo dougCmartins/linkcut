@@ -76,7 +76,7 @@ describe('auth store', () => {
     // Arrange
     installFakeIdentityApi({ preferredChannel: 'email' })
     const auth = useAuthStore()
-    await auth.submitCredentials({ email: 'rafael@linkcut.app', password: PASSWORD })
+    await auth.submitCredentials({ email: 'rafael@linkcut.app', password: PASSWORD }, 'rafael')
 
     // Act
     const signedIn = await auth.submitCode(RIGHT_CODE)
@@ -90,7 +90,7 @@ describe('auth store', () => {
   it('keeps the session after the browser closes (in-app browsers close all the time)', async () => {
     // Arrange
     installFakeIdentityApi({ preferredChannel: 'email' })
-    await useAuthStore().submitCredentials({ email: 'rafael@linkcut.app', password: PASSWORD })
+    await useAuthStore().submitCredentials({ email: 'rafael@linkcut.app', password: PASSWORD }, 'rafael')
     await useAuthStore().submitCode(RIGHT_CODE)
 
     // Act: a new page load (new Pinia) reads what was stored.

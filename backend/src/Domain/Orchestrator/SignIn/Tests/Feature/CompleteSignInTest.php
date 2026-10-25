@@ -121,11 +121,25 @@ final class CompleteSignInTest extends TestCase
         $response->assertJsonPath('code', 'CHALLENGE_EXPIRED');
     }
 
-    public function test_a_deactivated_tenant_cannot_sign_in(): void
+    public function test_a_deactivated_tenant_cannot_even_start_signing_in(): void
     {
         // Arrange
         $user = User::factory()->create(['tenant_id' => Tenant::factory()->inactive()]);
+
+        // Act
+        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password', 'slug' => $this->slugOf($user)]);
+
+        // Assert
+        $response->assertUnauthorized();
+        $response->assertJsonPath('code', 'INVALID_CREDENTIALS');
+    }
+
+    public function test_a_tenant_deactivated_during_the_sign_in_cannot_finish_it(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
         [, $challengeId, $code] = $this->challengeWithCode($user);
+        Tenant::query()->whereKey($user->tenant_id)->update(['active' => false]);
 
         // Act
         $response = $this->verify($challengeId, $code);

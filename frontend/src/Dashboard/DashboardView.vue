@@ -18,10 +18,11 @@ import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/fi
 import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { hasAddress, imageUrl } from '@/Domain/Settings/settings.model'
-import { useTenantStore } from '@/Domain/Tenant/tenant.store'
+import { lastBarberSlug, useTenantStore } from '@/Domain/Tenant/tenant.store'
 import PushPrompt from '@/Domain/Notification/PushPrompt.vue'
 import { usePushStore } from '@/Domain/Notification/push.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
+import { loginLocation } from '@/Domain/Identity/auth.guard'
 import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
 import { formatAddress } from '@/utils/address'
@@ -40,8 +41,10 @@ const pushStore = usePushStore()
 async function logout(): Promise<void> {
   // This browser stops receiving this barbershop's notices before the session ends.
   await pushStore.disable().catch(() => undefined)
+  // Back to the barbershop's own sign-in page (read before the logout clears the barbershop).
+  const slug = tenantStore.tenant?.slug ?? lastBarberSlug()
   await authStore.logout()
-  await router.replace({ name: 'login' })
+  await router.replace(loginLocation(undefined, slug))
 }
 
 const profile = computed(() => settingsStore.profile)
