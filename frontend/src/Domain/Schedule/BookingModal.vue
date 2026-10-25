@@ -22,11 +22,15 @@ import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import { buildWhatsappUrl, isValidBrazilianPhone, onlyDigits } from '@/utils/phone'
 import { isValidEmail } from '@/utils/email'
 import { useClientStore } from '@/Domain/Client/client.store'
+import LegalDialog from '@/Legal/LegalDialog.vue'
+import { useLegalOverlay } from '@/Legal/useLegalDocument'
 
 const MIN_NAME_LENGTH = 2
 
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
+/** Terms and policy open over the form, so nothing typed is lost. */
+const legal = useLegalOverlay()
 const { hasErrorCode, messageKey } = useApiErrors()
 const publicPageStore = usePublicPageStore()
 const clientStore = useClientStore()
@@ -210,7 +214,13 @@ onBeforeUnmount(() => {
         </button>
       </header>
 
-      <BookingSuccess v-if="submittedSummary" class="px-5 pb-8" :summary="submittedSummary" :register-email="registerEmail" @done="emit('close')" />
+      <BookingSuccess
+        v-if="submittedSummary"
+        class="px-5 pb-8"
+        :summary="submittedSummary"
+        :register-email="registerEmail"
+        @done="emit('close')"
+      />
 
       <BookingVacationNotice
         v-else-if="!barbershopAddress"
@@ -310,10 +320,13 @@ onBeforeUnmount(() => {
           </BaseButton>
           <p class="mt-2 text-center text-xs text-muted">
             {{ t('privacy.notice.booking') }}
-            <RouterLink to="/privacidade" class="font-semibold underline" target="_blank">{{ t('privacy.links.policy') }}</RouterLink>
+            <a href="/privacidade" class="font-semibold underline" @click.prevent="legal.open('privacy')">{{
+              t('privacy.links.policy')
+            }}</a>
           </p>
         </div>
       </form>
     </section>
+    <LegalDialog v-if="legal.document.value" :document="legal.document.value" @close="legal.close()" />
   </div>
 </template>

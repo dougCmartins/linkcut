@@ -39,6 +39,7 @@ describe('client area', () => {
   beforeEach(() => {
     localStorage.clear()
     sessionStorage.clear()
+    localStorage.clear()
   })
 
   afterEach(() => {

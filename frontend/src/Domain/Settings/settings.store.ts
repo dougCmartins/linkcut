@@ -12,6 +12,27 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
+/** The barber's theme, kept on this device so the dashboard paints with it before the settings arrive. */
+const THEME_KEY = 'linkcut.theme'
+
+function readCachedTheme(): AppSettings['theme'] | null {
+  try {
+    const raw = localStorage.getItem(THEME_KEY)
+    return raw ? ({ ...DEFAULT_THEME, ...(JSON.parse(raw) as Partial<AppSettings['theme']>) } as AppSettings['theme']) : null
+  } catch {
+    return null
+  }
+}
+
+function writeCachedTheme(theme: AppSettings['theme'] | null): void {
+  try {
+    if (theme) localStorage.setItem(THEME_KEY, JSON.stringify(theme))
+    else localStorage.removeItem(THEME_KEY)
+  } catch {
+    // Storage blocked: the theme arrives with the settings.
+  }
+}
+
 /** The barber's own settings (dashboard and editor). Visitors read the public page store instead. */
 export const useSettingsStore = defineStore('settings', () => {
   /** As saved on the API. */
@@ -25,7 +46,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const profile = computed(() => saved.value.profile)
   const portfolio = computed(() => saved.value.portfolio)
   const schedule = computed(() => saved.value.schedule)
-  const theme = computed(() => saved.value.theme)
+  const cachedTheme = ref(readCachedTheme())
+  const theme = computed(() => (status.value === LoadStatus.Ready ? saved.value.theme : (cachedTheme.value ?? saved.value.theme)))
 
   const errors = computed(() => ({
     profile: sectionValidators.profile(drafts.value.profile),
@@ -52,6 +74,7 @@ export const useSettingsStore = defineStore('settings', () => {
       saved.value = settings
       drafts.value = clone(settings)
       status.value = LoadStatus.Ready
+      writeCachedTheme(settings.theme)
     } catch {
       status.value = LoadStatus.Failed
     }
@@ -69,6 +92,8 @@ export const useSettingsStore = defineStore('settings', () => {
     saved.value = createEmptySettings()
     drafts.value = clone(saved.value)
     status.value = LoadStatus.Idle
+    cachedTheme.value = null
+    writeCachedTheme(null)
   }
 
   /** Throws the ApiError when the API refuses or cannot be reached. */
@@ -77,6 +102,7 @@ export const useSettingsStore = defineStore('settings', () => {
     const stored = await saveSection(section, clone(drafts.value[section]))
     ;(saved.value as Record<SettingsSection, unknown>)[section] = stored
     ;(drafts.value as Record<SettingsSection, unknown>)[section] = clone(stored)
+    if (section === 'theme') writeCachedTheme(saved.value.theme)
     return SaveResult.Saved
   }
 

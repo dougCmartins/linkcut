@@ -34,6 +34,7 @@ function signIn(): void {
 describe('auth guard', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
     setActivePinia(createPinia())
   })
 

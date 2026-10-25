@@ -12,6 +12,8 @@ import { useApiErrors } from '@/composables/useApiErrors'
 import { ApiErrorCode } from '@/types/apiErrorCode'
 import { checkSlug, sendSignUpCode, signUp } from './onboarding.api'
 import { SLUG_MAX_LENGTH, isReservedSlug, isValidSlug, slugify } from './slug'
+import LegalDialog from '@/Legal/LegalDialog.vue'
+import { useLegalOverlay } from '@/Legal/useLegalDocument'
 
 /**
  * Open sign-up (on /, /cadastrar), in three steps. The account (name, e-mail, password) → the code sent to the e-mail →
@@ -27,6 +29,8 @@ const publicHost = `${window.location.host}/`
 const NAME_MIN_LENGTH = 2
 
 const { t } = useI18n()
+/** Terms and policy open over the form, so nothing typed is lost. */
+const legal = useLegalOverlay()
 const router = useRouter()
 const auth = useAuthStore()
 const apiErrors = useApiErrors()
@@ -234,9 +238,9 @@ onBeforeUnmount(() => {
         <input v-model="form.acceptTerms" type="checkbox" class="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
         <span>
           {{ t('signUp.terms.accept') }}
-          <RouterLink to="/termos" target="_blank" class="font-semibold underline">{{ t('privacy.links.terms') }}</RouterLink>
+          <a href="/termos" class="font-semibold underline" @click.prevent="legal.open('terms')">{{ t('privacy.links.terms') }}</a>
           {{ t('signUp.terms.and') }}
-          <RouterLink to="/privacidade" target="_blank" class="font-semibold underline">{{ t('privacy.links.policy') }}</RouterLink
+          <a href="/privacidade" class="font-semibold underline" @click.prevent="legal.open('privacy')">{{ t('privacy.links.policy') }}</a
           >.
         </span>
       </label>
@@ -248,5 +252,6 @@ onBeforeUnmount(() => {
 
     <!-- "Já tem conta? Entrar", only before the e-mail code is asked. -->
     <slot v-if="step === 'account'" name="switch" />
+    <LegalDialog v-if="legal.document.value" :document="legal.document.value" @close="legal.close()" />
   </section>
 </template>

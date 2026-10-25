@@ -100,7 +100,9 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
       const days = Array.from({ length: 7 }, (_, index) => {
         const date = addDays(today, index)
         const isSunday = new Date(`${date}T12:00`).getDay() === 0
-        const taken = blocking().filter((row) => row.date === date).map((row) => row.starts_at)
+        const taken = blocking()
+          .filter((row) => row.date === date)
+          .map((row) => row.starts_at)
         return { date, times: isSunday ? [] : dayTimes.filter((time) => !taken.includes(time)) }
       })
       return { status: 200, body: { service_id: serviceId, days } }
@@ -131,10 +133,10 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
       requests.push(row)
       return { status: 201, body: { id: row.id, service_name: row.service_name, date: row.date, time: row.starts_at, status: 'pending' } }
     },
-    'GET /schedule/requests': () => ({
+    'GET /schedule/requests': (call: FakeCall) => ({
       status: 200,
       body: requests
-        .filter((row) => row.status === 'pending' && row.date >= today)
+        .filter((row) => row.status === (call.query.get('status') ?? 'pending') && row.date >= today)
         .sort((a, b) => `${a.date} ${a.starts_at}`.localeCompare(`${b.date} ${b.starts_at}`)),
     }),
     'GET /schedule/today': () => ({
@@ -152,7 +154,8 @@ export function createScheduleRoutes(options: ScheduleOptions = {}) {
       return error ?? { status: 200, body: row }
     },
     'POST /schedule/requests/:id/complete': (call: FakeCall) => {
-      if (find(call)?.date !== today) return find(call) ? envelope('INVALID_STATUS_TRANSITION', 409) : envelope('BOOKING_REQUEST_NOT_FOUND', 404)
+      if (find(call)?.date !== today)
+        return find(call) ? envelope('INVALID_STATUS_TRANSITION', 409) : envelope('BOOKING_REQUEST_NOT_FOUND', 404)
       const { row, error } = transition(call, 'confirmed', 'completed')
       if (error || !row) return error!
       const service = SERVICES[row.service_id]!

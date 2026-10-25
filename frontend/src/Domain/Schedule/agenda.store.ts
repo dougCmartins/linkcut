@@ -4,28 +4,46 @@ import type { BookingRequest } from './booking.model'
 import {
   acceptBookingRequest,
   completeBookingRequest,
+  fetchConfirmedAppointments,
   fetchPendingRequests,
   fetchTodayAgenda,
   rejectBookingRequest,
   reopenBookingRequest,
 } from './booking.api'
 
-/** The barber's side of the agenda (dashboard): pending requests and today's appointments, from the API. */
+/** How many next appointments the dashboard shows. */
+export const UPCOMING_LIMIT = 20
+
+/** The barber's side of the agenda (dashboard): pending requests, today's and the next appointments, from the API. */
 export const useAgendaStore = defineStore('agenda', () => {
   const pendingRequests = ref<BookingRequest[]>([])
   const todayAgenda = ref<BookingRequest[]>([])
+  /** Confirmed appointments of the next days (today's are in the agenda above). */
+  const upcoming = ref<BookingRequest[]>([])
   const isLoading = ref(false)
+  /** False until the first answer: the dashboard shows placeholders instead of "nothing here". */
+  const isLoaded = ref(false)
+
+  async function fetchAppointments(): Promise<[BookingRequest[], BookingRequest[]]> {
+    const [today, confirmed] = await Promise.all([fetchTodayAgenda(), fetchConfirmedAppointments()])
+    const todayIds = new Set(today.map((item) => item.id))
+    return [today, confirmed.filter((item) => !todayIds.has(item.id)).slice(0, UPCOMING_LIMIT)]
+  }
   const hasFailed = ref(false)
 
   async function load(): Promise<void> {
     isLoading.value = true
     hasFailed.value = false
     try {
-      ;[pendingRequests.value, todayAgenda.value] = await Promise.all([fetchPendingRequests(), fetchTodayAgenda()])
+      const [pending, [today, next]] = await Promise.all([fetchPendingRequests(), fetchAppointments()])
+      pendingRequests.value = pending
+      todayAgenda.value = today
+      upcoming.value = next
     } catch {
       hasFailed.value = true
     } finally {
       isLoading.value = false
+      isLoaded.value = true
     }
   }
 
@@ -37,8 +55,8 @@ export const useAgendaStore = defineStore('agenda', () => {
   async function accept(id: number): Promise<void> {
     await acceptBookingRequest(id)
     pendingRequests.value = pendingRequests.value.filter((item) => item.id !== id)
-    // Reloaded rather than guessed: only the API knows the barbershop's "today".
-    todayAgenda.value = await fetchTodayAgenda()
+    // Reloaded rather than guessed: only the API knows the barbershop's "today", so it lands in the right list.
+    ;[todayAgenda.value, upcoming.value] = await fetchAppointments()
   }
 
   async function reject(id: number): Promise<void> {
@@ -58,5 +76,5 @@ export const useAgendaStore = defineStore('agenda', () => {
     replaceInToday(await reopenBookingRequest(id))
   }
 
-  return { pendingRequests, todayAgenda, isLoading, hasFailed, load, accept, reject, complete, undoCompletion }
+  return { pendingRequests, todayAgenda, upcoming, isLoading, isLoaded, hasFailed, load, accept, reject, complete, undoCompletion }
 })

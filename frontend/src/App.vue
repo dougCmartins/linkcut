@@ -10,6 +10,7 @@ import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
+import { leaveTo } from '@/composables/useQueryOverlay'
 
 // Loaded only when "Agendar" opens: the rest of the public page does not wait for the booking code.
 const BookingModal = defineAsyncComponent(() => import('@/Domain/Schedule/BookingModal.vue'))
@@ -51,11 +52,10 @@ watch(
   },
 )
 
+// The booking modal follows the address (/:slug/agendar): the phone's back button closes it, not the page.
 watch(
   () => route.meta.openBooking,
-  (openBooking) => {
-    if (openBooking) bookingStore.openModal()
-  },
+  (openBooking) => (openBooking ? bookingStore.openModal() : bookingStore.closeModal()),
   { immediate: true },
 )
 
@@ -69,8 +69,8 @@ watch(
 
 function closeBooking(): void {
   bookingStore.closeModal()
-  // Leave the /:slug/agendar deep link so the modal does not reopen.
-  if (route.meta.openBooking) router.replace(`/${route.params.slug}`)
+  // Back to the page it was opened from, or (a shared /agendar link) to the page under it, without leaving the app.
+  if (route.meta.openBooking) leaveTo(router, route.path.replace(/\/agendar\/?$/, ''))
 }
 </script>
 

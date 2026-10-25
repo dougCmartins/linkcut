@@ -90,6 +90,13 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Portfolio/PortfolioView.vue'),
     meta: { isPublic: true },
   },
+  // Opens the booking modal on top of the portfolio, as its own history entry.
+  {
+    path: '/:slug/portfolio/agendar',
+    name: 'portfolio-booking',
+    component: () => import('@/Portfolio/PortfolioView.vue'),
+    meta: { isPublic: true, openBooking: true },
+  },
   // Opens the booking modal on top of the bio link page.
   {
     path: '/:slug/agendar',

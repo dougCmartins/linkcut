@@ -59,6 +59,22 @@ final class PublicBookingTest extends TestCase
         $this->assertStringNotContainsString('Ana', $response->getContent());
     }
 
+    public function test_an_accepted_booking_keeps_its_time_taken_and_a_cancelled_one_frees_it(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $this->bookingRequest($owner, '2026-10-20', '10:00', BookingStatus::Confirmed);
+        $this->bookingRequest($owner, '2026-10-20', '15:00', BookingStatus::Cancelled);
+
+        // Act
+        $response = $this->getJson('/api/public/rafael/availability?service_id='.$this->serviceId($owner, 'Corte'));
+
+        // Assert
+        $times = collect($response->json('days'))->keyBy('date')['2026-10-20']['times'];
+        $this->assertNotContains('10:00', $times);
+        $this->assertContains('15:00', $times);
+    }
+
     public function test_without_a_service_it_uses_the_shortest_one_and_an_unknown_service_is_refused(): void
     {
         // Arrange

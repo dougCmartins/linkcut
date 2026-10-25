@@ -16,7 +16,16 @@ function signedInSession(availableChannels: TwoFactorChannel[] = [TwoFactorChann
     refreshToken: 'refresh-1',
     accessExpiresAt: now + 60_000,
     refreshExpiresAt: now + 120_000,
-    user: { id: 7, tenantId: 3, name: 'Rafael', email: 'rafael@linkcut.app', phoneMasked: '+55 •• •••••-7777', role: 'owner', twoFactorChannel: null, availableChannels },
+    user: {
+      id: 7,
+      tenantId: 3,
+      name: 'Rafael',
+      email: 'rafael@linkcut.app',
+      phoneMasked: '+55 •• •••••-7777',
+      role: 'owner',
+      twoFactorChannel: null,
+      availableChannels,
+    },
   }
 }
 
@@ -32,6 +41,7 @@ describe('SettingsView', () => {
 
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
     api = installFakeSettingsApi(undefined, identityRoutes())
   })
 

@@ -30,6 +30,7 @@ async function acceptTerms(): Promise<void> {
 describe('SignUpPanel (on /cadastrar)', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
     vi.useFakeTimers({ shouldAdvanceTime: true })
   })
 
@@ -138,5 +139,25 @@ describe('SignUpPanel (on /cadastrar)', () => {
     expect(finish.disabled).toBe(false)
     const termsLabel = screen.getByRole('checkbox', { name: /Li e aceito os/ }).closest('label') as HTMLElement
     expect(within(termsLabel).getByRole('link', { name: 'Termos de Uso' }).getAttribute('href')).toBe('/termos')
+  })
+
+  it('the terms open over the form, as their own history entry, and closing keeps what was typed', async () => {
+    // Arrange
+    installFakeOnboardingApi()
+    const { router } = await renderSignUp()
+    await fillAccountAndCode()
+    await fireEvent.update(await screen.findByLabelText('Nome da barbearia'), 'Barbearia do Marcos')
+    const termsLabel = screen.getByRole('checkbox', { name: /Li e aceito os/ }).closest('label') as HTMLElement
+
+    // Act
+    await fireEvent.click(within(termsLabel).getByRole('link', { name: 'Termos de Uso' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Termos de Uso' })
+    const query = router.currentRoute.value.query.documento
+    await fireEvent.click(within(dialog).getByRole('button', { name: 'Fechar e voltar' }))
+
+    // Assert
+    expect(query).toBe('termos')
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect((screen.getByLabelText('Nome da barbearia') as HTMLInputElement).value).toBe('Barbearia do Marcos')
   })
 })
