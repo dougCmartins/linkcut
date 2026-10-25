@@ -17,13 +17,15 @@ final class BookingRequest extends Model
     protected $fillable = [
         'tenant_id', 'client_name', 'client_whatsapp', 'service_id', 'service_name', 'duration_minutes',
         'date', 'starts_at', 'ends_at', 'status', 'completed_at', 'client_distance_meters',
-        'client_id', 'client_email', 'reminded_at',
+        'client_id', 'client_email', 'reminded_at', 'service_ids', 'price_in_cents', 'client_notes',
     ];
 
     protected function casts(): array
     {
         return [
             'service_id' => 'integer',
+            'service_ids' => 'array',
+            'price_in_cents' => 'integer',
             'duration_minutes' => 'integer',
             'status' => BookingStatus::class,
             'completed_at' => 'immutable_datetime',

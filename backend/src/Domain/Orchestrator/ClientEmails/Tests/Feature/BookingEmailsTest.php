@@ -32,7 +32,7 @@ final class BookingEmailsTest extends TestCase
     /** @return array<string, mixed> */
     private function payload(int $serviceId, string $email = 'Ana@Example.com', string $time = '10:00'): array
     {
-        return ['client_name' => 'Ana Souza', 'client_whatsapp' => '11912345678', 'client_email' => $email, 'service_id' => $serviceId, 'date' => '2026-10-20', 'time' => $time];
+        return ['client_name' => 'Ana Souza', 'client_whatsapp' => '11912345678', 'client_email' => $email, 'service_ids' => [$serviceId], 'date' => '2026-10-20', 'time' => $time];
     }
 
     /** @return list<BookingEmailNotification> */

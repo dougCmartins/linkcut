@@ -52,7 +52,7 @@ const loadedDays = () =>
   })
 
 async function fillValidBooking(): Promise<void> {
-  await fireEvent.click(screen.getByRole('radio', { name: /Corte/ }))
+  await fireEvent.click(screen.getByRole('checkbox', { name: /^Corte(?! infantil)/ }))
   // Tomorrow (Tuesday): today's times may have passed.
   await fireEvent.click((await loadedDays())[1]!)
   await fireEvent.click(await screen.findByRole('radio', { name: '11:00' }))
@@ -73,7 +73,7 @@ describe('BookingModal', () => {
     const submit = screen.getByRole('button', { name: 'Solicitar Agendamento' })
 
     // Act
-    await fireEvent.click(screen.getByRole('radio', { name: /Corte/ }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^Corte(?! infantil)/ }))
 
     // Assert
     expect((submit as HTMLButtonElement).disabled).toBe(true)
@@ -84,11 +84,11 @@ describe('BookingModal', () => {
     const { calls } = renderModal()
 
     // Act
-    await fireEvent.click(screen.getByRole('radio', { name: /Corte/ }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^Corte(?! infantil)/ }))
 
     // Assert
     await vi.waitFor(() =>
-      expect(calls.map((call) => call.path)).toEqual([`/public/${SLUG}/availability`, `/public/${SLUG}/availability?service_id=1`]),
+      expect(calls.map((call) => call.path)).toEqual([`/public/${SLUG}/availability`, `/public/${SLUG}/availability?service_ids[]=1`]),
     )
     expect(calls.every((call) => !call.headers.Authorization)).toBe(true)
   })
@@ -107,7 +107,8 @@ describe('BookingModal', () => {
       client_name: 'João Silva',
       client_whatsapp: '11912345678',
       client_email: 'joao@example.com',
-      service_id: 1,
+      service_ids: [1],
+      client_notes: null,
       date: '2026-10-20',
       time: '11:00',
       client_latitude: null,
@@ -188,8 +189,8 @@ describe('BookingModal with the booking options of the barbershop', () => {
     })
 
     // Assert
-    expect(screen.getByRole('radio', { name: /Corte infantil/ })).toBeTruthy()
-    expect(screen.queryByRole('radio', { name: /Barba/ })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: /Corte infantil/ })).toBeTruthy()
+    expect(screen.queryByRole('checkbox', { name: /Barba/ })).toBeNull()
   })
 
   it('disables the days without free times', async () => {
@@ -220,36 +221,77 @@ describe('BookingModal and the barbershop address', () => {
     expect(directions.getAttribute('target')).toBe('_blank')
   })
 
-  it('a client who shares the location sees the distance and the request carries it', async () => {
+  it('the location is asked on "Solicitar Agendamento", and sharing sends the coordinates', async () => {
     // Arrange: the MASP, 648 m from the barbershop
     fakeDeviceLocation({ latitude: -23.5614, longitude: -46.6559 })
     const { calls } = renderModal()
+    await fillValidBooking()
 
     // Act
-    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar minha localização' }))
-    await fillValidBooking()
     await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+    const question = screen.getByText('Quer avisar o barbeiro a que distância você está?')
+    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar e enviar' }))
 
     // Assert
-    expect(screen.getByText('Você está a 648 m da barbearia.')).toBeTruthy()
+    expect(question).toBeTruthy()
     await screen.findByText('Solicitação enviada!')
     expect(calls.at(-1)?.body).toMatchObject({ client_latitude: -23.5614, client_longitude: -46.6559 })
+  })
+
+  it('"Enviar sem localização" books without asking the device', async () => {
+    // Arrange
+    const getCurrentPosition = fakeDeviceLocation({ latitude: -23.5614, longitude: -46.6559 })
+    const { calls } = renderModal()
+    await fillValidBooking()
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Enviar sem localização' }))
+
+    // Assert
+    await screen.findByText('Solicitação enviada!')
+    expect(getCurrentPosition).not.toHaveBeenCalled()
+    expect(calls.at(-1)?.body).toMatchObject({ client_latitude: null, client_longitude: null })
   })
 
   it('a client who denies the location still books, without coordinates', async () => {
     // Arrange
     fakeDeviceLocation({ errorCode: 1 })
     const { calls } = renderModal()
+    await fillValidBooking()
 
     // Act
-    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar minha localização' }))
-    await fillValidBooking()
     await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar e enviar' }))
 
     // Assert
-    expect(screen.getByText('Tudo bem, você pode agendar mesmo assim.')).toBeTruthy()
     await screen.findByText('Solicitação enviada!')
     expect(calls.at(-1)?.body).toMatchObject({ client_latitude: null, client_longitude: null })
+  })
+
+  it('several services add up time and price, and the note goes to the barber', async () => {
+    // Arrange
+    fakeDeviceLocation({ errorCode: 1 })
+    const { calls } = renderModal()
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^Corte(?! infantil)/ }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: /^Barba/ }))
+    const total = screen.getByText(/^Total:/).textContent
+    await fireEvent.click((await loadedDays())[1]!)
+    await fireEvent.click(await screen.findByRole('radio', { name: '11:00' }))
+    await fireEvent.update(screen.getByLabelText('Nome'), 'João Silva')
+    await fireEvent.update(screen.getByLabelText('WhatsApp'), '(11) 91234-5678')
+    await fireEvent.update(screen.getByLabelText('E-mail'), 'joao@example.com')
+    await fireEvent.update(screen.getByLabelText('Observação para o barbeiro (opcional)'), 'Cabelo cacheado')
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Enviar sem localização' }))
+
+    // Assert
+    expect(total?.replace(/\s/g, ' ')).toBe('Total: 1h15 · R$ 90,00')
+    await screen.findByText('Solicitação enviada!')
+    expect(calls.find((call) => call.path.startsWith('/public/rafael/availability?service_ids[]=1&service_ids[]=2'))).toBeTruthy()
+    expect(calls.at(-1)?.body).toMatchObject({ service_ids: [1, 2], client_notes: 'Cabelo cacheado' })
   })
 
   it('a barbershop without address shows a notice instead of the form', () => {

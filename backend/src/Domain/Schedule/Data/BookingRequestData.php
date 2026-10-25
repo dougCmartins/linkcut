@@ -27,5 +27,11 @@ final class BookingRequestData extends Data
         public readonly string $client_email = '',
         /** The client account behind the booking (null for requests made before accounts existed). */
         public readonly ?int $client_id = null,
+        /** @var list<int>|null every service of the booking (null only before the migration ran) */
+        public readonly ?array $service_ids = null,
+        /** Total price frozen when booking (null for bookings made before several services existed). */
+        public readonly ?int $price_in_cents = null,
+        /** A note from the client to the barber. */
+        public readonly ?string $client_notes = null,
     ) {}
 }

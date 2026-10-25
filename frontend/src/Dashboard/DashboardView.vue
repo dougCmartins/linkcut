@@ -16,6 +16,7 @@ import { AppointmentStatus } from '@/types/appointmentStatus'
 import { useMonthToDateStore } from '@/Domain/Finance/monthToDate.store'
 import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/financialSummary'
 import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
+import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { hasAddress, imageUrl } from '@/Domain/Settings/settings.model'
 import { lastBarberSlug, useTenantStore } from '@/Domain/Tenant/tenant.store'
@@ -75,7 +76,12 @@ const tenantStore = useTenantStore()
 const publicPath = computed(() => (tenantStore.tenant ? `/${tenantStore.tenant.slug}` : null))
 
 /** Current price of a service of the barber (for requests not concluded yet). */
-const priceOf = (serviceId: string) => settingsStore.schedule.services.find((service) => service.id === serviceId)?.priceInCents
+/** The total frozen at booking; for older bookings, the services' current prices (undefined if one was removed). */
+function priceOf(request: BookingRequest): number | undefined {
+  if (request.priceInCents !== null) return request.priceInCents
+  const prices = request.serviceIds.map((id) => settingsStore.schedule.services.find((service) => service.id === id)?.priceInCents)
+  return prices.some((price) => price === undefined) ? undefined : prices.reduce((sum: number, price) => sum + (price ?? 0), 0)
+}
 
 onMounted(() => {
   void dashboardStore.load()
@@ -261,7 +267,7 @@ async function undo(): Promise<void> {
         <li v-for="request in agenda" :key="request.id">
           <TodayAgendaCard
             :request="request"
-            :price-in-cents="priceOf(request.serviceId)"
+            :price-in-cents="priceOf(request)"
             :is-busy="busyRequestId === request.id"
             :barbershop-name="profile.name"
             :barbershop-address="shopAddress"
@@ -278,7 +284,7 @@ async function undo(): Promise<void> {
       <h2 id="upcoming-title" class="text-xl">{{ t('dashboard.upcoming.title') }}</h2>
       <ul class="mt-4 grid gap-3">
         <li v-for="request in agendaStore.upcoming" :key="request.id">
-          <UpcomingAppointmentCard :request="request" :price-in-cents="priceOf(request.serviceId)" :barbershop-name="profile.name" />
+          <UpcomingAppointmentCard :request="request" :price-in-cents="priceOf(request)" :barbershop-name="profile.name" />
         </li>
       </ul>
     </section>
@@ -295,7 +301,7 @@ async function undo(): Promise<void> {
         <li v-for="request in agendaStore.pendingRequests" :key="request.id">
           <PendingRequestCard
             :request="request"
-            :price-in-cents="priceOf(request.serviceId)"
+            :price-in-cents="priceOf(request)"
             @accept="attempt(() => agendaStore.accept($event))"
             @reject="attempt(() => agendaStore.reject($event))"
           />

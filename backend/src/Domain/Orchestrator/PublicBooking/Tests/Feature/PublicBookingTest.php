@@ -27,7 +27,7 @@ final class PublicBookingTest extends TestCase
             'client_name' => 'João Silva',
             'client_whatsapp' => '(11) 91234-5678',
             'client_email' => 'Joao@Example.com',
-            'service_id' => $serviceId,
+            'service_ids' => [$serviceId],
             'date' => '2026-10-20',
             'time' => '10:00',
             ...$overrides,
@@ -42,7 +42,7 @@ final class PublicBookingTest extends TestCase
         $this->bookingRequest($owner, '2026-10-20', '14:00', BookingStatus::Rejected);
 
         // Act
-        $response = $this->getJson('/api/public/rafael/availability?service_id='.$this->serviceId($owner, 'Corte'));
+        $response = $this->getJson('/api/public/rafael/availability?service_ids[]='.$this->serviceId($owner, 'Corte'));
 
         // Assert
         $response->assertOk();
@@ -59,6 +59,41 @@ final class PublicBookingTest extends TestCase
         $this->assertStringNotContainsString('Ana', $response->getContent());
     }
 
+    public function test_several_services_add_up_their_time_and_price_and_the_note_reaches_the_barber(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $ids = [$this->serviceId($owner, 'Corte'), $this->serviceId($owner, 'Barba')];
+
+        // Act
+        $response = $this->postJson('/api/public/rafael/booking-requests', $this->bookingPayload($ids[0], ['service_ids' => $ids, 'client_notes' => "  cabelo\n cacheado  "]));
+
+        // Assert
+        $response->assertCreated()->assertJsonPath('service_name', 'Corte + Barba');
+        $this->actingAsOwner($owner);
+        $pending = $this->getJson('/api/schedule/requests')->json('0');
+        $this->assertSame(['11:15', 75, 9000, 'cabelo cacheado', $ids], [$pending['ends_at'], $pending['duration_minutes'], $pending['price_in_cents'], $pending['client_notes'], $pending['service_ids']]);
+    }
+
+    public function test_free_times_for_several_services_need_room_for_all_of_them(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $this->bookingRequest($owner, '2026-10-20', '11:00');
+        $corte = $this->serviceId($owner, 'Corte');
+        $barba = $this->serviceId($owner, 'Barba');
+
+        // Act
+        $alone = $this->getJson("/api/public/rafael/availability?service_ids[]={$corte}");
+        $both = $this->getJson("/api/public/rafael/availability?service_ids[]={$corte}&service_ids[]={$barba}");
+
+        // Assert
+        $day = fn ($response) => collect($response->json('days'))->keyBy('date')['2026-10-20']['times'];
+        $this->assertContains('10:00', $day($alone));
+        $this->assertNotContains('10:00', $day($both));
+        $this->assertContains('09:30', $day($both));
+    }
+
     public function test_an_accepted_booking_keeps_its_time_taken_and_a_cancelled_one_frees_it(): void
     {
         // Arrange
@@ -67,7 +102,7 @@ final class PublicBookingTest extends TestCase
         $this->bookingRequest($owner, '2026-10-20', '15:00', BookingStatus::Cancelled);
 
         // Act
-        $response = $this->getJson('/api/public/rafael/availability?service_id='.$this->serviceId($owner, 'Corte'));
+        $response = $this->getJson('/api/public/rafael/availability?service_ids[]='.$this->serviceId($owner, 'Corte'));
 
         // Assert
         $times = collect($response->json('days'))->keyBy('date')['2026-10-20']['times'];
@@ -82,11 +117,11 @@ final class PublicBookingTest extends TestCase
 
         // Act
         $default = $this->getJson('/api/public/rafael/availability');
-        $unknown = $this->getJson('/api/public/rafael/availability?service_id=999');
+        $unknown = $this->getJson('/api/public/rafael/availability?service_ids[]=999');
 
         // Assert
         $default->assertJsonPath('service_id', $this->serviceId($owner, 'Barba'));
-        $unknown->assertUnprocessable()->assertJsonPath('errors.service_id.0', 'exists');
+        $unknown->assertUnprocessable()->assertJsonPath('errors.service_ids.0', 'exists');
     }
 
     public function test_a_client_requests_a_free_time_and_it_reaches_the_barber_as_pending(): void
@@ -161,7 +196,7 @@ final class PublicBookingTest extends TestCase
         $wrongService = $this->postJson('/api/public/navalha/booking-requests', $this->bookingPayload($this->serviceId($rafael, 'Barba')));
 
         // Assert
-        $wrongService->assertUnprocessable()->assertJsonPath('errors.service_id.0', 'exists');
+        $wrongService->assertUnprocessable()->assertJsonPath('errors.service_ids.0', 'exists');
         $this->actingAsOwner($rafael);
         $this->getJson('/api/schedule/requests')->assertExactJson([]);
     }

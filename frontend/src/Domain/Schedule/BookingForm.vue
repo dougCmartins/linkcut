@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
-defineProps<{ clientName: string; clientWhatsapp: string; clientEmail: string }>()
+defineProps<{ clientName: string; clientWhatsapp: string; clientEmail: string; clientNotes: string }>()
 const emit = defineEmits<{
   'update:clientName': [value: string]
   'update:clientWhatsapp': [value: string]
   'update:clientEmail': [value: string]
+  'update:clientNotes': [value: string]
 }>()
+const NOTES_MAX_LENGTH = 300
 const { t } = useI18n()
 
 const inputClass =
@@ -51,5 +53,16 @@ const inputClass =
       />
     </label>
     <p class="-mt-1.5 pl-2 text-xs text-muted">{{ t('booking.emailHint') }}</p>
+    <label class="block">
+      <span class="pl-2 text-xs font-semibold text-muted">{{ t('booking.notesLabel') }}</span>
+      <textarea
+        :value="clientNotes"
+        rows="2"
+        :maxlength="NOTES_MAX_LENGTH"
+        :placeholder="t('booking.notesPlaceholder')"
+        class="mt-1.5 w-full resize-none rounded-[20px] bg-surface px-5 py-3 text-base text-ink ring-1 ring-line shadow-soft placeholder:text-muted/70 focus:ring-2 focus:ring-accent focus:outline-none"
+        @input="emit('update:clientNotes', ($event.target as HTMLTextAreaElement).value)"
+      />
+    </label>
   </div>
 </template>

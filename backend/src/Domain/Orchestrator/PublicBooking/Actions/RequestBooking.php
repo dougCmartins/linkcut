@@ -35,6 +35,7 @@ use Domain\Settings\Data\PublicServiceData;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Context\TenantClock;
 use Domain\Tenant\Data\TenantIdsData;
+use Illuminate\Support\Str;
 
 /**
  * A client asks for a time on the public page. The barbershop must have an address (the client saw where it is);
@@ -61,7 +62,8 @@ final class RequestBooking
     {
         // Options first: they also create the default settings of a new barbershop.
         $options = $this->showBookingOptions->handle();
-        $service = AvailableTimes::service($options, $data->service_id);
+        $serviceIds = array_map('intval', $data->service_ids);
+        $service = AvailableTimes::services($options, $serviceIds);
         $profile = $this->listProfiles->handle(new TenantIdsData(ids: [$this->currentTenant->id()]))->first();
         $address = $profile?->address ?? throw new BarbershopAddressMissingException;
         $this->ensureSlotIsFree($data, $options, $service);
@@ -75,6 +77,7 @@ final class RequestBooking
             client_name: trim($data->client_name),
             client_whatsapp: PhoneNumber::digits($data->client_whatsapp),
             service_id: $service->id,
+            service_ids: $serviceIds,
             service_name: $service->name,
             duration_minutes: $service->duration_minutes,
             date: $data->date,
@@ -82,6 +85,8 @@ final class RequestBooking
             client_email: $client->email,
             client_id: $client->id,
             client_distance_meters: self::distance($data, $address),
+            price_in_cents: $service->price_in_cents,
+            client_notes: self::notes($data->client_notes),
         ));
 
         $this->notifyBarber($request);
@@ -124,11 +129,19 @@ final class RequestBooking
                     'service' => $request->service_name,
                     'date' => CarbonImmutable::parse($request->date)->format('d/m'),
                     'time' => $request->starts_at,
-                ]),
+                ]).($request->client_notes ? ' · '.Str::limit($request->client_notes, 80) : ''),
                 url: '/painel',
                 tag: "booking-request-{$request->id}",
             ),
         ));
+    }
+
+    /** Plain text on one paragraph: spaces and line breaks squeezed, nothing when empty. */
+    private static function notes(?string $notes): ?string
+    {
+        $clean = trim((string) preg_replace('/\s+/u', ' ', (string) $notes));
+
+        return $clean === '' ? null : $clean;
     }
 
     private static function registrationUrl(ClientData $client): ?string

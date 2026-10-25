@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import ClientNote from './ClientNote.vue'
 import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { formatDistance } from '@/utils/address'
 import { formatBRL } from '@/utils/currency'
@@ -54,6 +55,7 @@ const price = computed(() => (props.priceInCents === undefined ? '' : formatBRL(
         <p class="font-display text-sm font-extrabold text-accent">{{ price }}</p>
       </div>
     </div>
+    <ClientNote :note="request.clientNotes" />
     <div class="mt-4 grid grid-cols-2 gap-3">
       <BaseButton variant="danger" block @click="emit('reject', request.id)">{{ t('dashboard.reject') }}</BaseButton>
       <BaseButton variant="primary" elevated block @click="emit('accept', request.id)">{{ t('dashboard.accept') }}</BaseButton>

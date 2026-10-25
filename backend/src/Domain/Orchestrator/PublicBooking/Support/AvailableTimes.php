@@ -39,15 +39,30 @@ final class AvailableTimes
         );
     }
 
-    /** The chosen service, or the shortest one when none was chosen. */
-    public static function service(BookingOptionsData $options, ?int $serviceId): PublicServiceData
+    /**
+     * The chosen services as one visit ("Corte + Barba": durations and prices add up), or the shortest service when
+     * none was chosen. The id is the first service's.
+     *
+     * @param  list<int>  $serviceIds
+     */
+    public static function services(BookingOptionsData $options, array $serviceIds): PublicServiceData
     {
         $services = collect($options->services->all());
-        $service = $serviceId
-            ? $services->first(fn (PublicServiceData $item): bool => $item->id === $serviceId)
-            : $services->sortBy('duration_minutes')->first();
+        if ($serviceIds === []) {
+            return $services->sortBy('duration_minutes')->first() ?? throw ValidationException::withMessages(['service_ids' => 'exists']);
+        }
 
-        return $service ?? throw ValidationException::withMessages(['service_id' => 'exists']);
+        $chosen = collect($serviceIds)->map(
+            fn (int $id): PublicServiceData => $services->first(fn (PublicServiceData $item): bool => $item->id === $id)
+                ?? throw ValidationException::withMessages(['service_ids' => 'exists']),
+        );
+
+        return new PublicServiceData(
+            id: $chosen->first()->id,
+            name: $chosen->pluck('name')->implode(' + '),
+            duration_minutes: (int) $chosen->sum('duration_minutes'),
+            price_in_cents: (int) $chosen->sum('price_in_cents'),
+        );
     }
 
     /**

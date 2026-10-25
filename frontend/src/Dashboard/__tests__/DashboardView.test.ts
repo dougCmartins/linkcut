@@ -156,6 +156,29 @@ describe('DashboardView', () => {
     expect(screen.getByText('Pedro Martins')).toBeTruthy()
   })
 
+  it("a visit with several services shows its total and the client's note", async () => {
+    // Arrange
+    installFakeApis([
+      requestRow({
+        id: 8,
+        client_name: 'Caio Rocha',
+        service_name: 'Corte + Barba',
+        service_ids: [1, 2],
+        price_in_cents: 9000,
+        client_notes: 'Cabelo cacheado',
+      }),
+    ])
+
+    // Act
+    renderWithPlugins(DashboardView)
+
+    // Assert
+    const card = (await screen.findByText('Caio Rocha')).closest('article') as HTMLElement
+    expect(within(card).getByText('Corte + Barba')).toBeTruthy()
+    expect(within(card).getByText(/R\$\s90,00/)).toBeTruthy()
+    expect(within(card).getByText(/Cabelo cacheado/)).toBeTruthy()
+  })
+
   it('asks the barber for the address when the barbershop has none', async () => {
     // Arrange
     const settings = createTestSettings()
