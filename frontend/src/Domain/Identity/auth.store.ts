@@ -10,7 +10,11 @@ import { useApiErrors } from '@/composables/useApiErrors'
 import { setObservabilityUser } from '@/observability/sentry'
 import { logSecurityEvent } from '@/utils/logger'
 
-/** Session lives in sessionStorage: closing the browser ends it. */
+/**
+ * The session survives closing the browser (localStorage), like the client's: barbers often open the panel from
+ * in-app browsers (Instagram, WhatsApp) that close all the time. The refresh token rotates on every use and the
+ * strict CSP blocks injected scripts; "Sair" and a password change end it everywhere.
+ */
 const SESSION_KEY = 'linkcut.session'
 
 /** Errors that end the login attempt and send the barber back to the first step. */
@@ -24,7 +28,8 @@ export interface LoginError {
 
 function readSession(): Session | null {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY)
+    // Sessions opened before the move to localStorage are carried over once.
+    const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY)
     return raw ? (JSON.parse(raw) as Session) : null
   } catch {
     return null
@@ -33,8 +38,9 @@ function readSession(): Session | null {
 
 function writeSession(session: Session | null): void {
   try {
-    if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    else sessionStorage.removeItem(SESSION_KEY)
+    if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    else localStorage.removeItem(SESSION_KEY)
+    sessionStorage.removeItem(SESSION_KEY)
   } catch {
     // Storage blocked: the session lasts while the page is open.
   }
@@ -124,8 +130,9 @@ export const useAuthStore = defineStore('auth', () => {
   function submitCode(code: string): Promise<boolean> {
     return run(async () => {
       if (!challenge.value) throw new ApiError(ApiErrorCode.ChallengeExpired, 410)
+      // The login steps are reset only when the login page closes: resetting here would show the e-mail form
+      // again while the dashboard is still loading.
       setSession(await authApi.verifyCode(challenge.value.challengeId, code))
-      resetLogin()
     }, 'login.code_rejected')
   }
 

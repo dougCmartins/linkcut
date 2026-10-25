@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePageMeta } from '@/composables/usePageMeta'
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -8,13 +8,12 @@ import ShareButton from '@/components/ui/ShareButton.vue'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import SmartImage from '@/components/ui/SmartImage.vue'
 import SocialLinks from '@/components/ui/SocialLinks.vue'
-import { useBookingStore } from '@/Domain/Schedule/booking.store'
+import { useQueryOverlay } from '@/composables/useQueryOverlay'
 import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
 import { usePublicPage } from '@/Domain/Settings/usePublicPage'
 import { buildWhatsappUrl } from '@/utils/phone'
 
 const { t } = useI18n()
-const bookingStore = useBookingStore()
 const publicPage = usePublicPage()
 
 const profile = computed(() => publicPage.page?.profile)
@@ -25,11 +24,10 @@ usePageMeta(
 )
 // The share sheet loads only when opened (keeps the public page light).
 const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet.vue'))
-const isSharing = ref(false)
+// "?compartilhar=1": its own history entry, so the phone's back button closes the sheet, not the page.
+const share = useQueryOverlay('compartilhar')
 const pageUrl = computed(() => `${window.location.origin}/${publicPage.slug}`)
-const whatsappUrl = computed(() =>
-  profile.value ? buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage) : '',
-)
+const whatsappUrl = computed(() => (profile.value ? buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage) : ''))
 </script>
 
 <template>
@@ -37,12 +35,17 @@ const whatsappUrl = computed(() =>
   <main v-else class="relative min-h-dvh overflow-hidden">
     <!-- Background photo with an overlay so text stays readable -->
     <div class="absolute inset-0 -z-10" aria-hidden="true">
-      <SmartImage v-if="profile.backgroundUrl" :src="profile.backgroundUrl" alt="" class="size-full scale-105 object-cover opacity-60 blur-[2px]" />
+      <SmartImage
+        v-if="profile.backgroundUrl"
+        :src="profile.backgroundUrl"
+        alt=""
+        class="size-full scale-105 object-cover opacity-60 blur-[2px]"
+      />
       <div class="absolute inset-0 [background:var(--hero-overlay)]" />
     </div>
 
-    <ShareButton class="absolute top-4 left-4 z-10" @click="isSharing = true" />
-    <ShareSheet v-if="isSharing" :url="pageUrl" :name="profile.name" :image-url="profile.avatarUrl" @close="isSharing = false" />
+    <ShareButton class="absolute top-4 left-4 z-10" @click="share.open()" />
+    <ShareSheet v-if="share.isOpen.value" :url="pageUrl" :name="profile.name" :image-url="profile.avatarUrl" @close="share.close()" />
 
     <div class="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center px-5 pt-20 pb-10">
       <header class="flex flex-col items-center text-center">
@@ -53,7 +56,7 @@ const whatsappUrl = computed(() =>
       </header>
 
       <nav class="mt-10 flex w-full flex-col gap-5">
-        <BaseButton variant="primary" size="lg" elevated block @click="bookingStore.openModal()">
+        <BaseButton variant="primary" size="lg" elevated block :to="`/${publicPage.slug}/agendar`">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <rect x="3" y="5" width="18" height="16" rx="3" />
             <path d="M16 3v4M8 3v4M3 10h18" />
@@ -65,7 +68,9 @@ const whatsappUrl = computed(() =>
         </BaseButton>
         <BaseButton variant="secondary" size="lg" elevated block :href="whatsappUrl">
           <svg class="size-5 text-success" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.2 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.2Z" />
+            <path
+              d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.2 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.2Z"
+            />
           </svg>
           {{ t('bioLink.whatsapp') }}
         </BaseButton>

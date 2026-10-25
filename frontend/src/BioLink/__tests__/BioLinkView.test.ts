@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import BioLinkView from '../BioLinkView.vue'
-import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { createTestSettings, installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 import { ThemePalette } from '@/types/theme'
@@ -28,7 +27,7 @@ describe('BioLinkView', () => {
 
     // Assert
     expect(await screen.findByRole('heading', { name: 'Rafael Costa' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /Agendar Horário Agora/ })).toBeTruthy()
+    expect(screen.getByRole('link', { name: /Agendar Horário Agora/ }).getAttribute('href')).toBe('/rafael/agendar')
     expect(screen.getByRole('link', { name: /Conheça Minha História/ }).getAttribute('href')).toBe('/rafael/portfolio')
     expect(screen.getByRole('link', { name: /WhatsApp/ }).getAttribute('href')).toContain('https://wa.me/5511999998888')
   })
@@ -85,19 +84,33 @@ describe('BioLinkView', () => {
 
     // Assert
     expect(await screen.findByRole('heading', { name: 'Página não encontrada' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: /Agendar Horário Agora/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: /Agendar Horário Agora/ })).toBeNull()
   })
 
-  it('opens the booking modal from the main button', async () => {
+  it('the main button opens the booking as its own address, so "back" closes it instead of the page', async () => {
     // Arrange
     installFakeSettingsApi()
-    await renderBioLink()
-    const store = useBookingStore()
+    const { router } = await renderBioLink()
 
     // Act
-    await fireEvent.click(await screen.findByRole('button', { name: /Agendar Horário Agora/ }))
+    await fireEvent.click(await screen.findByRole('link', { name: /Agendar Horário Agora/ }))
 
     // Assert
-    expect(store.isModalOpen).toBe(true)
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/rafael/agendar'))
+    expect(router.currentRoute.value.meta.openBooking).toBe(true)
+  })
+
+  it('"Compartilhar" opens as its own history entry and closing removes it', async () => {
+    // Arrange
+    installFakeSettingsApi()
+    const { router } = await renderBioLink()
+    await fireEvent.click(await screen.findByRole('button', { name: /Compartilhar/ }))
+    await vi.waitFor(() => expect(router.currentRoute.value.query.compartilhar).toBe('1'))
+
+    // Act
+    await fireEvent.click(await screen.findByRole('button', { name: 'Fechar' }))
+
+    // Assert
+    await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/rafael'))
   })
 })

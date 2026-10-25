@@ -49,14 +49,14 @@ describe('DashboardView', () => {
     vi.unstubAllEnvs()
   })
 
-  it('links to the public page of the barbershop by its slug, in a new tab', async () => {
+  it('links to the public page of the barbershop in the same tab (a new one closes in-app browsers)', async () => {
     // Arrange & Act
     renderWithPlugins(DashboardView)
 
     // Assert
     const link = await screen.findByRole('link', { name: /Ver minha página/ })
-    expect(link.getAttribute('href')).toBe('/rafael')
-    expect(link.getAttribute('target')).toBe('_blank')
+    await vi.waitFor(() => expect(link.getAttribute('href')).toBe('/rafael'))
+    expect(link.getAttribute('target')).toBeNull()
   })
 
   it("shows today's date and that the numbers are month to date", () => {
@@ -82,20 +82,46 @@ describe('DashboardView', () => {
     expect(link.getAttribute('href')).toBe('/painel/historico')
   })
 
-  it('shows an empty agenda message when nothing is confirmed for today', () => {
+  it('shows an empty agenda message when nothing is confirmed for today', async () => {
+    // Arrange
+    installFakeApis([])
+
+    // Act
+    renderWithPlugins(DashboardView)
+
+    // Assert
+    expect(await screen.findByText(/Nenhum atendimento para hoje/)).toBeTruthy()
+  })
+
+  it('shows placeholders, not "nothing here", while the agenda loads', () => {
     // Arrange & Act
     renderWithPlugins(DashboardView)
 
     // Assert
-    expect(screen.getByText(/Nenhum atendimento confirmado para hoje/)).toBeTruthy()
+    expect(screen.queryByText(/Nenhum atendimento para hoje/)).toBeNull()
+    expect(screen.queryByText(/Nenhuma solicitação/)).toBeNull()
+  })
+
+  it('an accepted request for another day goes to "Próximos atendimentos"', async () => {
+    // Arrange
+    installFakeApis([requestRow({ id: 7, client_name: 'Caio Rocha', date: '2026-10-19', starts_at: '09:00' })])
+    renderWithPlugins(DashboardView)
+    const pending = await screen.findByRole('heading', { name: 'Caio Rocha' })
+
+    // Act
+    await fireEvent.click(within(pending.closest('article') as HTMLElement).getByRole('button', { name: /Aceitar/ }))
+
+    // Assert
+    const upcoming = await screen.findByRole('region', { name: 'Próximos atendimentos' })
+    expect(within(upcoming).getByText('Caio Rocha')).toBeTruthy()
+    expect(within(upcoming).getByText(/19\/10/)).toBeTruthy()
   })
 
   it('accept → agenda → conclude adds the price to the revenue, and undo takes it back', async () => {
     // Arrange
     const { schedule } = installFakeApis([requestRow({ id: 5, client_name: 'Ana Souza', date: TODAY, starts_at: '09:00' })])
     const revenueBefore = (await fetchMonthToDateFinances()).revenueInCents
-    const revenueLink = (cents: number) => (name: string) =>
-      name === `Faturamento do mês até hoje: ${formatBRL(cents)}. Ver histórico`
+    const revenueLink = (cents: number) => (name: string) => name === `Faturamento do mês até hoje: ${formatBRL(cents)}. Ver histórico`
     renderWithPlugins(DashboardView)
     await screen.findByRole('link', { name: revenueLink(revenueBefore) })
 

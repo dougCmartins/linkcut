@@ -44,23 +44,20 @@ export async function fetchAvailability(slug: string, serviceId: string | null):
 
 /** Rejects with SLOT_UNAVAILABLE (409) when the time was taken in the meantime. */
 export async function createBookingRequest(slug: string, input: BookingRequestInput): Promise<BookingConfirmation> {
-  const { data } = await http<{ id: number; service_name: string; date: string; time: string }>(
-    `${publicPath(slug)}/booking-requests`,
-    {
-      method: 'POST',
-      auth: false,
-      body: {
-        client_name: input.clientName,
-        client_whatsapp: input.clientWhatsapp,
-        client_email: input.clientEmail,
-        service_id: Number(input.serviceId),
-        date: input.date,
-        time: input.time,
-        client_latitude: input.clientLocation?.latitude ?? null,
-        client_longitude: input.clientLocation?.longitude ?? null,
-      },
+  const { data } = await http<{ id: number; service_name: string; date: string; time: string }>(`${publicPath(slug)}/booking-requests`, {
+    method: 'POST',
+    auth: false,
+    body: {
+      client_name: input.clientName,
+      client_whatsapp: input.clientWhatsapp,
+      client_email: input.clientEmail,
+      service_id: Number(input.serviceId),
+      date: input.date,
+      time: input.time,
+      client_latitude: input.clientLocation?.latitude ?? null,
+      client_longitude: input.clientLocation?.longitude ?? null,
     },
-  )
+  })
   return { id: data.id, serviceName: data.service_name, date: data.date, time: data.time }
 }
 
@@ -68,6 +65,12 @@ export async function createBookingRequest(slug: string, input: BookingRequestIn
 
 export async function fetchPendingRequests(): Promise<BookingRequest[]> {
   const { data } = await http<BookingRequestBody[]>('/schedule/requests?status=pending')
+  return data.map(toRequest)
+}
+
+/** Confirmed appointments from today on, by date and time (the API caps the list). */
+export async function fetchConfirmedAppointments(): Promise<BookingRequest[]> {
+  const { data } = await http<BookingRequestBody[]>('/schedule/requests?status=confirmed')
   return data.map(toRequest)
 }
 

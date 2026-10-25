@@ -208,7 +208,7 @@ export default {
     agenda: {
       title: 'Agenda de hoje',
       progress: '{done} de {total} concluídos',
-      empty: 'Nenhum atendimento confirmado para hoje. Aceite uma solicitação para ela aparecer aqui.',
+      empty: 'Nenhum atendimento para hoje. Os aceitos para outros dias aparecem em "Próximos atendimentos".',
       complete: 'Concluir atendimento',
       completeFor: 'Concluir atendimento de {client} às {time}',
       completed: 'Concluído',
@@ -220,6 +220,11 @@ export default {
       remindAddress: 'Endereço: {address}',
       cancelled: 'Cancelado pelo cliente: horário liberado',
     },
+    upcoming: {
+      title: 'Próximos atendimentos',
+      remindMessage: 'Oi, {client}! Passando para lembrar do seu horário {day}, às {time}, na {barbershop}.',
+    },
+    loading: 'Carregando…',
   },
   history: {
     title: 'Histórico',
@@ -706,6 +711,10 @@ export default {
       network: 'Sem conexão com o servidor. Verifique a internet e tente de novo.',
       unexpected: 'Não foi possível continuar agora. Tente de novo.',
     },
+  },
+  legal: {
+    loading: 'Carregando…',
+    close: 'Fechar e voltar',
   },
   privacy: {
     notice: {

@@ -6,6 +6,7 @@ import AvatarImage from '@/components/ui/AvatarImage.vue'
 import MetricCard from '@/components/ui/MetricCard.vue'
 import PendingRequestCard from './PendingRequestCard.vue'
 import TodayAgendaCard from './TodayAgendaCard.vue'
+import UpcomingAppointmentCard from './UpcomingAppointmentCard.vue'
 import MarginExplanation from './MarginExplanation.vue'
 import InfoTooltip from '@/components/ui/InfoTooltip.vue'
 import UndoToast from '@/components/ui/UndoToast.vue'
@@ -17,7 +18,7 @@ import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/fi
 import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { hasAddress, imageUrl } from '@/Domain/Settings/settings.model'
-import { fetchCurrentTenant } from '@/Domain/Tenant/tenant.api'
+import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import PushPrompt from '@/Domain/Notification/PushPrompt.vue'
 import { usePushStore } from '@/Domain/Notification/push.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
@@ -66,20 +67,17 @@ const marginBadge = computed(() => {
     : t('dashboard.marginHealthy')
 })
 
-// Public address of the barbershop, for the "Ver minha página" link (hidden if it cannot be read).
-const publicPath = ref<string | null>(null)
+// Public address of the barbershop, for the "Ver minha página" link (the guard already loaded the barbershop).
+const tenantStore = useTenantStore()
+const publicPath = computed(() => (tenantStore.tenant ? `/${tenantStore.tenant.slug}` : null))
 
 /** Current price of a service of the barber (for requests not concluded yet). */
 const priceOf = (serviceId: string) => settingsStore.schedule.services.find((service) => service.id === serviceId)?.priceInCents
 
-onMounted(async () => {
+onMounted(() => {
   void dashboardStore.load()
   void agendaStore.load()
-  try {
-    publicPath.value = `/${(await fetchCurrentTenant()).slug}`
-  } catch {
-    publicPath.value = null
-  }
+  void tenantStore.ensureLoaded()
 })
 
 // "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
@@ -91,9 +89,7 @@ const agendaError = ref('')
 const agenda = computed(() => agendaStore.todayAgenda)
 /** Cancelled by the client: shown, but not counted in "x de y concluídos". */
 const activeAgendaCount = computed(() => agenda.value.filter((request) => request.status !== AppointmentStatus.Cancelled).length)
-const completedCount = computed(
-  () => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length,
-)
+const completedCount = computed(() => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length)
 
 /** Runs an agenda change on the API; a refusal (e.g. already answered elsewhere) is shown and the lists reload. */
 async function attempt(change: () => Promise<void>): Promise<void> {
@@ -124,7 +120,6 @@ async function undo(): Promise<void> {
     await dashboardStore.load()
   })
 }
-
 </script>
 
 <template>
@@ -135,8 +130,22 @@ async function undo(): Promise<void> {
         <p class="text-xs font-semibold text-muted">
           <time :datetime="toIsoDate(today)">{{ todayLabel }}</time>
         </p>
-        <h1 class="text-xl leading-tight break-words">{{ t('dashboard.greeting', { name: firstName }) }}</h1>
-        <RouterLink v-if="publicPath" :to="publicPath" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-accent">{{ t('dashboard.openPublicPage') }} →</RouterLink>
+        <h1 class="text-xl leading-tight break-words">
+          <template v-if="settingsStore.isLoaded">{{ t('dashboard.greeting', { name: firstName }) }}</template>
+          <span
+            v-else
+            class="inline-block h-6 w-36 animate-pulse rounded-full bg-raised align-middle"
+            :aria-label="t('dashboard.loading')"
+          />
+        </h1>
+        <!-- Same tab: a new window in Instagram/WhatsApp browsers closes everything when it is closed. -->
+        <RouterLink
+          :to="publicPath ?? '/painel'"
+          class="inline-block min-h-4 text-xs font-semibold text-accent"
+          :class="{ invisible: !publicPath }"
+        >
+          {{ t('dashboard.openPublicPage') }} →
+        </RouterLink>
       </div>
       <RouterLink
         to="/painel/configuracoes"
@@ -146,7 +155,9 @@ async function undo(): Promise<void> {
       >
         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
+          />
         </svg>
       </RouterLink>
       <button
@@ -170,8 +181,6 @@ async function undo(): Promise<void> {
       {{ t('dashboard.addressMissing') }}
       <RouterLink to="/painel/configuracoes?aba=link" class="underline">{{ t('dashboard.addressMissingLink') }}</RouterLink>
     </p>
-
-    <PushPrompt class="mt-6" />
 
     <section class="mt-8" :aria-labelledby="'dashboard-period'">
       <div class="flex items-center justify-between gap-3">
@@ -227,7 +236,11 @@ async function undo(): Promise<void> {
       </div>
     </section>
 
-    <p v-if="agendaError || agendaStore.hasFailed" class="mt-8 rounded-card bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/40" role="alert">
+    <p
+      v-if="agendaError || agendaStore.hasFailed"
+      class="mt-8 rounded-card bg-danger/10 px-4 py-3 text-sm text-danger ring-1 ring-danger/40"
+      role="alert"
+    >
       {{ agendaError || t('dashboard.agendaFailed') }}
     </p>
 
@@ -238,7 +251,10 @@ async function undo(): Promise<void> {
           {{ t('dashboard.agenda.progress', { done: completedCount, total: activeAgendaCount }) }}
         </span>
       </div>
-      <ul v-if="agenda.length" class="mt-4 grid gap-3">
+      <ul v-if="!agendaStore.isLoaded" class="mt-4 grid gap-3" aria-hidden="true">
+        <li v-for="index in 2" :key="index" class="h-36 animate-pulse rounded-card bg-surface ring-1 ring-line" />
+      </ul>
+      <ul v-else-if="agenda.length" class="mt-4 grid gap-3">
         <li v-for="request in agenda" :key="request.id">
           <TodayAgendaCard
             :request="request"
@@ -255,11 +271,20 @@ async function undo(): Promise<void> {
       </p>
     </section>
 
+    <section v-if="agendaStore.upcoming.length" class="mt-10" aria-labelledby="upcoming-title">
+      <h2 id="upcoming-title" class="text-xl">{{ t('dashboard.upcoming.title') }}</h2>
+      <ul class="mt-4 grid gap-3">
+        <li v-for="request in agendaStore.upcoming" :key="request.id">
+          <UpcomingAppointmentCard :request="request" :price-in-cents="priceOf(request.serviceId)" :barbershop-name="profile.name" />
+        </li>
+      </ul>
+    </section>
+
     <section class="mt-10">
       <div class="flex items-center justify-between">
         <h2 class="text-xl">{{ t('dashboard.pendingTitle') }}</h2>
         <span class="flex h-7 min-w-7 items-center justify-center rounded-full bg-accent px-2 text-xs font-extrabold text-on-accent">
-          {{ agendaStore.pendingRequests.length }}
+          {{ agendaStore.isLoaded ? agendaStore.pendingRequests.length : '·' }}
         </span>
       </div>
 
@@ -273,13 +298,19 @@ async function undo(): Promise<void> {
           />
         </li>
       </TransitionGroup>
+      <ul v-if="!agendaStore.isLoaded" class="mt-4 grid gap-3" aria-hidden="true">
+        <li class="h-40 animate-pulse rounded-card bg-surface ring-1 ring-line" />
+      </ul>
       <p
-        v-if="agendaStore.pendingRequests.length === 0"
+        v-else-if="agendaStore.pendingRequests.length === 0"
         class="mt-4 rounded-card bg-surface px-4 py-6 text-center text-sm text-muted ring-1 ring-line shadow-soft"
       >
         {{ t('dashboard.pendingEmpty') }}
       </p>
     </section>
+    <!-- Last: it shows up only after asking the browser, so it never pushes the agenda down. -->
+    <PushPrompt class="mt-10" />
+
     <UndoToast
       v-if="lastCompleted.pending.value"
       :message="t('dashboard.agenda.completedToast', { value: formatBRL(lastCompleted.pending.value.priceInCents) })"

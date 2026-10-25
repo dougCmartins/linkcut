@@ -40,6 +40,7 @@ async function chooseAvatar(): Promise<void> {
 describe('image upload in the settings', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
     vi.mocked(preloadImage).mockReset().mockResolvedValue(undefined)
   })
 

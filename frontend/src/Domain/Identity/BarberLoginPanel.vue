@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AuthHeading from '@/components/ui/AuthHeading.vue'
@@ -9,6 +9,7 @@ import CredentialsForm from './CredentialsForm.vue'
 import { safeRedirect } from './auth.guard'
 import { LoginStep, type Credentials, type TwoFactorChannel } from './auth.model'
 import { useAuthStore } from './auth.store'
+import { useSettingsStore } from '@/Domain/Settings/settings.store'
 
 /** Barber sign-in (on /entrar): e-mail and password, then the code of the second step. */
 const { t } = useI18n()
@@ -37,9 +38,26 @@ function chooseChannel(channel: TwoFactorChannel): void {
   void auth.requestCode(channel)
 }
 
+/** Signed in and on the way to the dashboard: the code step stays on screen ("Verificando…") until it opens. */
+const isEntering = ref(false)
+
 async function submitCode(code: string): Promise<void> {
-  if (await auth.submitCode(code)) await router.replace(safeRedirect(route.query.redirect))
+  if (!(await auth.submitCode(code))) return
+  isEntering.value = true
+  // Starts the dashboard's settings (name, theme) and its code while the guard checks the barbershop.
+  void useSettingsStore().ensureLoaded()
+  void import('@/Dashboard/DashboardView.vue')
+  try {
+    await router.replace(safeRedirect(route.query.redirect))
+  } finally {
+    isEntering.value = false
+  }
 }
+
+// The next visit to the login starts from the first step again.
+onBeforeUnmount(() => {
+  if (auth.session) auth.restart()
+})
 </script>
 
 <template>
@@ -89,7 +107,7 @@ async function submitCode(code: string): Promise<void> {
       v-else-if="auth.step === LoginStep.Code && auth.delivery"
       :delivery="auth.delivery"
       :error="auth.error"
-      :is-busy="auth.isBusy"
+      :is-busy="auth.isBusy || isEntering"
       @submit="submitCode"
       @resend="auth.resendCode()"
       @change-channel="auth.changeChannel()"

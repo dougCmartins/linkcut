@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '../auth.store'
-import { installFakeIdentityApi } from './fakeIdentityApi'
+import { LoginStep } from '../auth.model'
+import { installFakeIdentityApi, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
 
 function expiredAccessSession() {
   const now = Date.now()
@@ -17,6 +18,7 @@ function expiredAccessSession() {
 describe('auth store', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
     setActivePinia(createPinia())
   })
 
@@ -51,7 +53,7 @@ describe('auth store', () => {
 
     // Assert
     expect(auth.session).toBeNull()
-    expect(sessionStorage.getItem('linkcut.session')).toBeNull()
+    expect(localStorage.getItem('linkcut.session')).toBeNull()
   })
 
   it('logout revokes the tokens on the server with the current access token', async () => {
@@ -68,5 +70,34 @@ describe('auth store', () => {
     expect(logoutCall?.headers.Authorization).toBe('Bearer access-1')
     expect(logoutCall?.body).toEqual({ refresh_token: 'refresh-1' })
     expect(auth.session).toBeNull()
+  })
+
+  it('after the right code the login stays on the code step (no e-mail form flashing before the dashboard)', async () => {
+    // Arrange
+    installFakeIdentityApi({ preferredChannel: 'email' })
+    const auth = useAuthStore()
+    await auth.submitCredentials({ email: 'rafael@linkcut.app', password: PASSWORD })
+
+    // Act
+    const signedIn = await auth.submitCode(RIGHT_CODE)
+
+    // Assert
+    expect(signedIn).toBe(true)
+    expect(auth.step).toBe(LoginStep.Code)
+    expect(auth.session?.accessToken).toBe('access-1')
+  })
+
+  it('keeps the session after the browser closes (in-app browsers close all the time)', async () => {
+    // Arrange
+    installFakeIdentityApi({ preferredChannel: 'email' })
+    await useAuthStore().submitCredentials({ email: 'rafael@linkcut.app', password: PASSWORD })
+    await useAuthStore().submitCode(RIGHT_CODE)
+
+    // Act: a new page load (new Pinia) reads what was stored.
+    sessionStorage.clear()
+    setActivePinia(createPinia())
+
+    // Assert
+    expect(useAuthStore().session?.refreshToken).toBe('refresh-1')
   })
 })
