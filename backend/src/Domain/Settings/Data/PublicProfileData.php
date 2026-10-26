@@ -11,7 +11,10 @@ use Spatie\LaravelData\DataCollection;
 /** Bio link as a visitor sees it: only networks with a url. */
 final class PublicProfileData extends Data
 {
-    /** @param DataCollection<int, SocialLinkData> $socials */
+    /**
+     * @param  DataCollection<int, SocialLinkData>  $socials
+     * @param  DataCollection<int, ProfileLinkData>  $links
+     */
     public function __construct(
         public readonly string $name,
         public readonly string $handle,
@@ -22,6 +25,8 @@ final class PublicProfileData extends Data
         public readonly string $whatsapp_message,
         #[DataCollectionOf(SocialLinkData::class)]
         public readonly DataCollection $socials,
+        #[DataCollectionOf(ProfileLinkData::class)]
+        public readonly DataCollection $links,
         /** Where the barbershop is (a business address is public). Null = it can't receive bookings yet. */
         public readonly ?AddressData $address,
     ) {}

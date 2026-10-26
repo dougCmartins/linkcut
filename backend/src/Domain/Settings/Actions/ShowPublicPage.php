@@ -7,6 +7,7 @@ namespace Domain\Settings\Actions;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Data\HighlightData;
 use Domain\Settings\Data\PortfolioPhotoData;
+use Domain\Settings\Data\ProfileLinkData;
 use Domain\Settings\Data\PublicPageData;
 use Domain\Settings\Data\PublicPhotoData;
 use Domain\Settings\Data\PublicPortfolioData;
@@ -54,6 +55,7 @@ final class ShowPublicPage
                 whatsapp_number: $profile->whatsapp_number,
                 whatsapp_message: $profile->whatsapp_message,
                 socials: new DataCollection(SocialLinkData::class, $socials),
+                links: new DataCollection(ProfileLinkData::class, $profile->links->all()),
                 address: $profile->address,
             ),
             portfolio: new PublicPortfolioData(

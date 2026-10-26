@@ -19,6 +19,8 @@ export const TEXT_LIMITS = {
   handle: { max: 30 },
   bio: { max: 160 },
   whatsappMessage: { max: 200 },
+  linkTitle: { max: 60 },
+  linkUrl: { max: 300 },
   quote: { max: 200 },
   story: { max: 1200 },
   highlightLabel: { max: 16 },
@@ -79,6 +81,18 @@ export function validateProfile(profile: ProfileSettings): ValidationErrors {
   profile.socials.forEach((social, index) => {
     const url = social.url.trim()
     add(`socials.${index}`, url && !url.startsWith('https://') ? { key: 'https' } : null)
+  })
+  profile.links.forEach((link, index) => {
+    add(`links.${index}.title`, checkLength(link.title, TEXT_LIMITS.linkTitle, true))
+    const url = link.url.trim()
+    const urlError = !url
+      ? { key: 'required' }
+      : !url.startsWith('https://')
+        ? { key: 'https' }
+        : url.length > TEXT_LIMITS.linkUrl.max
+          ? { key: 'tooLong', params: { max: TEXT_LIMITS.linkUrl.max } }
+          : null
+    add(`links.${index}.url`, urlError)
   })
   // Required: clients see the address when they book.
   const { address } = profile

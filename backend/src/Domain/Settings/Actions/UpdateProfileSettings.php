@@ -6,11 +6,13 @@ namespace Domain\Settings\Actions;
 
 use Domain\Settings\Data\AddressInputData;
 use Domain\Settings\Data\DefaultSettingsData;
+use Domain\Settings\Data\ProfileLinkData;
 use Domain\Settings\Data\ProfileSettingsData;
 use Domain\Settings\Data\SocialLinkData;
 use Domain\Settings\Data\UpdateProfileSettingsData;
 use Domain\Settings\Exceptions\ImageNotFoundException;
 use Domain\Settings\Models\Image;
+use Domain\Settings\Models\ProfileLink;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\SocialLink;
 use Domain\Settings\Support\AddressGeocoder;
@@ -54,6 +56,18 @@ final class UpdateProfileSettings
                 fn (SocialLinkData $social, int $position): array => ['network' => $social->network->value, 'url' => $social->url, 'position' => $position],
                 $data->socials->all(),
                 array_keys($data->socials->all()),
+            ));
+
+            ProfileLink::query()->delete();
+            ProfileLink::insertForCurrentTenant(array_map(
+                fn (ProfileLinkData $link, int $position): array => [
+                    'title' => trim($link->title),
+                    'url' => trim($link->url),
+                    'icon' => $link->icon?->value,
+                    'position' => $position,
+                ],
+                $data->links->all(),
+                array_keys($data->links->all()),
             ));
         });
 

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ImageUploader from '@/components/ui/ImageUploader.vue'
+import SelectField from '@/components/ui/SelectField.vue'
 import SocialIcon from '@/components/ui/SocialIcon.vue'
 import TextArea from '@/components/ui/TextArea.vue'
 import TextField from '@/components/ui/TextField.vue'
@@ -11,10 +12,11 @@ import LinkPreview from './LinkPreview.vue'
 import PhoneFrame from './PhoneFrame.vue'
 import SettingsCard from './SettingsCard.vue'
 import { useSettingsStore } from './settings.store'
-import { SettingsSection, imageUrl } from './settings.model'
+import { SettingsSection, imageUrl, type ProfileLink } from './settings.model'
 import { TEXT_LIMITS } from './settings.validation'
 import { useImageUpload } from './useImageUpload'
 import { useSectionErrors } from './useSectionErrors'
+import { PROFILE_LINK_ICONS } from '@/types/profileLinkIcon'
 
 const { t } = useI18n()
 const store = useSettingsStore()
@@ -24,6 +26,37 @@ const { upload, isBusy, errorFor: uploadErrorFor } = useImageUpload()
 const profile = computed(() => store.drafts.profile)
 const avatarUrl = computed(() => imageUrl(profile.value.avatar))
 const backgroundUrl = computed(() => imageUrl(profile.value.background))
+const iconOptions = computed(() => [
+  { value: '', label: t('settings.link.linkIconNone') },
+  ...PROFILE_LINK_ICONS.map((icon) => ({ value: icon, label: t(`settings.link.icons.${icon}`) })),
+])
+
+function addLink(): void {
+  profile.value.links.push({ title: '', url: '', icon: null })
+}
+
+function removeLink(index: number): void {
+  profile.value.links.splice(index, 1)
+}
+
+function moveLink(index: number, direction: -1 | 1): void {
+  const next = index + direction
+  const links = profile.value.links
+  const current = links[index]
+  const target = links[next]
+  if (!current || !target) return
+  links[index] = target
+  links[next] = current
+}
+
+function setIcon(link: ProfileLink, value: string): void {
+  link.icon = (PROFILE_LINK_ICONS as readonly string[]).includes(value) ? (value as ProfileLink['icon']) : null
+}
+
+function iconValue(link: ProfileLink): string {
+  return link.icon ?? ''
+}
+
 </script>
 
 <template>
@@ -101,6 +134,44 @@ const backgroundUrl = computed(() => imageUrl(profile.value.background))
             :error="errorFor(`socials.${index}`)"
           />
         </div>
+      </SettingsCard>
+
+      <SettingsCard :title="t('settings.link.linksTitle')" :description="t('settings.link.linksDescription')">
+        <div v-for="(link, index) in profile.links" :key="index" class="grid gap-3 rounded-2xl bg-raised p-4 ring-1 ring-line">
+          <TextField
+            v-model="link.title"
+            :label="t('settings.link.linkTitle')"
+            :maxlength="TEXT_LIMITS.linkTitle.max"
+            :error="errorFor(`links.${index}.title`)"
+          />
+          <TextField
+            v-model="link.url"
+            type="url"
+            inputmode="url"
+            :label="t('settings.link.linkUrl')"
+            :placeholder="t('settings.link.socialPlaceholder')"
+            :maxlength="TEXT_LIMITS.linkUrl.max"
+            :error="errorFor(`links.${index}.url`)"
+          />
+          <SelectField
+            :model-value="iconValue(link)"
+            :label="t('settings.link.linkIcon')"
+            :options="iconOptions"
+            @update:model-value="setIcon(link, $event)"
+          />
+          <div class="flex flex-wrap gap-3">
+            <button type="button" class="text-sm font-semibold text-muted hover:text-ink disabled:opacity-40" :disabled="index === 0" :aria-label="t('settings.link.linkUp')" @click="moveLink(index, -1)">
+              {{ t('settings.link.linkUp') }}
+            </button>
+            <button type="button" class="text-sm font-semibold text-muted hover:text-ink disabled:opacity-40" :disabled="index === profile.links.length - 1" :aria-label="t('settings.link.linkDown')" @click="moveLink(index, 1)">
+              {{ t('settings.link.linkDown') }}
+            </button>
+            <button type="button" class="text-sm font-semibold text-danger" :aria-label="t('settings.link.linkRemove')" @click="removeLink(index)">
+              {{ t('settings.link.linkRemove') }}
+            </button>
+          </div>
+        </div>
+        <button type="button" class="text-sm font-semibold text-accent" @click="addLink">{{ t('settings.link.linkAdd') }}</button>
       </SettingsCard>
 
     </div>

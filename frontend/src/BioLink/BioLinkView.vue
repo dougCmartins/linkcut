@@ -4,6 +4,7 @@ import { computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import ProfileLinkIcon from '@/components/ui/ProfileLinkIcon.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import SmartImage from '@/components/ui/SmartImage.vue'
@@ -73,6 +74,18 @@ const whatsappUrl = computed(() => (profile.value ? buildWhatsappUrl(profile.val
             />
           </svg>
           {{ t('bioLink.whatsapp') }}
+        </BaseButton>
+        <BaseButton
+          v-for="(link, index) in profile.links"
+          :key="index"
+          variant="secondary"
+          size="lg"
+          elevated
+          block
+          :href="link.url"
+        >
+          <ProfileLinkIcon v-if="link.icon" :icon="link.icon" class="size-5" />
+          {{ link.title }}
         </BaseButton>
       </nav>
 

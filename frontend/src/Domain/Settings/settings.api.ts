@@ -1,4 +1,5 @@
 import { http } from '@/http/client'
+import type { ProfileLinkIcon } from '@/types/profileLinkIcon'
 import type { SocialNetwork } from '@/types/socialNetwork'
 import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 import {
@@ -9,6 +10,7 @@ import {
   type DayHours,
   type ImageRef,
   type PortfolioSettings,
+  type ProfileLink,
   type ProfileSettings,
   type PublicPage,
   type ScheduleSettings,
@@ -23,6 +25,12 @@ import {
 interface SocialLinkBody {
   network: SocialNetwork
   url: string | null
+}
+
+interface ProfileLinkBody {
+  title: string
+  url: string
+  icon: ProfileLinkIcon | null
 }
 
 interface HighlightBody {
@@ -52,6 +60,7 @@ interface ProfileBody {
   whatsapp_number: string
   whatsapp_message: string | null
   socials: SocialLinkBody[]
+  links: ProfileLinkBody[]
 }
 
 interface PortfolioBody {
@@ -110,6 +119,9 @@ interface PublicPageBody {
 const toSocials = (socials: SocialLinkBody[]): SocialLink[] =>
   socials.map((social) => ({ network: social.network, url: social.url ?? '' }))
 
+const toLinks = (links: ProfileLinkBody[]): ProfileLink[] =>
+  links.map((link) => ({ title: link.title, url: link.url, icon: link.icon }))
+
 const toAddress = (body: AddressBody): BarbershopAddress => ({
   zipCode: body.zip_code,
   street: body.street,
@@ -135,6 +147,7 @@ function toProfile(body: ProfileBody): ProfileSettings {
     whatsappNumber: body.whatsapp_number,
     whatsappMessage: body.whatsapp_message ?? '',
     socials: toSocials(body.socials),
+    links: toLinks(body.links),
     address: body.address ? toAddress(body.address) : emptyAddress(),
   }
 }
@@ -199,6 +212,7 @@ function profileBody(profile: ProfileSettings) {
     whatsapp_number: profile.whatsappNumber,
     whatsapp_message: profile.whatsappMessage,
     socials: profile.socials.map((social) => ({ network: social.network, url: social.url.trim() || null })),
+    links: profile.links.map((link) => ({ title: link.title.trim(), url: link.url.trim(), icon: link.icon })),
     address: {
       zip_code: profile.address.zipCode.replace(/\D/g, ''),
       street: profile.address.street.trim(),
@@ -304,6 +318,7 @@ export async function fetchPublicPage(slug: string): Promise<PublicPage> {
       whatsappNumber: data.profile.whatsapp_number,
       whatsappMessage: data.profile.whatsapp_message ?? '',
       socials: toSocials(data.profile.socials),
+      links: toLinks(data.profile.links),
       address: data.profile.address ? toAddress(data.profile.address) : null,
     },
     portfolio: {

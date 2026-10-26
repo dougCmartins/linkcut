@@ -75,6 +75,21 @@ describe('BioLinkView', () => {
     expect(socials.querySelectorAll('a')).toHaveLength(1)
   })
 
+  it('shows each free link as a button with its title', async () => {
+    // Arrange
+    const settings = createTestSettings()
+    settings.profile.links = [{ title: 'Meu site', url: 'https://example.com', icon: 'link' }]
+    installFakeSettingsApi(settings)
+
+    // Act
+    await renderBioLink()
+
+    // Assert
+    const link = await screen.findByRole('link', { name: 'Meu site' })
+    expect(link.getAttribute('href')).toBe('https://example.com')
+    expect(link.getAttribute('target')).toBe('_blank')
+  })
+
   it('says the page does not exist for an unknown slug', async () => {
     // Arrange
     installFakeSettingsApi()

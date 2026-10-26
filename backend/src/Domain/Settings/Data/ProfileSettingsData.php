@@ -11,7 +11,10 @@ use Spatie\LaravelData\DataCollection;
 /** Bio link profile, as the editor sees it. */
 final class ProfileSettingsData extends Data
 {
-    /** @param DataCollection<int, SocialLinkData> $socials */
+    /**
+     * @param  DataCollection<int, SocialLinkData>  $socials
+     * @param  DataCollection<int, ProfileLinkData>  $links
+     */
     public function __construct(
         public readonly string $name,
         public readonly string $handle,
@@ -22,6 +25,8 @@ final class ProfileSettingsData extends Data
         public readonly string $whatsapp_message,
         #[DataCollectionOf(SocialLinkData::class)]
         public readonly DataCollection $socials,
+        #[DataCollectionOf(ProfileLinkData::class)]
+        public readonly DataCollection $links,
         /** Null until the barber fills it in (required to receive bookings). */
         public readonly ?AddressData $address,
     ) {}

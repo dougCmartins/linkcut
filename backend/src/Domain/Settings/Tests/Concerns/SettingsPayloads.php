@@ -22,6 +22,7 @@ trait SettingsPayloads
                 ['network' => 'instagram', 'url' => 'https://instagram.com/rafa'],
                 ['network' => 'tiktok', 'url' => null],
             ],
+            'links' => [],
             'address' => $this->addressPayload(),
         ], $overrides);
     }
