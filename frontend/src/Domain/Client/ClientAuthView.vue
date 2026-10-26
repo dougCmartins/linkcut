@@ -12,6 +12,8 @@ import { credentialsSchema } from '@/Domain/Identity/auth.schemas'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { usePageMeta } from '@/composables/usePageMeta'
 import ClientPasswordForm from './ClientPasswordForm.vue'
+import ClientGoogleSignInLink from './ClientGoogleSignInLink.vue'
+import { isGoogleLoginEnabled } from './googleLogin'
 import { safeClientRedirect } from './client.guard'
 import { CodePurpose } from './client.model'
 import { useClientStore } from './client.store'
@@ -87,6 +89,10 @@ usePageMeta(
     <section v-else-if="mode === 'register'">
       <AuthHeading :title="t('authPage.client.register.title')" :subtitle="t('authPage.client.register.subtitle')" />
       <ClientPasswordForm :purpose="CodePurpose.Registration" :initial-email="linkEmail" @done="goOn" />
+      <div v-if="isGoogleLoginEnabled()" class="mt-5 grid gap-3">
+        <p class="text-center text-xs font-semibold tracking-wide text-muted uppercase">{{ t('client.google.or') }}</p>
+        <ClientGoogleSignInLink />
+      </div>
       <AuthSwitch
         :question="t('authPage.client.haveAccount')"
         :action="t('authPage.client.loginAction')"
@@ -103,6 +109,13 @@ usePageMeta(
       >
         {{ t('client.profile.deleted') }}
       </p>
+      <p
+        v-if="route.query.erro === 'google'"
+        class="mb-5 rounded-card bg-danger/10 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-danger/40"
+        role="alert"
+      >
+        {{ t('client.google.denied') }}
+      </p>
       <p v-if="error" class="mb-5 rounded-card bg-danger/10 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-danger/40" role="alert">
         {{ error }}
       </p>
@@ -116,6 +129,10 @@ usePageMeta(
           {{ t('client.login.forgot') }}
         </button>
       </form>
+      <div v-if="isGoogleLoginEnabled()" class="mt-5 grid gap-3">
+        <p class="text-center text-xs font-semibold tracking-wide text-muted uppercase">{{ t('client.google.or') }}</p>
+        <ClientGoogleSignInLink />
+      </div>
       <AuthSwitch
         :question="t('authPage.client.firstAccess')"
         :action="t('authPage.client.registerAction')"

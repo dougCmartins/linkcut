@@ -76,6 +76,11 @@ export const routes: RouteRecordRaw[] = [
   { path: '/conta/entrar', name: 'client-login', component: ClientAuthView, meta: { clientAuthMode: 'login' } },
   { path: '/conta/finalizar', name: 'client-register', component: ClientAuthView, meta: { clientAuthMode: 'register' } },
   {
+    path: '/conta/entrar/google',
+    name: 'client-google',
+    component: () => import('@/Domain/Client/ClientGoogleCallbackView.vue'),
+  },
+  {
     path: '/conta/lembretes-desativados',
     name: 'client-opt-out',
     component: () => import('@/Domain/Client/ClientOptOutView.vue'),

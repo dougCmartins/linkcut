@@ -17,5 +17,7 @@ final class ClientData extends Data
         public readonly bool $has_account,
         /** Gets the reminders and invitations by e-mail (false after the opt-out). */
         public readonly bool $emails_enabled = true,
+        /** The account is linked to Google. The Google id itself stays off the API. */
+        public readonly bool $google_linked = false,
     ) {}
 }

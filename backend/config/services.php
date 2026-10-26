@@ -53,4 +53,11 @@ return [
         ],
     ],
 
+    // Client sign-in only ("Continuar com Google"). The barber keeps e-mail, password and a code.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/api/client/auth/google/callback',
+    ],
+
 ];

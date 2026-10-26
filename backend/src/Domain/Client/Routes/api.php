@@ -12,6 +12,9 @@ Route::prefix('client')->group(function (): void {
     Route::post('registration', [ClientAuthController::class, 'register'])->middleware('throttle:client-login');
     Route::post('password', [ClientAuthController::class, 'resetPassword'])->middleware('throttle:client-login');
     Route::post('login', [ClientAuthController::class, 'login'])->middleware('throttle:client-login');
+    Route::get('auth/google/redirect', [ClientAuthController::class, 'redirectToGoogle'])->middleware('throttle:client-login');
+    Route::get('auth/google/callback', [ClientAuthController::class, 'googleCallback'])->middleware('throttle:client-login');
+    Route::post('auth/google/exchange', [ClientAuthController::class, 'exchangeGoogle'])->middleware('throttle:client-login');
     Route::post('token/refresh', [ClientAuthController::class, 'refresh'])->middleware('throttle:refresh');
     Route::get('emails/opt-out/{client}', [ClientEmailController::class, 'optOut'])
         ->whereNumber('client')->middleware('signed')->name('client.emails.opt-out');

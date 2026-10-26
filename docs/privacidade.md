@@ -12,8 +12,9 @@ O app **não grava cookies**: a API é stateless (Bearer token).
 
 | Chave | Onde | Para quê | Categoria |
 |---|---|---|---|
-| sessão do barbeiro | `sessionStorage` | manter o login até fechar o navegador | necessário |
+| sessão do barbeiro | `localStorage` | manter o barbeiro conectado (o token de acesso fica só na memória) | necessário |
 | `linkcut.client-session` | `localStorage` | manter o cliente conectado (até 30 dias) | necessário |
+| `linkcut.google-nonce` | `localStorage` | ligar o "Continuar com Google" ao navegador que começou o login; apagado ao voltar do Google | necessário (segurança) |
 | tema claro/escuro | `localStorage` | lembrar a escolha do visitante | necessário (preferência) |
 | aviso de notificações dispensado | `localStorage` | não perguntar de novo | necessário (preferência) |
 | `linkcut.consent` | `localStorage` | guardar a escolha de privacidade, com a versão e a data | necessário |
@@ -26,9 +27,10 @@ O app **não grava cookies**: a API é stateless (Bearer token).
 | Provedor de e-mail (ex.: Brevo) | nome e e-mail do destinatário, texto do aviso | ao enviar códigos e avisos | execução de contrato |
 | ViaCEP | o CEP digitado e o IP de quem digitou | ao buscar endereço | execução de contrato |
 | OpenStreetMap (Nominatim) | endereço da barbearia | ao salvar o endereço | execução de contrato |
+| Google (login do cliente) | nome, e-mail e o identificador da conta Google | só quando o cliente escolhe "Continuar com Google" | execução de contrato |
 | Hospedagem (VPS) | tudo | sempre | execução de contrato |
 
-**Não usamos** publicidade, pixel, Google Analytics nem fontes externas: as fontes são servidas pelo próprio app.
+**Não usamos** publicidade, pixel, Google Analytics nem fontes externas: as fontes são servidas pelo próprio app. O login com Google é opcional e não carrega script do Google na página.
 
 ## Consentimento
 - O aviso aparece na primeira visita. "Aceitar tudo", "Rejeitar opcionais" e "Personalizar" têm o mesmo peso.
@@ -47,7 +49,7 @@ O app **não grava cookies**: a API é stateless (Bearer token).
 ## Direitos do titular
 - **Cliente:**
   - corrige nome e WhatsApp em "Minha conta";
-  - baixa os dados ("Baixar meus dados": conta e horários em JSON, `GET /api/client/me/export`);
+  - baixa os dados ("Baixar meus dados": conta e horários em JSON, `GET /api/client/me/export`). A conta diz se está ligada ao Google (`google_linked`), sem o identificador do Google;
   - exclui a conta. A exclusão anonimiza os agendamentos e o financeiro das barbearias, **inclusive os agendamentos antigos feitos com o mesmo e-mail antes de existir a conta**.
 - **Barbeiro**, em Configurações → Segurança → "Seus dados":
   - baixa tudo da barbearia em JSON (perfil, configurações, serviços, horários, agendamentos e financeiro, `GET /api/account/export`);

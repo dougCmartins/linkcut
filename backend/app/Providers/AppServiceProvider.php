@@ -73,11 +73,19 @@ final class AppServiceProvider extends ServiceProvider
             Limit::perHour(20)->by($request->ip()),
             Limit::perHour(6)->by('client-codes-email:'.mb_strtolower((string) $request->input('email'))),
         ]);
-        RateLimiter::for('client-login', fn (Request $request) => [
-            Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
-            Limit::perMinute(20)->by($request->ip()),
-            Limit::perHour(20)->by('client-login-email:'.mb_strtolower((string) ($request->input('email') ?? $request->user('client')?->email))),
-        ]);
+        // Google's redirect has no e-mail yet. Without this, every visitor would share one hourly bucket.
+        RateLimiter::for('client-login', function (Request $request) {
+            $email = mb_strtolower((string) ($request->input('email') ?? $request->user('client')?->email ?? ''));
+            $limits = [
+                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+            if ($email !== '') {
+                $limits[] = Limit::perHour(20)->by('client-login-email:'.$email);
+            }
+
+            return $limits;
+        });
         // Barber sign-up: codes per e-mail and visitor; finishing and checking links per visitor.
         RateLimiter::for('sign-up-codes', fn (Request $request) => [
             Limit::perMinute(3)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),

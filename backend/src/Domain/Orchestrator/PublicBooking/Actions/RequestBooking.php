@@ -148,7 +148,8 @@ final class RequestBooking
 
     private static function registrationUrl(ClientData $client): ?string
     {
-        return $client->has_account ? null : ClientLinks::registration($client->email);
+        // Signed in with Google = already has a way in: no "create your password" link.
+        return $client->has_account || $client->google_linked ? null : ClientLinks::registration($client->email);
     }
 
     /** Meters between the client and the barbershop, when both points are known. */

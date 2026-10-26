@@ -76,6 +76,11 @@ export const useClientStore = defineStore('client', () => {
     setSession(await clientApi.login(email.trim(), password))
   }
 
+  /** Google's one-time code, same storage as the password login. */
+  async function exchangeGoogle(code: string, nonce: string): Promise<void> {
+    setSession(await clientApi.exchangeGoogle(code, nonce))
+  }
+
   /** Completes the sign-up or sets a new password with the code from the e-mail. */
   async function setPassword(...args: Parameters<typeof clientApi.setPassword>): Promise<void> {
     setSession(await clientApi.setPassword(...args))
@@ -159,6 +164,7 @@ export const useClientStore = defineStore('client', () => {
     isSignedIn,
     ensureSession,
     login,
+    exchangeGoogle,
     setPassword,
     logout,
     onSessionExpired,
