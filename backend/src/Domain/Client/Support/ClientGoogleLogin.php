@@ -39,6 +39,11 @@ final class ClientGoogleLogin
         return 'client-google-state:'.hash('sha256', $state);
     }
 
+    public static function nonceHash(string $nonce): string
+    {
+        return hash('sha256', $nonce);
+    }
+
     public static function codeKey(string $code): string
     {
         return 'client-google-code:'.hash('sha256', $code);

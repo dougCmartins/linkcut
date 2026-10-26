@@ -68,6 +68,7 @@ describe('ClientAuthView', () => {
     // Assert
     expect(returnPath(loginLink)).toBe('/conta/perfil')
     expect(loginLink.getAttribute('target')).toBeNull()
+    expect(new URL(loginLink.getAttribute('href') ?? '', 'http://localhost').searchParams.get('nonce')).toMatch(/^[0-9a-f]{48}$/)
     expect(returnPath(registerLink)).toBe('/conta/perfil')
   })
 

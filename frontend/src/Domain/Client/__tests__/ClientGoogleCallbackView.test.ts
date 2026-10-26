@@ -21,9 +21,10 @@ describe('ClientGoogleCallbackView', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
   })
-  it('exchanges the code and opens the return path', async () => {
+  it('exchanges the code with the nonce this browser kept, and opens the return path', async () => {
     // Arrange
-    installFakeApi({
+    localStorage.setItem('linkcut.google-nonce', 'nonce-started-here')
+    const { calls } = installFakeApi({
       'POST /client/auth/google/exchange': () => ({ status: 200, body: clientSessionBody() }),
     })
 
@@ -32,6 +33,8 @@ describe('ClientGoogleCallbackView', () => {
 
     // Assert
     await waitFor(() => expect(router.currentRoute.value.path).toBe('/conta/perfil'))
+    expect(calls.find((call) => call.method === 'POST')?.body).toEqual({ code: 'once', nonce: 'nonce-started-here' })
+    expect(localStorage.getItem('linkcut.google-nonce')).toBeNull()
     expect(useClientStore().isSignedIn).toBe(true)
     expect(screen.getByRole('status').textContent).toContain('Entrando com Google…')
   })

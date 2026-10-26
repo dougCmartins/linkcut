@@ -61,10 +61,10 @@ final class ClientAuthController
         return redirect()->away($action->handle($data));
     }
 
-    /** Google's return. The session itself is issued later, by the one-time code. */
+    /** Google's return, sent on to the SPA. The session itself is issued later, by the one-time code. */
     public function googleCallback(GoogleCallbackData $data, FinishClientGoogleSignIn $action): RedirectResponse
     {
-        return redirect($action->handle($data));
+        return redirect()->away(rtrim((string) config('app.frontend_url'), '/').$action->handle($data));
     }
 
     public function exchangeGoogle(GoogleExchangeData $data, ExchangeClientGoogleCode $action): ClientSessionData

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Domain\Client\Tests\Feature;
 
+use Domain\Client\Actions\ListClientsToInvite;
+use Domain\Client\Data\ClientInviteBatchData;
 use Domain\Client\Models\Client;
 use Domain\Client\Support\ClientGoogleLogin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,12 +24,17 @@ final class ClientGoogleSignInTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const SPA = 'https://linkcut.test';
+
+    private const NONCE = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
     private ?string $state = null;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->preparePassport();
+        config(['app.frontend_url' => self::SPA]);
     }
 
     public function test_a_new_google_account_creates_a_client_without_a_password(): void
@@ -39,8 +46,8 @@ final class ClientGoogleSignInTest extends TestCase
         $code = $this->codeOf($callback);
 
         // Act
-        $started = $this->postJson('/api/client/auth/google/exchange', ['code' => $code]);
-        $again = $this->postJson('/api/client/auth/google/exchange', ['code' => $code]);
+        $started = $this->postJson('/api/client/auth/google/exchange', ['code' => $code, 'nonce' => self::NONCE]);
+        $again = $this->postJson('/api/client/auth/google/exchange', ['code' => $code, 'nonce' => self::NONCE]);
         $this->start('/conta');
         $this->googleCallback();
 
@@ -92,7 +99,7 @@ final class ClientGoogleSignInTest extends TestCase
         $response = $this->googleCallback();
 
         // Assert
-        $response->assertRedirect('/conta/entrar?erro=google');
+        $response->assertRedirect(self::SPA.'/conta/entrar?erro=google');
         $this->assertDatabaseCount('clients', 0);
     }
 
@@ -110,7 +117,7 @@ final class ClientGoogleSignInTest extends TestCase
         $response = $this->googleCallback();
 
         // Assert
-        $response->assertRedirect('/conta/entrar?erro=google');
+        $response->assertRedirect(self::SPA.'/conta/entrar?erro=google');
         $this->assertSame('google-old', $client->fresh()->google_id);
     }
 
@@ -124,7 +131,7 @@ final class ClientGoogleSignInTest extends TestCase
         $response = $this->get('/api/client/auth/google/callback?error=access_denied&state='.$this->state);
 
         // Assert
-        $response->assertRedirect('/conta/entrar?erro=google');
+        $response->assertRedirect(self::SPA.'/conta/entrar?erro=google');
         $this->assertNull(Cache::get(ClientGoogleLogin::stateKey((string) $this->state)));
         $this->assertDatabaseCount('clients', 0);
     }
@@ -138,10 +145,44 @@ final class ClientGoogleSignInTest extends TestCase
         $this->travel(61)->seconds();
 
         // Act
-        $response = $this->postJson('/api/client/auth/google/exchange', ['code' => $code]);
+        $response = $this->postJson('/api/client/auth/google/exchange', ['code' => $code, 'nonce' => self::NONCE]);
 
         // Assert
         $response->assertStatus(422)->assertJsonPath('code', 'GOOGLE_CODE_INVALID');
+    }
+
+    public function test_a_code_sent_to_another_browser_does_not_open_a_session(): void
+    {
+        // Arrange: someone signs in with their own Google and sends the code link to another person
+        $this->fakeGoogle($this->googleUser('google-9', 'attacker@example.com', 'Attacker', true));
+        $this->start();
+        $code = $this->codeOf($this->googleCallback());
+
+        // Act: the other browser never started a sign-in, so it has another nonce (or none)
+        $otherBrowser = $this->postJson('/api/client/auth/google/exchange', ['code' => $code, 'nonce' => str_repeat('b', 40)]);
+        $starter = $this->postJson('/api/client/auth/google/exchange', ['code' => $code, 'nonce' => self::NONCE]);
+        $noNonce = $this->postJson('/api/client/auth/google/exchange', ['code' => $code]);
+
+        // Assert: refused, and the code is gone after the first try
+        $otherBrowser->assertStatus(422)->assertJsonPath('code', 'GOOGLE_CODE_INVALID');
+        $starter->assertStatus(422)->assertJsonPath('code', 'GOOGLE_CODE_INVALID');
+        $noNonce->assertUnprocessable();
+    }
+
+    public function test_a_google_only_client_gets_no_invitation_to_create_a_password(): void
+    {
+        // Arrange
+        $this->fakeGoogle($this->googleUser('google-10', 'ana@example.com', 'Ana', true));
+        $this->start();
+        $this->exchange($this->googleCallback())->assertSuccessful();
+        $this->travel((int) config('client.invite_after_hours') + 1)->hours();
+
+        // Act
+        $clients = app(ListClientsToInvite::class)
+            ->handle(new ClientInviteBatchData(limit: 10));
+
+        // Assert
+        $this->assertCount(0, $clients);
     }
 
     public function test_an_external_return_path_becomes_the_client_home(): void
@@ -151,14 +192,14 @@ final class ClientGoogleSignInTest extends TestCase
 
         // Act
         foreach (['https://evil.test', '//evil.test', '/\\evil.test'] as $volta) {
-            $this->get('/api/client/auth/google/redirect?volta='.urlencode($volta))->assertRedirect();
-            $this->assertSame('/conta', Cache::get(ClientGoogleLogin::stateKey((string) $this->state)));
+            $this->get('/api/client/auth/google/redirect?nonce='.self::NONCE.'&volta='.urlencode($volta))->assertRedirect();
+            $this->assertSame('/conta', Cache::get(ClientGoogleLogin::stateKey((string) $this->state))['volta'] ?? null);
         }
         $location = (string) $this->googleCallback()->headers->get('Location');
         parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
 
         // Assert
-        $this->assertStringContainsString('/conta/entrar/google?', $location);
+        $this->assertStringStartsWith(self::SPA.'/conta/entrar/google?', $location);
         $this->assertSame('/conta', $query['volta'] ?? null);
         $this->assertStringNotContainsString('evil', $location);
     }
@@ -232,10 +273,10 @@ final class ClientGoogleSignInTest extends TestCase
 
     private function start(string $volta = '/conta'): void
     {
-        $this->get('/api/client/auth/google/redirect?volta='.urlencode($volta))
+        $this->get('/api/client/auth/google/redirect?nonce='.self::NONCE.'&volta='.urlencode($volta))
             ->assertRedirect('https://accounts.google.com/o/oauth2/v2/auth');
         $this->assertNotNull($this->state);
-        $this->assertSame(ClientGoogleLogin::safeReturnPath($volta), Cache::get(ClientGoogleLogin::stateKey($this->state)));
+        $this->assertSame(ClientGoogleLogin::safeReturnPath($volta), Cache::get(ClientGoogleLogin::stateKey($this->state))['volta'] ?? null);
     }
 
     private function googleCallback(): TestResponse
@@ -246,7 +287,7 @@ final class ClientGoogleSignInTest extends TestCase
     private function codeOf(TestResponse $response): string
     {
         $location = (string) $response->headers->get('Location');
-        $this->assertStringContainsString('/conta/entrar/google?', $location);
+        $this->assertStringStartsWith(self::SPA.'/conta/entrar/google?', $location);
         parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
         $this->assertIsString($query['codigo'] ?? null);
 
@@ -255,6 +296,6 @@ final class ClientGoogleSignInTest extends TestCase
 
     private function exchange(TestResponse $callback): TestResponse
     {
-        return $this->postJson('/api/client/auth/google/exchange', ['code' => $this->codeOf($callback)]);
+        return $this->postJson('/api/client/auth/google/exchange', ['code' => $this->codeOf($callback), 'nonce' => self::NONCE]);
     }
 }

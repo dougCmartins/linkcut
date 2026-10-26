@@ -12,8 +12,9 @@ O app **não grava cookies**: a API é stateless (Bearer token).
 
 | Chave | Onde | Para quê | Categoria |
 |---|---|---|---|
-| sessão do barbeiro | `sessionStorage` | manter o login até fechar o navegador | necessário |
+| sessão do barbeiro | `localStorage` | manter o barbeiro conectado (o token de acesso fica só na memória) | necessário |
 | `linkcut.client-session` | `localStorage` | manter o cliente conectado (até 30 dias) | necessário |
+| `linkcut.google-nonce` | `localStorage` | ligar o "Continuar com Google" ao navegador que começou o login; apagado ao voltar do Google | necessário (segurança) |
 | tema claro/escuro | `localStorage` | lembrar a escolha do visitante | necessário (preferência) |
 | aviso de notificações dispensado | `localStorage` | não perguntar de novo | necessário (preferência) |
 | `linkcut.consent` | `localStorage` | guardar a escolha de privacidade, com a versão e a data | necessário |

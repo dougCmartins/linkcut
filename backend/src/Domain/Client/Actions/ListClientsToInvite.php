@@ -18,6 +18,7 @@ final class ListClientsToInvite
     {
         $clients = Client::query()
             ->whereNull('password')
+            ->whereNull('google_id')
             ->whereNull('registration_invited_at')
             ->whereNull('emails_opted_out_at')
             ->where('created_at', '<=', now()->subHours((int) config('client.invite_after_hours')))

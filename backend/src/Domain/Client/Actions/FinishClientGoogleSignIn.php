@@ -30,8 +30,8 @@ final class FinishClientGoogleSignIn
             return self::DENIED;
         }
 
-        $volta = Cache::pull(ClientGoogleLogin::stateKey($data->state));
-        if (! is_string($volta) || $volta === '') {
+        $started = Cache::pull(ClientGoogleLogin::stateKey($data->state));
+        if (! is_array($started) || ! is_string($started['volta'] ?? null) || ! is_string($started['nonce'] ?? null)) {
             return self::DENIED;
         }
 
@@ -47,11 +47,15 @@ final class FinishClientGoogleSignIn
         }
 
         $code = Str::random(64);
-        Cache::put(ClientGoogleLogin::codeKey($code), $client->client_id, ClientGoogleLogin::CODE_TTL_SECONDS);
+        Cache::put(
+            ClientGoogleLogin::codeKey($code),
+            ['client_id' => $client->client_id, 'nonce' => $started['nonce']],
+            ClientGoogleLogin::CODE_TTL_SECONDS,
+        );
 
         return '/conta/entrar/google?'.http_build_query([
             'codigo' => $code,
-            'volta' => $volta,
+            'volta' => $started['volta'],
         ]);
     }
 

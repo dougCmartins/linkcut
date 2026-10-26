@@ -9,6 +9,7 @@ import { useApiErrors } from '@/composables/useApiErrors'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { safeClientRedirect } from './client.guard'
 import { useClientStore } from './client.store'
+import { takeGoogleNonce } from './googleNonce'
 
 /** Google sent the browser back with a one-time code. This page trades it for the session and leaves. */
 const { t } = useI18n()
@@ -29,7 +30,7 @@ async function signIn(): Promise<void> {
     return
   }
   try {
-    await clientStore.exchangeGoogle(code)
+    await clientStore.exchangeGoogle(code, takeGoogleNonce())
     await router.replace(volta)
   } catch (caught) {
     error.value = t(`errors.api.${apiErrors.messageKey(caught)}`)

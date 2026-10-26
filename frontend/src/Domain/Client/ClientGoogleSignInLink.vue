@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { safeClientRedirect } from './client.guard'
+import { keepGoogleNonce, newGoogleNonce } from './googleNonce'
 
 /**
  * A normal link to our API, which redirects to Google. No Google script, so the page CSP stays as it is.
@@ -11,17 +12,19 @@ import { safeClientRedirect } from './client.guard'
 const props = defineProps<{ returnTo?: string }>()
 const { t } = useI18n()
 const route = useRoute()
+const nonce = newGoogleNonce()
 
 const href = computed(() => {
   const volta = safeClientRedirect(props.returnTo ?? route.query.redirect)
   const base = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
-  return `${base}/client/auth/google/redirect?volta=${encodeURIComponent(volta)}`
+  return `${base}/client/auth/google/redirect?nonce=${nonce}&volta=${encodeURIComponent(volta)}`
 })
 </script>
 
 <template>
   <a
     :href="href"
+    @click="keepGoogleNonce(nonce)"
     class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-button bg-surface px-5 text-[15px] font-display font-bold tracking-tight text-ink ring-1 ring-line transition duration-150 ease-out hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
   >
     <svg class="size-5" viewBox="0 0 24 24" aria-hidden="true">

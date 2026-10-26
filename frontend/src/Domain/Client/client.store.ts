@@ -77,8 +77,8 @@ export const useClientStore = defineStore('client', () => {
   }
 
   /** Google's one-time code, same storage as the password login. */
-  async function exchangeGoogle(code: string): Promise<void> {
-    setSession(await clientApi.exchangeGoogle(code))
+  async function exchangeGoogle(code: string, nonce: string): Promise<void> {
+    setSession(await clientApi.exchangeGoogle(code, nonce))
   }
 
   /** Completes the sign-up or sets a new password with the code from the e-mail. */
