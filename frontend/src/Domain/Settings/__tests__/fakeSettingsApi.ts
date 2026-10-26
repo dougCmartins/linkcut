@@ -26,6 +26,7 @@ export function createTestSettings(): AppSettings {
         { network: SocialNetwork.TikTok, url: '' },
         { network: SocialNetwork.YouTube, url: '' },
       ],
+      links: [],
       address: {
         zipCode: '01304001',
         street: 'Rua Augusta',
@@ -127,6 +128,9 @@ const addressBody = ({ profile: { address } }: AppSettings) =>
 const socialsBody = (settings: AppSettings) =>
   settings.profile.socials.map((social) => ({ network: social.network, url: social.url || null }))
 
+const linksBody = (settings: AppSettings) =>
+  settings.profile.links.map((link) => ({ title: link.title, url: link.url, icon: link.icon }))
+
 /** GET /settings */
 export function settingsBody(settings = createTestSettings()) {
   const { profile, portfolio } = settings
@@ -140,6 +144,7 @@ export function settingsBody(settings = createTestSettings()) {
       whatsapp_number: profile.whatsappNumber,
       whatsapp_message: profile.whatsappMessage,
       socials: socialsBody(settings),
+      links: linksBody(settings),
       address: addressBody(settings),
     },
     portfolio: {
@@ -167,6 +172,7 @@ export function publicPageBody(settings = createTestSettings()) {
       whatsapp_number: profile.whatsappNumber,
       whatsapp_message: profile.whatsappMessage,
       socials: socialsBody(settings).filter((social) => social.url),
+      links: linksBody(settings),
       address: addressBody(settings),
     },
     portfolio: {

@@ -23,6 +23,7 @@ export function createEmptySettings(): AppSettings {
       whatsappNumber: '',
       whatsappMessage: '',
       socials: [],
+      links: [],
       address: emptyAddress(),
     },
     portfolio: { cover: null, quote: '', story: '', highlights: [], photos: [] },

@@ -1,3 +1,4 @@
+import type { ProfileLinkIcon } from '@/types/profileLinkIcon'
 import type { SocialNetwork } from '@/types/socialNetwork'
 import type { ButtonShape, ButtonStyle, ThemeMode, ThemePalette } from '@/types/theme'
 
@@ -58,6 +59,13 @@ export interface SocialLink {
   url: string
 }
 
+/** A free button on the public page. `icon` is null when the barber picked none. */
+export interface ProfileLink {
+  title: string
+  url: string
+  icon: ProfileLinkIcon | null
+}
+
 /** The 27 Brazilian states (UF). */
 export const BRAZIL_STATES = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
@@ -100,6 +108,7 @@ export interface ProfileSettings {
   whatsappNumber: string
   whatsappMessage: string
   socials: SocialLink[]
+  links: ProfileLink[]
   /** Always an object in the editor; empty fields when not filled in yet. */
   address: BarbershopAddress
 }
@@ -184,6 +193,7 @@ export interface PublicProfile {
   whatsappNumber: string
   whatsappMessage: string
   socials: SocialLink[]
+  links: ProfileLink[]
   /** Null when the barbershop has no address yet (then it can't receive bookings). */
   address: BarbershopAddress | null
 }
