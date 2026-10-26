@@ -71,6 +71,16 @@ function checkLength(value: string, limits: { min?: number; max: number }, requi
   return null
 }
 
+/** A real address after https:// (a host, no spaces): "https://" alone would be a dead button. */
+function isWebAddress(url: string): boolean {
+  if (/\s/.test(url)) return false
+  try {
+    return new URL(url).hostname.includes('.')
+  } catch {
+    return false
+  }
+}
+
 export function validateProfile(profile: ProfileSettings): ValidationErrors {
   const { errors, add } = createCollector()
   add('name', checkLength(profile.name, TEXT_LIMITS.name, true))
@@ -91,7 +101,9 @@ export function validateProfile(profile: ProfileSettings): ValidationErrors {
         ? { key: 'https' }
         : url.length > TEXT_LIMITS.linkUrl.max
           ? { key: 'tooLong', params: { max: TEXT_LIMITS.linkUrl.max } }
-          : null
+          : !isWebAddress(url)
+            ? { key: 'url' }
+            : null
     add(`links.${index}.url`, urlError)
   })
   // Required: clients see the address when they book.

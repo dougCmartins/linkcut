@@ -263,7 +263,7 @@ final class SettingsEditorTest extends TestCase
         $this->getJson('/api/public/rafael')->assertOk()->assertJsonPath('profile.links.0.title', 'Site');
     }
 
-    public function test_profile_links_reject_http_and_urls_longer_than_300(): void
+    public function test_profile_links_reject_http_broken_addresses_and_urls_longer_than_300(): void
     {
         // Arrange
         $this->actingAsBarber();
@@ -273,15 +273,22 @@ final class SettingsEditorTest extends TestCase
         $tooLong = $this->profilePayload([
             'links' => [['title' => 'Longo', 'url' => 'https://'.str_repeat('a', 293), 'icon' => null]],
         ]);
+        $notAddress = $this->profilePayload([
+            'links' => [['title' => 'Vazio', 'url' => 'https://', 'icon' => null], ['title' => 'Espaço', 'url' => 'https://meu site.com', 'icon' => null]],
+        ]);
 
         // Act
         $insecure = $this->putJson('/api/settings/profile', $http);
         $overLimit = $this->putJson('/api/settings/profile', $tooLong);
+        $broken = $this->putJson('/api/settings/profile', $notAddress);
 
         // Assert
         $insecure->assertUnprocessable();
         $this->assertSame(['starts_with'], $insecure->json('errors')['links.0.url']);
         $overLimit->assertUnprocessable();
-        $this->assertSame(['max'], $overLimit->json('errors')['links.0.url']);
+        $this->assertContains('max', $overLimit->json('errors')['links.0.url']);
+        $broken->assertUnprocessable();
+        $this->assertSame(['url'], $broken->json('errors')['links.0.url']);
+        $this->assertSame(['url'], $broken->json('errors')['links.1.url']);
     }
 }

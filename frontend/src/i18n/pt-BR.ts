@@ -395,6 +395,7 @@ export default {
       tooLong: 'Use no máximo {max} caracteres.',
       phone: 'Informe um telefone com DDD. Ex.: (11) 99999-8888',
       https: 'O link precisa começar com https://',
+      url: 'Confira o endereço do link. Ex.: https://meusite.com.br',
       tooManyPhotos: 'Máximo de {max} fotos.',
       altRequired: 'Descreva a foto (ajuda quem usa leitor de tela).',
       minServices: 'Cadastre pelo menos um serviço.',
