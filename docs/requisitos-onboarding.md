@@ -11,11 +11,18 @@
 - Trocar de modo muda só o formulário e a foto, sem recarregar a página. O endereço acompanha o modo e o "Voltar" do navegador funciona.
 - Barbeiro já conectado que abre uma dessas rotas vai direto para o `/painel`.
 
-### Login do barbeiro (`/<link>/entrar`)
+### Login do barbeiro (`/<link>/panel/login`)
+- O endereço antigo `/<link>/entrar` (em e-mails já enviados) leva para esse.
 - O barbeiro entra **pela página da barbearia**, com o tema, a foto e o nome dela.
 - O backend só aceita barbeiros daquela barbearia. Página errada, inexistente ou desativada dá **o mesmo erro** de senha errada (não revela quais e-mails existem).
 - O aparelho guarda a última página: "Sair", sessão expirada e o app instalado voltam para ela.
 - O rodapé da página pública ("feito com linkcut") leva a esse login.
+
+### Login do cliente (`/<link>/login`)
+- O cliente entra **pela página da barbearia**, com o tema, a foto e o nome dela.
+- A área do cliente continua em `/conta` e mostra todas as barbearias dele.
+- O aparelho guarda a última barbearia aberta (`linkcut.visited-slug`): "Sair", sessão expirada, exclusão da conta e os links sem barbearia (como `/conta/entrar`, a volta do Google) levam para `/<link>/login`.
+- Sem nenhuma barbearia aberta no aparelho, o login fica em `/conta/entrar`, com o visual do linkcut.
 
 ### Cadastro
 | ID | Regra |

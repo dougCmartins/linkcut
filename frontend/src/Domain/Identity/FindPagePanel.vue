@@ -11,7 +11,7 @@ import { lastBarberSlug } from '@/Domain/Tenant/tenant.store'
 import { sendLoginLink } from './auth.api'
 
 /**
- * /entrar: barbers sign in on their own page (/<slug>/entrar). Here they get its link by e-mail, or go straight to
+ * /entrar: barbers sign in on their own page (/<slug>/panel/login). Here they get its link by e-mail, or go straight to
  * the page this device used last.
  */
 const { t } = useI18n()
@@ -52,7 +52,7 @@ async function send(): Promise<void> {
     </p>
     <AuthHeading :title="t('findPage.title')" :subtitle="t('findPage.subtitle')" />
 
-    <BaseButton v-if="lastSlug" class="mb-6" variant="primary" size="lg" elevated block :to="`/${lastSlug}/entrar`">
+    <BaseButton v-if="lastSlug" class="mb-6" variant="primary" size="lg" elevated block :to="`/${lastSlug}/panel/login`">
       {{ t('findPage.continueOn', { address: `${host}/${lastSlug}` }) }}
     </BaseButton>
 

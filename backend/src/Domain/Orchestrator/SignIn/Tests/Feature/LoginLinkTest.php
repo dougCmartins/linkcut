@@ -33,7 +33,7 @@ final class LoginLinkTest extends TestCase
             $mail = $notification->toMail($notifiable);
 
             return $notifiable->routeNotificationFor('mail') === 'rafael@example.com'
-                && $mail->actionUrl === 'https://linkcut.app/rafael/entrar'
+                && $mail->actionUrl === 'https://linkcut.app/rafael/panel/login'
                 && str_contains(implode(' ', $mail->introLines), 'Barbearia do Rafa');
         });
     }

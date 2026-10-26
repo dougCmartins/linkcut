@@ -1,8 +1,17 @@
-import type { Router } from 'vue-router'
+import type { LocationQueryRaw, RouteLocationRaw, Router } from 'vue-router'
+import { lastVisitedSlug } from '@/Domain/Settings/publicPage.store'
 import { useClientStore } from './client.store'
 
+/** /conta/entrar: only when this device never opened a barbershop page; otherwise it sends on to /<slug>/login. */
 export const CLIENT_LOGIN_ROUTE = 'client-login'
+/** /<slug>/login: the client's sign-in with the barbershop's theme. */
+export const BARBERSHOP_CLIENT_LOGIN_ROUTE = 'barbershop-client-login'
 export const CLIENT_HOME = '/conta'
+
+/** Where the client signs in: the last barbershop page opened here (/<slug>/login), else /conta/entrar. */
+export function clientLoginLocation(query: LocationQueryRaw = {}, slug: string | null = lastVisitedSlug()): RouteLocationRaw {
+  return slug ? { name: BARBERSHOP_CLIENT_LOGIN_ROUTE, params: { slug }, query } : { name: CLIENT_LOGIN_ROUTE, query }
+}
 
 /** Only same-app paths are accepted as a redirect target (no open redirects). */
 export function safeClientRedirect(target: unknown): string {
@@ -16,17 +25,8 @@ export function installClientGuard(router: Router): void {
     const client = useClientStore()
     client.onSessionExpired(() => {
       const current = router.currentRoute.value
-      if (current.meta.requiresClient)
-        void router.replace({
-          name: CLIENT_LOGIN_ROUTE,
-          query: { redirect: current.fullPath },
-        })
+      if (current.meta.requiresClient) void router.replace(clientLoginLocation({ redirect: current.fullPath }))
     })
-    return (
-      (await client.ensureSession()) || {
-        name: CLIENT_LOGIN_ROUTE,
-        query: { redirect: to.fullPath },
-      }
-    )
+    return (await client.ensureSession()) || clientLoginLocation({ redirect: to.fullPath })
   })
 }

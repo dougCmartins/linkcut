@@ -64,7 +64,7 @@ describe('auth guard', () => {
     await router.push('/painel')
 
     // Assert
-    expect(router.currentRoute.value.fullPath).toBe('/rafael/entrar?redirect=/painel')
+    expect(router.currentRoute.value.fullPath).toBe('/rafael/panel/login?redirect=/painel')
     localStorage.removeItem('linkcut.last-slug')
   })
 

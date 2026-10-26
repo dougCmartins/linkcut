@@ -7,7 +7,7 @@ import AuthSplitLayout from '@/components/ui/AuthSplitLayout.vue'
 import { AUTH_PHOTOS } from '@/assets/auth/authPhotos'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { safeClientRedirect } from './client.guard'
+import { clientLoginLocation, safeClientRedirect } from './client.guard'
 import { useClientStore } from './client.store'
 import { takeGoogleNonce } from './googleNonce'
 
@@ -61,7 +61,7 @@ usePageMeta(
     </p>
     <p v-else class="text-sm font-semibold text-muted" role="status">{{ t('client.google.signingIn') }}</p>
     <p v-if="error" class="mt-8 text-center text-sm">
-      <RouterLink :to="{ name: 'client-login' }" class="font-semibold text-accent underline underline-offset-4">
+      <RouterLink :to="clientLoginLocation()" class="font-semibold text-accent underline underline-offset-4">
         {{ t('client.google.back') }}
       </RouterLink>
     </p>

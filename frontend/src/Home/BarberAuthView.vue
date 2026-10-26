@@ -9,7 +9,7 @@ import { usePageMeta } from '@/composables/usePageMeta'
 
 /**
  * linkcut's own entrance (/, /cadastrar, /entrar): one page where "Criar conta" comes first and "Entrar" is one
- * click away. Barbers sign in on their own page (/<slug>/entrar); here "Entrar" sends them its link. The three routes share this component, so switching only swaps the form and the photo.
+ * click away. Barbers sign in on their own page (/<slug>/panel/login); here "Entrar" sends them its link. The three routes share this component, so switching only swaps the form and the photo.
  */
 // Only the form of the current mode is downloaded; the other one comes when the barber switches.
 const FindPagePanel = defineAsyncComponent(() => import('@/Domain/Identity/FindPagePanel.vue'))

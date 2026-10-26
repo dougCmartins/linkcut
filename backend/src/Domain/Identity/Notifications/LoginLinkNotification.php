@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-/** "Encontrar minha página": the sign-in link of the barber's own page (linkcut.app/<slug>/entrar). */
+/** "Encontrar minha página": the sign-in link of the barber's own page (linkcut.app/<slug>/panel/login). */
 final class LoginLinkNotification extends Notification implements ShouldQueue
 {
     use Queueable;
