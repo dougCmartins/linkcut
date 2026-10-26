@@ -17,11 +17,13 @@ Route::middleware(['auth:api', 'tenant'])->prefix('settings')->group(function ()
     Route::post('images', [SettingsController::class, 'uploadImage'])->middleware('throttle:uploads');
 });
 
-// Badly formed slugs are a plain 404, like unknown ones.
-Route::middleware(['throttle:public', 'tenant.slug'])->prefix('public/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {
-    Route::get('/', [PublicPageController::class, 'show']);
-    Route::get('booking-options', [PublicPageController::class, 'bookingOptions']);
-});
+// Badly formed slugs are a plain 404, like unknown ones. The ETag lets a returning visitor get an empty 304;
+// "no-cache" makes the browser ask every time, so a barber sees the change right after saving.
+Route::middleware(['throttle:public', 'tenant.slug', 'cache.headers:public;no_cache;etag'])
+    ->prefix('public/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {
+        Route::get('/', [PublicPageController::class, 'show']);
+        Route::get('booking-options', [PublicPageController::class, 'bookingOptions']);
+    });
 
 // Link previews (Open Graph) for crawlers that do not run JavaScript; deploy/Caddyfile routes them here.
 Route::middleware(['throttle:public', 'tenant.slug'])->prefix('og/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {

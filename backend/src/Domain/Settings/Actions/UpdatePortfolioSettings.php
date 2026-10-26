@@ -14,6 +14,7 @@ use Domain\Settings\Models\Image;
 use Domain\Settings\Models\PortfolioHighlight;
 use Domain\Settings\Models\PortfolioPhoto;
 use Domain\Settings\Models\PortfolioSettings;
+use Domain\Settings\Support\PublicSettingsCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +23,7 @@ final class UpdatePortfolioSettings
 {
     public function __construct(
         private readonly CreateDefaultSettings $createDefaultSettings,
+        private readonly PublicSettingsCache $cache,
         private readonly ShowPortfolioSettings $showPortfolio,
     ) {}
 
@@ -54,6 +56,8 @@ final class UpdatePortfolioSettings
                 array_keys($data->photos->all()),
             ));
         });
+
+        $this->cache->forget();
 
         Log::info('settings_portfolio_updated', ['photos' => $data->photos->count()]);
 

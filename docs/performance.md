@@ -1,6 +1,6 @@
-# Performance do backend
+# Performance
 
-Como medimos, o que mudou e como repetir a medição quando o banco crescer.
+Como medimos, o que mudou e como repetir a medição quando o banco crescer. Os números de carga e o que fazer quando o movimento crescer estão também em [escala.md](escala.md).
 
 ## Como medir
 1. Suba um MySQL 8 só para isso (nunca use o banco de produção):
@@ -66,6 +66,69 @@ Os lembretes foram medidos num horário sem nenhum agendamento na janela. Com ag
   - `tenants.active`;
   - `images.created_at`.
 - **Produção:**
-  - `CACHE_STORE=file`: o limite de tentativas deixa de consultar o banco;
+  - cache e limite de tentativas no Redis (`docker-compose.prod.yml`), sem consultar o banco;
   - `config:cache`, `route:cache` e `event:cache` ao subir;
   - `make prod-up` recria os containers do app.
+
+## Cache da página pública
+- A página pública (`GET /api/public/{slug}`) e as opções de agendamento (`GET /api/public/{slug}/booking-options`) ficam no cache **por barbearia** (`PublicSettingsCache`).
+- Salvar qualquer aba das configurações apaga o cache daquela barbearia: o visitante vê a mudança na hora.
+- Validade de 10 minutos, só para o caso de alguém mudar o banco direto.
+- A cada deploy, o app limpa o cache depois das migrações (`docker/entrypoint.sh`): nada da versão anterior fica para trás.
+- Com o cache, essas duas rotas fazem **uma consulta** (a barbearia pelo slug), em vez de 5 a 12.
+- As duas respostas saem com `ETag` e `Cache-Control: no-cache`: o navegador sempre pergunta, mas, se nada mudou, recebe um `304` vazio.
+- O `CreateDefaultSettings` continua como garantia nessas rotas, mas só roda quando o cache está vazio. As configurações já nascem no cadastro (`SignUpBarber`).
+- O "mês até hoje" do financeiro soma as despesas fixas no banco, sem carregar todas.
+- O histórico abre com um esqueleto do tamanho final e só desenha os dias que estão na tela (`content-visibility`).
+
+## Teste de carga (k6)
+Os roteiros estão em `loadtest/`:
+- `public.js`: visitantes chegando do Instagram. Cada um abre a página (perfil e opções juntos), vê os horários livres, e 1 em cada 10 pede um horário. Sobe de 50 para 200 visitantes ao mesmo tempo.
+- `stress.js`: aumenta as aberturas de página por segundo (de 20 para 300) até o servidor não dar conta.
+
+**Como rodar** (com o banco de teste do começo desta página, nunca em produção):
+```bash
+docker run --rm --network host -v $PWD/loadtest:/k6 grafana/k6 run /k6/public.js   # BASE=http://127.0.0.1:8081 por padrão
+docker run --rm --network host -v $PWD/loadtest:/k6 grafana/k6 run /k6/stress.js
+```
+Cada visitante manda um `X-Forwarded-For` diferente, como celulares diferentes, para não cair no limite de 120 por minuto por IP. Isso só funciona falando direto com o app. Atrás do Caddy, o IP real prevalece e o limite vale.
+
+**Ambiente da medição:**
+- 4 núcleos e o k6 rodando na mesma máquina;
+- PHP 8.3 com OPcache, 8 processos, no modo clássico (um boot do Laravel por requisição, como o FrankenPHP de produção hoje);
+- MySQL 8 com 200 barbearias e 500 mil agendamentos.
+
+| Teste | Antes (`main`) | Depois | Depois, com a configuração de produção |
+|---|---|---|---|
+| `public.js`: tempo de resposta p95 | 42 ms | 32 ms | **21 ms** (mediana 11 ms) |
+| `public.js`: horários livres p95 | 33 ms | 25 ms | **15 ms** |
+| `stress.js`: máximo de requisições por segundo | 170 | 193 | **240** |
+| `stress.js`: aberturas de página descartadas | 2.968 | 2.091 | **324** |
+| `stress.js`: tempo de resposta mediano no pico | 1,8 s | 0,8 s | **19 ms** |
+
+- **"Configuração de produção"** é o Laravel Pulse desligado (`PULSE_ENABLED=false`, como no `.env.production.example`). Ligado, o Pulse grava duas linhas no banco a cada requisição, cerca de 4 ms cada vez.
+- **Falhas:** nenhuma, fora alguns `409` de horário já ocupado, que é a resposta certa quando dois visitantes pedem o mesmo horário.
+- **O limite agora é a CPU do PHP:** cerca de 6 ms por requisição só para subir o Laravel. Numa VPS de 2 núcleos, espere metade: perto de 120 requisições por segundo, ou 60 aberturas de página por segundo. Isso dá mais de **200 mil visitas por hora**.
+
+## Lighthouse (celular)
+Lighthouse no perfil de celular do PageSpeed (Moto G Power, 4G lento), com o build de produção atrás do Caddy:
+
+| Página | Performance | CLS | LCP |
+|---|---|---|---|
+| `/` | 97 | 0 | 2,4 s |
+| `/:slug` | 95 | 0 | 2,6 s |
+| `/:slug/agendar` | 95 | 0,006 | 2,6 s |
+| `/:slug/entrar` | 93 | 0 | 3,0 s |
+| `/entrar` | 96 | 0 | 2,4 s |
+| `/conta/entrar` | 94 | 0 | 2,8 s |
+
+- Acessibilidade 100 em todas.
+- SEO 100 nas páginas públicas; as de login ficam fora do Google (`noindex`) de propósito.
+
+As telas com login foram medidas no Playwright, com CPU 4x mais lenta e 4G lento:
+
+| Página | CLS | LCP |
+|---|---|---|
+| `/painel` | 0,027 | 0,6 s |
+| `/painel/historico` | 0,016 | 0,9 s |
+| `/painel/configuracoes` | 0 | 1,2 s |

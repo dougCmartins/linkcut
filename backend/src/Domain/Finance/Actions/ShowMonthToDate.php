@@ -29,7 +29,10 @@ final class ShowMonthToDate
             ->selectRaw('coalesce(sum(price_in_cents), 0) as revenue, coalesce(sum(cost_in_cents), 0) as costs')
             ->toBase()
             ->first();
-        $fixed = FixedExpense::query()->get()->filter(fn (FixedExpense $expense): bool => $expense->isDueOn($today))->sum('amount_in_cents');
+        // Same rule as FixedExpense::isDueOn, summed in the database: on the last day of the month every one is due.
+        $fixed = (int) FixedExpense::query()
+            ->when($today->day < $today->daysInMonth, fn ($query) => $query->where('due_day', '<=', $today->day))
+            ->sum('amount_in_cents');
         $oneOff = (int) OneOffExpense::query()->betweenDates($from, $to)->sum('amount_in_cents');
         $serviceCosts = (int) $revenue->costs;
 

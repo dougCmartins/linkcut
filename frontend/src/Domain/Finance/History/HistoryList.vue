@@ -15,7 +15,8 @@ function dayLabel(isoDate: string): string {
 
 <template>
   <ol class="grid gap-5">
-    <li v-for="group in groups" :key="group.date">
+    <!-- Days off screen are only laid out when scrolled to: 50 or 100 records render light on a slow phone. -->
+    <li v-for="group in groups" :key="group.date" class="[contain-intrinsic-size:auto_220px] [content-visibility:auto]">
       <div class="flex items-baseline justify-between gap-3 px-1 pb-2">
         <h3 class="text-sm">
           <time :datetime="group.date">{{ dayLabel(group.date) }}</time>
