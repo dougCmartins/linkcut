@@ -144,9 +144,13 @@ async function exportCsv(): Promise<void> {
     <p v-else-if="summary.count" class="mt-1 text-xs text-muted">{{ t('history.exportHint', { count: summary.count }) }}</p>
 
     <div class="mt-4" :aria-busy="state.isLoading">
-      <p v-if="state.isLoading" class="rounded-card bg-surface px-4 py-8 text-center text-sm text-muted ring-1 ring-line" role="status">
-        {{ t('history.loading') }}
-      </p>
+      <div v-if="state.isLoading" role="status">
+        <span class="sr-only">{{ t('history.loading') }}</span>
+        <!-- Same height as a day of records, so the page does not jump when they arrive. -->
+        <ul class="grid gap-5" aria-hidden="true">
+          <li v-for="index in 3" :key="index" class="h-44 animate-pulse rounded-card bg-surface ring-1 ring-line" />
+        </ul>
+      </div>
       <p v-else-if="state.hasFailed" class="rounded-card bg-danger/10 px-4 py-6 text-center text-sm text-danger ring-1 ring-danger/40" role="alert">
         {{ t('history.loadFailed') }}
       </p>

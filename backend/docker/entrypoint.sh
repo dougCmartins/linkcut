@@ -60,6 +60,8 @@ if [ "${RUN_SETUP:-true}" = "true" ]; then
   done
 
   php artisan migrate --force
+  # The cache keeps PHP objects of the previous version (and data the migrations may have changed): start clean.
+  php artisan cache:clear
 
   # Push notification keys (VAPID), written to .env once.
   php artisan notifications:vapid-keys

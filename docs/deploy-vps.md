@@ -89,7 +89,7 @@ make prod-up
 
 As migrations do banco rodam sozinhas. O `make prod-up` sempre recria os containers do app, então uma mudança no `.env.production` vale na hora.
 
-> **Quem já tinha subido antes:** no seu `.env.production`, troque `CACHE_STORE=database` por `CACHE_STORE=file`. O limite de tentativas deixa de consultar o banco a cada requisição.
+> **Cache no Redis:** o `docker-compose.prod.yml` sobe um Redis só para o cache e para o limite de tentativas (64 MB, sem disco), e já aponta o app para ele. Não precisa mudar nada no `.env.production`. A fila continua no MySQL, que não perde trabalho se o servidor reiniciar.
 
 ## Backup (banco + imagens + chaves + configurações)
 O `make prod-backup` gera **um arquivo cifrado** (AES-256) em `backups/linkcut-AAAA-MM-DD-HHMM.tar.gz.enc` com:

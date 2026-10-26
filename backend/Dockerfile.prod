@@ -7,7 +7,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --pr
 
 FROM dunglas/frankenphp:1-php8.3
 
-RUN install-php-extensions pdo_mysql gd intl zip gmp pcntl opcache \
+RUN install-php-extensions pdo_mysql redis gd intl zip gmp pcntl opcache \
     && apt-get update && apt-get install -y --no-install-recommends gosu \
     && rm -rf /var/lib/apt/lists/* \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"

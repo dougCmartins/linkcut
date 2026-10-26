@@ -1,5 +1,5 @@
 # Production on a VPS: make prod-up (reads .env.production; see docs/deploy-vps.md).
-# Only Caddy (web) is public, on ports 80 and 443. The API, the queue, the scheduler and MySQL stay inside.
+# Only Caddy (web) is public, on ports 80 and 443. The API, the queue, the scheduler, Redis and MySQL stay inside.
 # Sized for a 2 GB VPS (+2 GB swap): memory limits per service and logs capped at 50 MB each.
 
 x-logging: &logging
@@ -21,11 +21,16 @@ x-app: &app
     DB_DATABASE: ${DB_DATABASE}
     DB_USERNAME: ${DB_USERNAME}
     DB_PASSWORD: ${DB_PASSWORD}
+    # Cache and rate limits in Redis (shared by every app process; the queue stays in MySQL, which is durable).
+    CACHE_STORE: redis
+    REDIS_HOST: redis
   volumes:
     - ./.env.production:/var/www/html/.env
     - app_storage:/var/www/html/storage
   depends_on:
     mysql:
+      condition: service_healthy
+    redis:
       condition: service_healthy
 
 services:
@@ -86,6 +91,19 @@ services:
     depends_on:
       app:
         condition: service_healthy
+
+  # Only a cache: no disk, and the least recently used keys go when the 48 MB are full.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 64m
+    command: ["redis-server", "--maxmemory", "48mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   mysql:
     image: mysql:8.0

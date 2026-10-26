@@ -8,6 +8,7 @@ use Domain\Settings\Data\BookingOptionsData;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Data\PublicServiceData;
 use Domain\Settings\Data\ServiceData;
+use Domain\Settings\Support\PublicSettingsCache;
 use Spatie\LaravelData\DataCollection;
 
 /** What the public booking needs. Services go out without the cost. */
@@ -16,9 +17,15 @@ final class ShowBookingOptions
     public function __construct(
         private readonly CreateDefaultSettings $createDefaultSettings,
         private readonly ShowScheduleSettings $showSchedule,
+        private readonly PublicSettingsCache $cache,
     ) {}
 
     public function handle(): BookingOptionsData
+    {
+        return $this->cache->remember(PublicSettingsCache::BOOKING_OPTIONS, fn (): BookingOptionsData => $this->build());
+    }
+
+    private function build(): BookingOptionsData
     {
         $this->createDefaultSettings->handle(new DefaultSettingsData);
         $schedule = $this->showSchedule->handle();

@@ -12,6 +12,7 @@ use Domain\Settings\Data\UpdateScheduleSettingsData;
 use Domain\Settings\Models\BookingSettings;
 use Domain\Settings\Models\BusinessHour;
 use Domain\Settings\Models\Service;
+use Domain\Settings\Support\PublicSettingsCache;
 use Domain\Tenant\Context\CurrentTenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,7 @@ final class UpdateScheduleSettings
 {
     public function __construct(
         private readonly CreateDefaultSettings $createDefaultSettings,
+        private readonly PublicSettingsCache $cache,
         private readonly ShowScheduleSettings $showSchedule,
         private readonly CurrentTenant $currentTenant,
     ) {}
@@ -59,6 +61,8 @@ final class UpdateScheduleSettings
                 'vacation_message' => $data->vacation->message ?? '',
             ]);
         });
+
+        $this->cache->forget();
 
         Log::info('settings_schedule_updated', ['services' => $data->services->count()]);
 

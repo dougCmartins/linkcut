@@ -12,6 +12,7 @@ use Domain\Settings\Data\PublicPhotoData;
 use Domain\Settings\Data\PublicPortfolioData;
 use Domain\Settings\Data\PublicProfileData;
 use Domain\Settings\Data\SocialLinkData;
+use Domain\Settings\Support\PublicSettingsCache;
 use Spatie\LaravelData\DataCollection;
 
 /** Bio link + portfolio + theme of the barbershop resolved by slug, as visitors see them. */
@@ -22,9 +23,15 @@ final class ShowPublicPage
         private readonly ShowProfileSettings $showProfile,
         private readonly ShowPortfolioSettings $showPortfolio,
         private readonly ShowThemeSettings $showTheme,
+        private readonly PublicSettingsCache $cache,
     ) {}
 
     public function handle(): PublicPageData
+    {
+        return $this->cache->remember(PublicSettingsCache::PUBLIC_PAGE, fn (): PublicPageData => $this->build());
+    }
+
+    private function build(): PublicPageData
     {
         $this->createDefaultSettings->handle(new DefaultSettingsData);
         $profile = $this->showProfile->handle();

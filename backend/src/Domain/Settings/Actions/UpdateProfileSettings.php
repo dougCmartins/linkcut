@@ -14,6 +14,7 @@ use Domain\Settings\Models\Image;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\SocialLink;
 use Domain\Settings\Support\AddressGeocoder;
+use Domain\Settings\Support\PublicSettingsCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +24,7 @@ final class UpdateProfileSettings
 {
     public function __construct(
         private readonly CreateDefaultSettings $createDefaultSettings,
+        private readonly PublicSettingsCache $cache,
         private readonly ShowProfileSettings $showProfile,
         private readonly AddressGeocoder $geocoder,
     ) {}
@@ -54,6 +56,8 @@ final class UpdateProfileSettings
                 array_keys($data->socials->all()),
             ));
         });
+
+        $this->cache->forget();
 
         Log::info('settings_profile_updated');
 
