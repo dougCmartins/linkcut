@@ -50,22 +50,25 @@ export async function fetchAvailability(slug: string, serviceIds: string[]): Pro
 
 /** Rejects with SLOT_UNAVAILABLE (409) when the time was taken in the meantime. */
 export async function createBookingRequest(slug: string, input: BookingRequestInput): Promise<BookingConfirmation> {
-  const { data } = await http<{ id: number; service_name: string; date: string; time: string }>(`${publicPath(slug)}/booking-requests`, {
-    method: 'POST',
-    auth: false,
-    body: {
-      client_name: input.clientName,
-      client_whatsapp: input.clientWhatsapp,
-      client_email: input.clientEmail,
-      service_ids: input.serviceIds.map(Number),
-      client_notes: input.clientNotes?.trim() || null,
-      date: input.date,
-      time: input.time,
-      client_latitude: input.clientLocation?.latitude ?? null,
-      client_longitude: input.clientLocation?.longitude ?? null,
+  const { data } = await http<{ id: number; service_name: string; date: string; time: string; push_url?: string | null }>(
+    `${publicPath(slug)}/booking-requests`,
+    {
+      method: 'POST',
+      auth: false,
+      body: {
+        client_name: input.clientName,
+        client_whatsapp: input.clientWhatsapp,
+        client_email: input.clientEmail,
+        service_ids: input.serviceIds.map(Number),
+        client_notes: input.clientNotes?.trim() || null,
+        date: input.date,
+        time: input.time,
+        client_latitude: input.clientLocation?.latitude ?? null,
+        client_longitude: input.clientLocation?.longitude ?? null,
+      },
     },
-  })
-  return { id: data.id, serviceName: data.service_name, date: data.date, time: data.time }
+  )
+  return { id: data.id, serviceName: data.service_name, date: data.date, time: data.time, pushUrl: data.push_url ?? null }
 }
 
 /* Barber */

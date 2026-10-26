@@ -17,7 +17,6 @@
     <meta name="twitter:card" content="summary">
 @endif
     <link rel="canonical" href="{{ $card->url }}">
-    <meta http-equiv="refresh" content="0; url={{ $card->url }}">
 </head>
 <body>
     <p><a href="{{ $card->url }}">{{ $card->title }}</a></p>

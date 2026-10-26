@@ -42,7 +42,17 @@ final class BookingEmailNotification extends Notification implements ShouldBeEnc
             'time' => $data->time,
         ];
 
+        $accent = $data->accent_color ?? '#121212';
         $mail = (new MailMessage)
+            // The barbershop's look for its clients: its name as the sender, its photo and color (linkcut in the footer).
+            ->from((string) config('mail.from.address'), __('client_mail.from', ['barbershop' => $data->barbershop_name]))
+            ->markdown('mail.client-booking', [
+                'barbershop' => $data->barbershop_name,
+                'logoUrl' => $data->logo_url,
+                'bookingUrl' => $data->booking_url,
+                'accent' => $accent,
+                'accentText' => self::textOn($accent),
+            ])
             ->subject(__("{$key}.subject", $replace))
             ->greeting(__('client_mail.greeting', $replace))
             ->line(__("{$key}.intro", $replace))
@@ -65,5 +75,13 @@ final class BookingEmailNotification extends Notification implements ShouldBeEnc
         }
 
         return $mail;
+    }
+
+    /** Black or white text, whichever reads better on the button color. */
+    private static function textOn(string $hex): string
+    {
+        [$red, $green, $blue] = sscanf($hex, '#%02x%02x%02x') ?: [0, 0, 0];
+
+        return (0.299 * $red + 0.587 * $green + 0.114 * $blue) > 160 ? '#111111' : '#ffffff';
     }
 }

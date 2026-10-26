@@ -15,5 +15,7 @@ final class BookingConfirmationData extends Data
         public readonly string $date,
         public readonly string $time,
         public readonly string $status,
+        /** Short-lived signed link (relative to the site) to get this booking's answers as push on this device. */
+        public readonly ?string $push_url = null,
     ) {}
 }

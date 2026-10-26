@@ -21,5 +21,7 @@ final class BarbershopContactData extends Data
         public readonly string $booking_url,
         /** The barbershop's photo or logo (null = none: the SPA shows its initials). */
         public readonly ?string $avatar_url = null,
+        /** "#rrggbb" for the client e-mails' buttons. */
+        public readonly ?string $accent_color = null,
     ) {}
 }

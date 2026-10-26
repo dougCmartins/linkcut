@@ -28,5 +28,9 @@ final class BookingEmailData extends Data
         public readonly ?string $registration_url = null,
         /** Only on reminders: "Não quero receber lembretes". */
         public readonly ?string $opt_out_url = null,
+        /** Absolute URL of the barbershop's photo (header of the e-mail). */
+        public readonly ?string $logo_url = null,
+        /** "#rrggbb" of the barbershop (button). */
+        public readonly ?string $accent_color = null,
     ) {}
 }

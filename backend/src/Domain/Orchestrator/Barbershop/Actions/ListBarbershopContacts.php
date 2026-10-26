@@ -50,6 +50,7 @@ final class ListBarbershopContacts
             whatsapp_url: $whatsapp !== '' ? 'https://wa.me/55'.$whatsapp : '',
             booking_url: rtrim((string) config('app.frontend_url'), '/').'/'.$tenant->slug,
             avatar_url: $profile?->avatar_url,
+            accent_color: $profile?->accent_color,
         );
     }
 

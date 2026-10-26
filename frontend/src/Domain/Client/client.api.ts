@@ -166,3 +166,19 @@ export async function exportMyData(): Promise<unknown> {
   const { data } = await http<unknown>('/client/me/export', { auth: 'client' })
   return data
 }
+
+/** The server key browsers need to subscribe (public: the client may not be signed in yet). */
+export async function fetchClientPushKey(): Promise<string> {
+  const { data } = await http<{ public_key: string }>('/public/push-key', { auth: false })
+  return data.public_key
+}
+
+/**
+ * Sends this device's subscription: with the signed link of a booking just made (no session needed, valid for a
+ * short time), or for the signed-in client.
+ */
+export async function saveClientPushSubscription(subscription: PushSubscriptionJSON, pushUrl: string | null): Promise<void> {
+  const body = { endpoint: subscription.endpoint, keys: subscription.keys }
+  if (pushUrl) await http<void>(pushUrl.replace(/^\/api/, ''), { method: 'POST', body, auth: false })
+  else await http<void>('/client/push-subscriptions', { method: 'POST', body, auth: 'client' })
+}

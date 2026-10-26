@@ -56,4 +56,36 @@ final class ImageProcessor
 
         return ['path' => $path, 'mime' => 'image/webp', 'size' => strlen($bytes), 'width' => $targetWidth, 'height' => $targetHeight];
     }
+
+    /** Max side of the JPEG copy used by link previews (WhatsApp and Facebook read JPEG best). */
+    public const PREVIEW_MAX_DIMENSION = 1200;
+
+    /**
+     * A JPEG copy of a stored image, for link previews: some apps ignore WebP there. Transparent parts become white.
+     * Null when the bytes are not an image.
+     */
+    public static function jpegOf(string $bytes): ?string
+    {
+        $source = @imagecreatefromstring($bytes);
+        if (! $source) {
+            return null;
+        }
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $scale = min(1, self::PREVIEW_MAX_DIMENSION / max($width, $height));
+        $targetWidth = max(1, (int) round($width * $scale));
+        $targetHeight = max(1, (int) round($height * $scale));
+
+        $target = imagecreatetruecolor($targetWidth, $targetHeight);
+        imagefill($target, 0, 0, (int) imagecolorallocate($target, 255, 255, 255));
+        imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+
+        ob_start();
+        imagejpeg($target, null, 82);
+        $jpeg = (string) ob_get_clean();
+        imagedestroy($source);
+        imagedestroy($target);
+
+        return $jpeg;
+    }
 }

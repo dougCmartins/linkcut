@@ -57,4 +57,6 @@ export interface BookingConfirmation {
   serviceName: string
   date: string
   time: string
+  /** Short-lived signed link to get this booking's answers as notifications on this device. */
+  pushUrl: string | null
 }

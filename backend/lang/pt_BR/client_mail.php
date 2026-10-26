@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 // E-mails to the client about bookings (Notification domain).
 return [
+    'from' => ':barbershop via linkcut',
+    'sent_by' => 'Enviado pelo linkcut para :barbershop.',
     'greeting' => 'Olá, :name!',
     // When the name typed at booking has nothing left after removing links and symbols.
     'default_name' => 'cliente',

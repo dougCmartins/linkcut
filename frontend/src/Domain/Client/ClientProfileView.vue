@@ -12,6 +12,7 @@ import { isValidBrazilianPhone } from '@/utils/phone'
 import { exportMyData } from './client.api'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import ClientLayout from './ClientLayout.vue'
+import ClientPushOffer from './ClientPushOffer.vue'
 import { CLIENT_LOGIN_ROUTE } from './client.guard'
 import { useClientStore } from './client.store'
 
@@ -165,6 +166,8 @@ const feedbackClass = (feedback: Feedback) => (feedback?.kind === 'success' ? 't
         <ToggleSwitch v-model="emailsEnabled" :label="t('client.profile.emails')" :description="t('client.profile.emailsHint')" />
         <p v-if="emailsFeedback" class="text-sm font-semibold text-danger" role="alert">{{ emailsFeedback }}</p>
       </BaseCard>
+
+      <ClientPushOffer />
 
       <BaseCard class="grid grid-cols-1 gap-4 p-5">
         <h2 class="text-base">{{ t('client.profile.passwordTitle') }}</h2>

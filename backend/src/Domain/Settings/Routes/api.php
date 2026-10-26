@@ -26,5 +26,10 @@ Route::middleware(['throttle:public', 'tenant.slug'])->prefix('public/{slug}')->
 // Link previews (Open Graph) for crawlers that do not run JavaScript; deploy/Caddyfile routes them here.
 Route::middleware(['throttle:public', 'tenant.slug'])->prefix('og/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {
     Route::get('/', [ShareCardController::class, 'bioLink']);
+    // A shared booking link previews the barbershop (/rafael/agendar, /rafael/portfolio/agendar).
+    Route::get('agendar', [ShareCardController::class, 'bioLink']);
+    Route::get('imagem', [ShareCardController::class, 'bioLinkImage']);
     Route::get('portfolio', [ShareCardController::class, 'portfolio']);
+    Route::get('portfolio/agendar', [ShareCardController::class, 'portfolio']);
+    Route::get('portfolio/imagem', [ShareCardController::class, 'portfolioImage']);
 });

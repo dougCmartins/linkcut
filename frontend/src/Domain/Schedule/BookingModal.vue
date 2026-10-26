@@ -101,6 +101,7 @@ const form = reactive({
 })
 /** After booking, the e-mail for the "Finalizar cadastro" card (none when already signed in). */
 const registerEmail = ref<string | null>(null)
+const pushUrl = ref<string | null>(null)
 const submittedSummary = ref<string | null>(null)
 const isSubmitting = ref(false)
 const submitError = ref('')
@@ -186,6 +187,7 @@ async function submit(): Promise<void> {
       clientLocation: geolocation.point.value,
     })
     registerEmail.value = clientStore.isSignedIn ? null : form.clientEmail.trim()
+    pushUrl.value = confirmation.pushUrl
     submittedSummary.value = t('booking.summary', {
       service: confirmation.serviceName || chosenServices.value.map((service) => service.name).join(' + '),
       date: formatDayMonth(fromIsoDate(confirmation.date)),
@@ -254,6 +256,7 @@ onBeforeUnmount(() => {
         class="px-5 pb-8"
         :summary="submittedSummary"
         :register-email="registerEmail"
+        :push-url="pushUrl"
         @done="emit('close')"
       />
 
