@@ -91,7 +91,7 @@ const whatsappUrl = computed(() => (profile.value ? buildWhatsappUrl(profile.val
 
       <footer class="mt-auto flex flex-col items-center gap-6 pt-12">
         <SocialLinks :links="profile.socials" :label="t('bioLink.socials')" />
-        <RouterLink :to="`/${publicPage.slug}/entrar`" class="text-xs font-semibold tracking-wide text-muted transition hover:text-ink">
+        <RouterLink :to="{ name: 'barber-login', params: { slug: publicPage.slug } }" class="text-xs font-semibold tracking-wide text-muted transition hover:text-ink">
           {{ t('bioLink.poweredBy') }}
         </RouterLink>
         <PrivacyLinks />

@@ -18,6 +18,7 @@ final class ClientDataMapper
             phone: $client->phone,
             has_account: $client->hasAccount(),
             emails_enabled: $client->emails_opted_out_at === null,
+            google_linked: ! empty($client->google_id),
         );
     }
 }

@@ -11,7 +11,7 @@ import { LoginStep, type Credentials, type TwoFactorChannel } from './auth.model
 import { useAuthStore } from './auth.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 
-/** Barber sign-in on the barbershop's own page (/<slug>/entrar): e-mail and password, then the code. */
+/** Barber sign-in on the barbershop's own page (/<slug>/panel/login): e-mail and password, then the code. */
 const props = defineProps<{ slug: string }>()
 const { t } = useI18n()
 const route = useRoute()

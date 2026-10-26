@@ -11,8 +11,8 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 
 /**
- * A client of the barbershops (global, no tenant). Created at the first booking; signs in only after
- * completing the sign-up (password + e-mail confirmed by a code). Uses its own guard ("client").
+ * A client of the barbershops (global, no tenant). Created at the first booking, or at the first Google
+ * sign-in. Signs in with a password, or with Google before a password exists. Uses its own guard ("client").
  */
 final class Client extends Authenticatable
 {
@@ -23,9 +23,9 @@ final class Client extends Authenticatable
 
     use Notifiable;
 
-    protected $fillable = ['name', 'email', 'phone', 'password', 'email_verified_at', 'registration_invited_at', 'emails_opted_out_at'];
+    protected $fillable = ['name', 'email', 'phone', 'password', 'google_id', 'email_verified_at', 'registration_invited_at', 'emails_opted_out_at'];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'google_id', 'remember_token'];
 
     protected function casts(): array
     {

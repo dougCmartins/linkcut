@@ -13,6 +13,7 @@ export const ApiErrorCode = {
   SendLimitReached: 'SEND_LIMIT_REACHED',
   ChannelUnavailable: 'CHANNEL_UNAVAILABLE',
   InvalidCode: 'INVALID_CODE',
+  GoogleCodeInvalid: 'GOOGLE_CODE_INVALID',
   CodeExpired: 'CODE_EXPIRED',
   TooManyAttempts: 'TOO_MANY_ATTEMPTS',
   InvalidRefreshToken: 'INVALID_REFRESH_TOKEN',

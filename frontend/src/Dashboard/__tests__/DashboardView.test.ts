@@ -254,6 +254,6 @@ describe('DashboardView', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
 
     // Assert
-    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/rafael/entrar'))
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/rafael/panel/login'))
   })
 })

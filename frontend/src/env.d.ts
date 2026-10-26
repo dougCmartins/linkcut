@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_PRIVACY_CONTROLLER?: string
   readonly VITE_PRIVACY_DOCUMENT?: string
   readonly VITE_PRIVACY_EMAIL?: string
+  /** "true" shows "Continuar com Google" (needs GOOGLE_CLIENT_ID/SECRET on the API). */
+  readonly VITE_GOOGLE_LOGIN?: string
 }
 
 interface ImportMeta {

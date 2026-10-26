@@ -10,7 +10,7 @@ use Spatie\LaravelData\Attributes\Validation\Required;
 use Spatie\LaravelData\Attributes\Validation\StringType;
 use Spatie\LaravelData\Data;
 
-/** Sign-in from the barbershop's own page (/<slug>/entrar). */
+/** Sign-in from the barbershop's own page (/<slug>/panel/login). */
 final class BarberLoginData extends Data
 {
     public function __construct(

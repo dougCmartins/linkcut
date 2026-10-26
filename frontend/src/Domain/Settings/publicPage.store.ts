@@ -6,6 +6,25 @@ import type { PublicPage, ScheduleSettings } from './settings.model'
 import { ApiError } from '@/http/apiError'
 import { LoadStatus } from '@/types/loadStatus'
 
+const VISITED_SLUG_KEY = 'linkcut.visited-slug'
+
+/** The last barbershop page opened on this device: the client's login (/<slug>/login) goes back there. */
+export function lastVisitedSlug(): string | null {
+  try {
+    return localStorage.getItem(VISITED_SLUG_KEY)
+  } catch {
+    return null
+  }
+}
+
+function rememberVisitedSlug(slug: string): void {
+  try {
+    localStorage.setItem(VISITED_SLUG_KEY, slug)
+  } catch {
+    // Storage blocked: the client signs in on /conta/entrar instead.
+  }
+}
+
 /** The barbershop a visitor is looking at (/:slug): bio link, portfolio, theme and booking options. */
 export const usePublicPageStore = defineStore('publicPage', () => {
   const slug = ref<string | null>(null)
@@ -28,6 +47,7 @@ export const usePublicPageStore = defineStore('publicPage', () => {
       page.value = loadedPage
       bookingOptions.value = options
       status.value = LoadStatus.Ready
+      rememberVisitedSlug(nextSlug)
     } catch (caught) {
       if (slug.value !== nextSlug) return
       status.value = caught instanceof ApiError && caught.status === 404 ? LoadStatus.NotFound : LoadStatus.Failed

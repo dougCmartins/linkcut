@@ -648,6 +648,14 @@ export default {
       submit: 'Entrar',
       forgot: 'Esqueci minha senha',
     },
+    google: {
+      or: 'ou',
+      continue: 'Continuar com Google',
+      signingIn: 'Entrando com Google…',
+      denied: 'Não foi possível entrar com o Google. Tente de novo ou use seu e-mail.',
+      failed: 'Não recebemos o acesso do Google. Tente de novo.',
+      back: 'Voltar para o login',
+    },
     reset: {
       back: 'Voltar para o login',
     },
@@ -722,6 +730,7 @@ export default {
         'Seus dados pessoais saem de todas as barbearias. Elas mantêm só o registro do atendimento, sem seu nome nem contato. Não dá para desfazer.',
       deleteOpen: 'Excluir minha conta',
       deletePassword: 'Digite sua senha para confirmar',
+      deleteNoPassword: 'Sua conta entrou com o Google e não tem senha. Confirme para excluir.',
       deleteConfirm: 'Excluir definitivamente',
       deleteKeep: 'Voltar',
       deleted: 'Sua conta foi excluída. Seus dados pessoais foram removidos.',
@@ -732,6 +741,7 @@ export default {
     api: {
       invalidCredentials: 'E-mail ou senha incorretos.',
       invalidCode: 'Código incorreto. Você tem mais {attempts} tentativa(s).',
+      googleCodeInvalid: 'Esse acesso do Google expirou. Entre de novo.',
       codeExpired: 'Este código expirou. Peça um novo.',
       tooManyAttempts: 'Muitas tentativas incorretas. Entre de novo para receber outro código.',
       resendTooSoon: 'Aguarde alguns segundos antes de pedir outro código.',

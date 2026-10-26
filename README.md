@@ -82,7 +82,9 @@ Telas mobile-first. Todas usam a API real, sem dados simulados ([plano da migra�
 | `/:slug` | Link da Bio de cada barbearia (ex.: `/rafael`) |
 | `/:slug/portfolio` | Portfólio / Sobre Mim |
 | `/:slug/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
-| `/entrar` | Login do barbeiro (e-mail + senha + código 2FA por WhatsApp ou e-mail) |
+| `/entrar` | "Encontrar minha página": o barbeiro recebe por e-mail o link do login dele |
+| `/:slug/panel/login` | Login do barbeiro na página da barbearia (e-mail + senha + código por e-mail) |
+| `/:slug/login` | Login do cliente na página da barbearia; a área do cliente fica em `/conta` |
 | `/painel` 🔒 | Painel do Barbeiro (métricas com tooltip da margem, agenda de hoje e solicitações pendentes) |
 | `/painel/historico` 🔒 | Histórico de atendimentos: filtros semana/mês/ano/personalizado, 50/100/200 por página e exportação CSV ([requisitos](docs/requisitos-historico.md)) |
 | `/painel/despesas` 🔒 | Despesas fixas e avulsas do mês, mais o custo dos atendimentos ([requisitos](docs/requisitos-despesas.md)) |

@@ -13,7 +13,7 @@ import { exportMyData } from './client.api'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import ClientLayout from './ClientLayout.vue'
 import ClientPushOffer from './ClientPushOffer.vue'
-import { CLIENT_LOGIN_ROUTE } from './client.guard'
+import { clientLoginLocation } from './client.guard'
 import { useClientStore } from './client.store'
 
 /**
@@ -115,14 +115,15 @@ const isDeleting = ref(false)
 const deletePassword = ref('')
 const deleteBusy = ref(false)
 const deleteError = ref('')
+const hasPassword = computed(() => clientStore.client?.hasAccount ?? true)
 
 async function deleteAccount(): Promise<void> {
-  if (!deletePassword.value || deleteBusy.value) return
+  if ((hasPassword.value && !deletePassword.value) || deleteBusy.value) return
   deleteBusy.value = true
   deleteError.value = ''
   try {
     await clientStore.deleteAccount(deletePassword.value)
-    await router.replace({ name: CLIENT_LOGIN_ROUTE, query: { conta: 'excluida' } })
+    await router.replace(clientLoginLocation({ conta: 'excluida' }))
   } catch (caught) {
     deleteError.value = apiErrors.hasFieldError(caught, 'password') ? t('client.profile.wrongPassword') : errorOf(caught)
   } finally {
@@ -211,12 +212,19 @@ const feedbackClass = (feedback: Feedback) => (feedback?.kind === 'success' ? 't
           {{ t('client.profile.deleteOpen') }}
         </button>
         <form v-else class="grid grid-cols-1 gap-3" novalidate @submit.prevent="deleteAccount">
-          <TextField v-model="deletePassword" :label="t('client.profile.deletePassword')" type="password" autocomplete="current-password" />
+          <TextField
+            v-if="hasPassword"
+            v-model="deletePassword"
+            :label="t('client.profile.deletePassword')"
+            type="password"
+            autocomplete="current-password"
+          />
+          <p v-else class="text-sm text-muted">{{ t('client.profile.deleteNoPassword') }}</p>
           <div class="flex flex-wrap items-center gap-3">
             <button
               type="submit"
               class="h-10 rounded-full bg-danger px-4 text-sm font-bold text-white disabled:opacity-60"
-              :disabled="!deletePassword || deleteBusy"
+              :disabled="(hasPassword && !deletePassword) || deleteBusy"
             >
               {{ t('client.profile.deleteConfirm') }}
             </button>

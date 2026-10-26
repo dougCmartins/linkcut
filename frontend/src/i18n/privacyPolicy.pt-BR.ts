@@ -22,7 +22,7 @@ export default {
           title: 'Quais dados tratamos',
           items: [
             'Barbeiro: nome, e-mail, senha (guardada com criptografia), WhatsApp, endereço e fotos da barbearia, serviços, horários, lançamentos financeiros e a data em que aceitou estes termos.',
-            'Cliente: nome, e-mail, WhatsApp e horários agendados. Ao agendar, criamos uma conta de cliente com o seu e-mail, para você acompanhar os horários; você define a senha só se quiser.',
+            'Cliente: nome, e-mail, WhatsApp e horários agendados. Ao agendar, criamos uma conta de cliente com o seu e-mail. Você entra com senha ou, se quiser, com o Google. Nesse caso guardamos só o identificador da conta Google, e não a senha do Google.',
             'Localização: só se você tocar em "compartilhar localização" no agendamento. As coordenadas passam pelo servidor apenas para calcular a distância até a barbearia; guardamos só a distância.',
             'Visitante: nenhum dado pessoal. Guardamos só no seu navegador o tema escolhido e a sua escolha de privacidade.',
             'Registros de acesso: endereço IP, data e hora, endereço da página e resultado, sem senhas, tokens nem dados do navegador.',
@@ -43,9 +43,10 @@ export default {
           items: [
             'Com a barbearia em que você agendou: só os dados do seu agendamento.',
             'Com fornecedores que nos ajudam a operar (suboperadores): hospedagem do servidor, envio de e-mails (Brevo) e monitoramento de erros (Sentry). Eles só usam os dados para isso.',
+            'Login com Google: só se você tocar em "Continuar com Google". O Google recebe o pedido de entrada e nos devolve seu nome, e-mail e um identificador. A página não carrega script do Google.',
             'Serviços de endereço: ao digitar um CEP, o seu navegador consulta o ViaCEP, que recebe o CEP e o seu endereço IP; o endereço da barbearia é localizado no mapa pelo OpenStreetMap (Nominatim), que recebe só esse endereço.',
             'Transferência internacional: o Brevo (França) e o Sentry (Estados Unidos/União Europeia) ficam fora do Brasil. A transferência se apoia nas cláusulas contratuais padrão desses fornecedores (art. 33 da LGPD).',
-            'Não vendemos dados e não usamos publicidade nem rastreadores de terceiros.',
+            'Não vendemos dados e não usamos publicidade, Google Analytics nem outros rastreadores.',
           ],
         },
         retention: {
