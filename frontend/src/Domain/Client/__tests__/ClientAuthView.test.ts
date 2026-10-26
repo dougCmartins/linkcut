@@ -13,10 +13,12 @@ async function renderAt(path: string) {
 describe('ClientAuthView', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.stubEnv('VITE_GOOGLE_LOGIN', 'true')
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('"Criar minha senha" swaps to the first access on the same page', async () => {
@@ -79,6 +81,18 @@ describe('ClientAuthView', () => {
     // Assert
     expect(screen.getByRole('alert').textContent).toContain('Não foi possível entrar com o Google')
     expect(returnPath(screen.getByRole('link', { name: 'Continuar com Google' }))).toBe('/conta')
+  })
+
+  it('has no Google button while the build leaves it off', async () => {
+    // Arrange
+    vi.stubEnv('VITE_GOOGLE_LOGIN', '')
+
+    // Act
+    await renderAt('/conta/entrar')
+
+    // Assert
+    expect(screen.queryByRole('link', { name: 'Continuar com Google' })).toBeNull()
+    expect(screen.queryByText('ou')).toBeNull()
   })
 
   it('hides Google while the client is resetting the password', async () => {

@@ -43,6 +43,7 @@ services:
         VITE_PRIVACY_CONTROLLER: ${VITE_PRIVACY_CONTROLLER:-}
         VITE_PRIVACY_DOCUMENT: ${VITE_PRIVACY_DOCUMENT:-}
         VITE_PRIVACY_EMAIL: ${VITE_PRIVACY_EMAIL:-}
+        VITE_GOOGLE_LOGIN: ${VITE_GOOGLE_LOGIN:-}
     restart: unless-stopped
     logging: *logging
     mem_limit: 128m

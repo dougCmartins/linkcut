@@ -13,6 +13,7 @@ import { useApiErrors } from '@/composables/useApiErrors'
 import { usePageMeta } from '@/composables/usePageMeta'
 import ClientPasswordForm from './ClientPasswordForm.vue'
 import ClientGoogleSignInLink from './ClientGoogleSignInLink.vue'
+import { isGoogleLoginEnabled } from './googleLogin'
 import { safeClientRedirect } from './client.guard'
 import { CodePurpose } from './client.model'
 import { useClientStore } from './client.store'
@@ -88,7 +89,7 @@ usePageMeta(
     <section v-else-if="mode === 'register'">
       <AuthHeading :title="t('authPage.client.register.title')" :subtitle="t('authPage.client.register.subtitle')" />
       <ClientPasswordForm :purpose="CodePurpose.Registration" :initial-email="linkEmail" @done="goOn" />
-      <div class="mt-5 grid gap-3">
+      <div v-if="isGoogleLoginEnabled()" class="mt-5 grid gap-3">
         <p class="text-center text-xs font-semibold tracking-wide text-muted uppercase">{{ t('client.google.or') }}</p>
         <ClientGoogleSignInLink />
       </div>
@@ -128,7 +129,7 @@ usePageMeta(
           {{ t('client.login.forgot') }}
         </button>
       </form>
-      <div class="mt-5 grid gap-3">
+      <div v-if="isGoogleLoginEnabled()" class="mt-5 grid gap-3">
         <p class="text-center text-xs font-semibold tracking-wide text-muted uppercase">{{ t('client.google.or') }}</p>
         <ClientGoogleSignInLink />
       </div>
