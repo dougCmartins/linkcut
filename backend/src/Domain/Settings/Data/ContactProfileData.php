@@ -16,5 +16,7 @@ final class ContactProfileData extends Data
         public readonly ?AddressData $address,
         /** The barbershop's photo or logo (null = none). */
         public readonly ?string $avatar_url = null,
+        /** "#rrggbb" of the barbershop (its custom color, or its palette's), for e-mails. */
+        public readonly ?string $accent_color = null,
     ) {}
 }

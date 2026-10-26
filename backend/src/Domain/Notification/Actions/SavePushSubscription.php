@@ -6,6 +6,7 @@ namespace Domain\Notification\Actions;
 
 use Domain\Notification\Data\PushSubscriptionInputData;
 use Domain\Notification\Models\PushSubscription;
+use Domain\Notification\Support\PushEndpoints;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -15,12 +16,9 @@ use Illuminate\Validation\ValidationException;
  */
 final class SavePushSubscription
 {
-    /** Chrome/Edge (FCM), Firefox, Safari and Windows push services. */
-    private const PUSH_HOSTS = ['fcm.googleapis.com', 'updates.push.services.mozilla.com', 'web.push.apple.com', '.notify.windows.com', '.push.apple.com'];
-
     public function handle(PushSubscriptionInputData $data): void
     {
-        if (! self::isKnownPushService($data->endpoint)) {
+        if (! PushEndpoints::isKnown($data->endpoint)) {
             throw ValidationException::withMessages(['endpoint' => 'url']);
         }
         PushSubscription::withoutTenantScope()->where('endpoint', $data->endpoint)->delete();
@@ -31,14 +29,5 @@ final class SavePushSubscription
             'auth_token' => $data->keys->auth,
         ]);
         Log::info('notification_push_subscribed');
-    }
-
-    private static function isKnownPushService(string $endpoint): bool
-    {
-        $host = mb_strtolower((string) parse_url($endpoint, PHP_URL_HOST));
-
-        return collect(self::PUSH_HOSTS)->contains(
-            fn (string $allowed): bool => str_starts_with($allowed, '.') ? str_ends_with($host, $allowed) : $host === $allowed,
-        );
     }
 }

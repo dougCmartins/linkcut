@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Settings\Actions;
 
+use Domain\Settings\Data\PublicPageData;
 use Domain\Settings\Data\ShareCardData;
 use Domain\Settings\Data\ShareCardQueryData;
 use Domain\Settings\Enums\SharedPage;
@@ -30,19 +31,20 @@ final class ShowShareCard
         $isPortfolio = $page === SharedPage::Portfolio;
         $title = $isPortfolio ? __('share.portfolio_title', ['name' => $name]) : $name;
         $text = $isPortfolio ? ($public->portfolio->quote ?: $public->portfolio->story) : $public->profile->bio;
-        $image = $isPortfolio ? ($public->portfolio->cover_url ?? $public->profile->avatar_url) : $public->profile->avatar_url;
+        $image = self::imageOf($public, $page);
 
         return new ShareCardData(
             title: $title,
             description: Str::limit(trim($text) !== '' ? trim($text) : __('share.default_description', ['name' => $name]), self::DESCRIPTION_MAX),
-            image_url: $image ? self::absolute($base, $image) : null,
+            // A JPEG copy (some apps ignore WebP in previews), served by the API next to this page.
+            image_url: $image ? "{$base}/api/og/{$slug}".($isPortfolio ? '/portfolio' : '').'/imagem' : null,
             url: $base.'/'.$slug.($isPortfolio ? '/portfolio' : ''),
         );
     }
 
-    /** "/storage/x.webp" → "https://domain/storage/x.webp"; already absolute (CDN) stays as is. */
-    private static function absolute(string $base, string $url): string
+    /** The photo of the shared page: the portfolio cover (or the avatar), or the avatar. */
+    public static function imageOf(PublicPageData $public, SharedPage $page): ?string
     {
-        return str_starts_with($url, 'http') ? $url : $base.'/'.ltrim($url, '/');
+        return $page === SharedPage::Portfolio ? ($public->portfolio->cover_url ?? $public->profile->avatar_url) : $public->profile->avatar_url;
     }
 }

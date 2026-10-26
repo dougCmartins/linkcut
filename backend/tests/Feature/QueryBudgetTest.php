@@ -7,12 +7,14 @@ namespace Tests\Feature;
 use Closure;
 use Domain\Client\Models\Client;
 use Domain\Identity\Models\User;
+use Domain\Notification\Jobs\SendPushToClient;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
 
@@ -48,7 +50,8 @@ final class QueryBudgetTest extends TestCase
 
     public function test_reminders_take_the_same_queries_for_one_or_twenty_appointments(): void
     {
-        // Arrange
+        // Arrange: the client pushes run later in the queue worker, not in this command.
+        Queue::fake([SendPushToClient::class]);
         $owner = $this->barbershop();
         $this->remindableBookings($owner, 1);
         $forOne = $this->countQueries(fn () => $this->artisan('schedule:send-reminders')->expectsOutput('Reminders sent: 1'));
@@ -92,7 +95,8 @@ final class QueryBudgetTest extends TestCase
         $queries = $this->countQueries(fn () => $this->postJson('/api/public/rafael/booking-requests', $payload)->assertCreated());
 
         // Assert
-        $this->assertLessThanOrEqual(15, $queries, "a booking took {$queries} queries");
+        // 17: settings, slot check under lock, client account, booking, and the barbershop's contact (with its color).
+        $this->assertLessThanOrEqual(17, $queries, "a booking took {$queries} queries");
     }
 
     public function test_the_slug_check_takes_one_query_even_when_many_links_are_taken(): void

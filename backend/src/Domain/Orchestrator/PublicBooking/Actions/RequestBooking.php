@@ -35,6 +35,7 @@ use Domain\Settings\Data\PublicServiceData;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Context\TenantClock;
 use Domain\Tenant\Data\TenantIdsData;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 /**
@@ -98,6 +99,7 @@ final class RequestBooking
             date: $request->date,
             time: $request->starts_at,
             status: $request->status->value,
+            push_url: URL::temporarySignedRoute('client-push.subscribe', now()->addHours(2), ['client' => $client->id], absolute: false),
         );
     }
 

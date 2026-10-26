@@ -13,4 +13,17 @@ enum ThemePalette: string
     case Forest = 'forest';
     case Wine = 'wine';
     case Minimal = 'minimal';
+
+    /** The palette's accent in light mode (core.css): readable on the white of e-mails. */
+    public function lightAccent(): string
+    {
+        return match ($this) {
+            self::Default => '#121212',
+            self::Classic => '#b3261e',
+            self::Ocean => '#0b6fa4',
+            self::Forest => '#1f6b45',
+            self::Wine => '#7d1d3f',
+            self::Minimal => '#111111',
+        };
+    }
 }

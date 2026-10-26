@@ -5,6 +5,16 @@ export default {
     dark: 'Escuro',
     light: 'Claro',
   },
+  clientPush: {
+    title: 'Quer ser avisado quando o barbeiro confirmar?',
+    text: 'Você recebe uma notificação neste aparelho com a resposta e o lembrete do horário.',
+    enable: 'Avisar neste aparelho',
+    enabling: 'Ativando…',
+    on: 'Pronto! Você vai receber os avisos neste aparelho.',
+    denied: 'As notificações estão bloqueadas neste navegador. Você ainda recebe tudo por e-mail.',
+    failed: 'Não foi possível ativar agora. Você ainda recebe tudo por e-mail.',
+    needsInstall: 'No iPhone, toque em Compartilhar → "Adicionar à Tela de Início" e abra por lá para receber avisos.',
+  },
   findPage: {
     title: 'Entre no seu painel',
     subtitle: 'Cada barbearia entra pela sua própria página. Digite o e-mail da sua conta e enviamos o link.',

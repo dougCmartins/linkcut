@@ -10,6 +10,9 @@ use Domain\Notification\Notifications\BookingEmailNotification;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Schedule\Models\BookingRequest;
 use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
+use Domain\Settings\Models\Image;
+use Domain\Settings\Models\ProfileSettings;
+use Domain\Settings\Models\ThemeSettings;
 use Domain\Tenant\Context\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -77,6 +80,30 @@ final class BookingEmailsTest extends TestCase
         $mail = $email->toMail(new AnonymousNotifiable);
         $this->assertStringContainsString('Recebemos seu pedido', $mail->subject);
         $this->assertSame('Finalizar cadastro', $mail->actionText);
+    }
+
+    public function test_the_client_e_mail_has_the_barbershops_name_photo_and_color_and_linkcut_only_in_the_footer(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        app(CurrentTenant::class)->run($owner->tenant_id, function (): void {
+            $image = Image::query()->create(['path' => 'tenants/1/images/rafa.webp', 'mime' => 'image/webp', 'size' => 10, 'width' => 400, 'height' => 400]);
+            ProfileSettings::query()->firstOrFail()->update(['name' => 'Barbearia do Rafa', 'avatar_image_id' => $image->id]);
+            ThemeSettings::query()->firstOrFail()->update(['palette' => 'ocean', 'custom_accent' => null]);
+        });
+        $this->postJson('/api/public/rafael/booking-requests', $this->payload($this->serviceId($owner, 'Corte')))->assertCreated();
+        $notifiable = (new AnonymousNotifiable)->route('mail', 'ana@example.com');
+
+        // Act
+        $mail = $this->emailsTo('ana@example.com')[0]->toMail($notifiable);
+        $html = (string) $mail->render();
+
+        // Assert
+        $this->assertSame([config('mail.from.address'), 'Barbearia do Rafa via linkcut'], $mail->from);
+        $this->assertStringContainsString('Barbearia do Rafa', $html);
+        $this->assertStringContainsString('/storage/tenants/1/images/rafa.webp', $html);
+        $this->assertStringContainsString('background-color: #0b6fa4', $html);
+        $this->assertStringContainsString('Enviado pelo linkcut para Barbearia do Rafa.', $html);
     }
 
     public function test_a_second_booking_with_the_same_e_mail_reuses_the_account_and_a_registered_client_gets_no_sign_up_link(): void

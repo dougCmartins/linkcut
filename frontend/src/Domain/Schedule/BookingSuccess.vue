@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import ClientPushOffer from '@/Domain/Client/ClientPushOffer.vue'
 
-/** `registerEmail`: shows the "Finalizar cadastro" card (the client is not signed in to the client area). */
-defineProps<{ summary: string; registerEmail?: string | null }>()
+/**
+ * `registerEmail`: shows the "Finalizar cadastro" card (the client is not signed in to the client area).
+ * `pushUrl`: offers "Avisar neste aparelho" for the barbershop's answer.
+ */
+defineProps<{ summary: string; registerEmail?: string | null; pushUrl?: string | null }>()
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
 </script>
@@ -18,6 +22,7 @@ const { t } = useI18n()
     <h3 class="mt-6 text-2xl">{{ t('booking.successTitle') }}</h3>
     <p class="mt-2 text-muted">{{ t('booking.successText') }}</p>
     <p class="mt-5 rounded-full bg-raised px-4 py-2 text-sm font-semibold ring-1 ring-line">{{ summary }}</p>
+    <ClientPushOffer v-if="pushUrl" class="mt-6" :push-url="pushUrl" />
     <RouterLink
       v-if="registerEmail"
       :to="{ name: 'client-register', query: { email: registerEmail } }"

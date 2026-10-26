@@ -1,37 +1,9 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { deletePushSubscription, fetchPushPublicKey, savePushSubscription } from './push.api'
+import { PushSupport, SERVICE_WORKER_URL, pushSupport, subscribeThisDevice } from './pushDevice'
 
-/** What this browser can do about push notifications. */
-export const PushSupport = {
-  Checking: 'checking',
-  /** No service worker / Push API (old browser, or iPhone Safari in a normal tab). */
-  Unsupported: 'unsupported',
-  /** iPhone/iPad: works only from the home screen app (Share → Add to Home Screen). */
-  NeedsInstall: 'needsInstall',
-  Ready: 'ready',
-} as const
-
-export type PushSupport = (typeof PushSupport)[keyof typeof PushSupport]
-
-const SERVICE_WORKER_URL = '/sw.js'
-
-/** The VAPID key comes as base64url; the browser wants the bytes. */
-function keyToBytes(base64Url: string): Uint8Array<ArrayBuffer> {
-  const base64 = (base64Url + '='.repeat((4 - (base64Url.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(base64)
-  const bytes = new Uint8Array(new ArrayBuffer(raw.length))
-  for (let index = 0; index < raw.length; index++) bytes[index] = raw.charCodeAt(index)
-  return bytes
-}
-
-function isAppleMobile(): boolean {
-  return /iPhone|iPad|iPod/.test(navigator.userAgent)
-}
-
-function isInstalledApp(): boolean {
-  return window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
-}
+export { PushSupport } from './pushDevice'
 
 /** Push notifications on this device for the signed-in barber (e.g. "Novo pedido de agendamento"). */
 export const usePushStore = defineStore('push', () => {
@@ -51,12 +23,8 @@ export const usePushStore = defineStore('push', () => {
 
   /** Reads what this browser supports and whether it already receives notifications. */
   async function refresh(): Promise<void> {
-    const hasApi = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
-    if (!hasApi) {
-      support.value = isAppleMobile() && !isInstalledApp() ? PushSupport.NeedsInstall : PushSupport.Unsupported
-      return
-    }
-    support.value = PushSupport.Ready
+    support.value = pushSupport()
+    if (support.value !== PushSupport.Ready) return
     permission.value = Notification.permission
     isSubscribed.value = permission.value === 'granted' && (await currentSubscription()) !== null
   }
@@ -66,17 +34,11 @@ export const usePushStore = defineStore('push', () => {
     isBusy.value = true
     hasFailed.value = false
     try {
-      permission.value = await Notification.requestPermission()
-      if (permission.value !== 'granted') return
-      const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL)
-      await navigator.serviceWorker.ready
-      const subscription =
-        (await registration.pushManager.getSubscription()) ??
-        (await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: keyToBytes(await fetchPushPublicKey()),
-        }))
-      await savePushSubscription(subscription.toJSON())
+      const answer = await subscribeThisDevice(fetchPushPublicKey)
+      permission.value = answer.permission
+      const subscription = answer.subscription
+      if (!subscription) return
+      await savePushSubscription(subscription)
       isSubscribed.value = true
     } catch {
       hasFailed.value = true
