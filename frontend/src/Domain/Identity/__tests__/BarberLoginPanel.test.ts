@@ -6,14 +6,14 @@ import { useAuthStore } from '../auth.store'
 import { renderWithPlugins } from '@/utils/testRender'
 import { identityRoutes, PASSWORD, RIGHT_CODE } from './fakeIdentityApi'
 
-/** The barbershop's public page (theme, name) and the sign-in API, like on /rafael/entrar. */
+/** The barbershop's public page (theme, name) and the sign-in API, like on /rafael/panel/login. */
 function installFakeIdentityApi(options: { preferredChannel?: string | null } = {}) {
   return installFakeSettingsApi(undefined, identityRoutes(options))
 }
 
 const EMAIL = 'rafael@linkcut.app'
 
-async function renderLogin(path = '/rafael/entrar?redirect=/painel/configuracoes') {
+async function renderLogin(path = '/rafael/panel/login?redirect=/painel/configuracoes') {
   const rendered = renderWithPlugins(BarberPageLoginView)
   await rendered.router.push(path)
   await rendered.router.isReady()
@@ -32,7 +32,7 @@ async function pasteCode(code: string): Promise<void> {
   await fireEvent.paste(firstBox!, { clipboardData: { getData: () => code } })
 }
 
-describe('BarberLoginPanel (on /rafael/entrar)', () => {
+describe('BarberLoginPanel (on /rafael/panel/login)', () => {
   beforeEach(() => {
     sessionStorage.clear()
     localStorage.clear()

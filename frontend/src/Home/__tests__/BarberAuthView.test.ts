@@ -99,6 +99,6 @@ describe('BarberAuthView', () => {
     await renderAt('/entrar')
 
     // Assert
-    expect(screen.getByRole('link', { name: /Continuar em .*\/rafael/ }).getAttribute('href')).toBe('/rafael/entrar')
+    expect(screen.getByRole('link', { name: /Continuar em .*\/rafael/ }).getAttribute('href')).toBe('/rafael/panel/login')
   })
 })

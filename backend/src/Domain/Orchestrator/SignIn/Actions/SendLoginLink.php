@@ -35,7 +35,7 @@ final class SendLoginLink
             return;
         }
 
-        $url = rtrim((string) config('app.frontend_url'), '/')."/{$tenant->slug}/entrar";
+        $url = rtrim((string) config('app.frontend_url'), '/')."/{$tenant->slug}/panel/login";
         Notification::route('mail', $email)->notify(new LoginLinkNotification($tenant->name, $url));
         Log::info('login_link_sent', ['tenant_id' => $tenant->id]);
     }

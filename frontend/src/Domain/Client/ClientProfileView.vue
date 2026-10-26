@@ -13,7 +13,7 @@ import { exportMyData } from './client.api'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import ClientLayout from './ClientLayout.vue'
 import ClientPushOffer from './ClientPushOffer.vue'
-import { CLIENT_LOGIN_ROUTE } from './client.guard'
+import { clientLoginLocation } from './client.guard'
 import { useClientStore } from './client.store'
 
 /**
@@ -123,7 +123,7 @@ async function deleteAccount(): Promise<void> {
   deleteError.value = ''
   try {
     await clientStore.deleteAccount(deletePassword.value)
-    await router.replace({ name: CLIENT_LOGIN_ROUTE, query: { conta: 'excluida' } })
+    await router.replace(clientLoginLocation({ conta: 'excluida' }))
   } catch (caught) {
     deleteError.value = apiErrors.hasFieldError(caught, 'password') ? t('client.profile.wrongPassword') : errorOf(caught)
   } finally {

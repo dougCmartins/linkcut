@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { CLIENT_LOGIN_ROUTE } from './client.guard'
+import { clientLoginLocation } from './client.guard'
 import { useClientStore } from './client.store'
 
 /** Frame of the client area: greeting, "Sair" and the menu (Meus horários · Barbearias · Minha conta). */
@@ -20,7 +20,7 @@ const LINKS = [
 
 async function logout(): Promise<void> {
   await clientStore.logout()
-  await router.replace({ name: CLIENT_LOGIN_ROUTE })
+  await router.replace(clientLoginLocation())
 }
 </script>
 

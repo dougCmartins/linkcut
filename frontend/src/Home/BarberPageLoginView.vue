@@ -12,7 +12,7 @@ import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
 import { usePublicPage } from '@/Domain/Settings/usePublicPage'
 
 /**
- * /<slug>/entrar: the barbershop's own sign-in, with its theme and photo. Only its barbers get in; the panel stays
+ * /<slug>/panel/login: the barbershop's own sign-in, with its theme and photo. Only its barbers get in; the panel stays
  * under the barbershop's address instead of linkcut's.
  */
 const { t } = useI18n()

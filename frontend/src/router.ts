@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { BARBERSHOP_CLIENT_LOGIN_ROUTE } from '@/Domain/Client/client.guard'
+import { lastVisitedSlug } from '@/Domain/Settings/publicPage.store'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -11,7 +13,7 @@ declare module 'vue-router' {
     requiresClient?: boolean
     /** linkcut's entrance (/, /cadastrar, /entrar): one page, the mode picks the form and the photo. */
     authMode?: 'sign-up' | 'login'
-    /** The client's entrance (/conta/entrar, /conta/finalizar): same idea. */
+    /** The client's entrance (/<slug>/login, /conta/entrar, /conta/finalizar): same idea. */
     clientAuthMode?: 'login' | 'register'
   }
 }
@@ -73,7 +75,17 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Domain/Client/ClientProfileView.vue'),
     meta: { requiresClient: true },
   },
-  { path: '/conta/entrar', name: 'client-login', component: ClientAuthView, meta: { clientAuthMode: 'login' } },
+  // Kept for links that have no barbershop (e-mails, Google's return): sends on to the last /<slug>/login.
+  {
+    path: '/conta/entrar',
+    name: 'client-login',
+    component: ClientAuthView,
+    meta: { clientAuthMode: 'login' },
+    beforeEnter: (to) => {
+      const slug = lastVisitedSlug()
+      return slug ? { name: BARBERSHOP_CLIENT_LOGIN_ROUTE, params: { slug }, query: to.query, replace: true } : true
+    },
+  },
   { path: '/conta/finalizar', name: 'client-register', component: ClientAuthView, meta: { clientAuthMode: 'register' } },
   {
     path: '/conta/entrar/google',
@@ -95,13 +107,22 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Portfolio/PortfolioView.vue'),
     meta: { isPublic: true },
   },
-  // The barbershop's own sign-in, with its theme (only its barbers get in).
+  // The client's sign-in, with the barbershop's theme. The client area itself stays at /conta.
   {
-    path: '/:slug/entrar',
+    path: '/:slug/login',
+    name: BARBERSHOP_CLIENT_LOGIN_ROUTE,
+    component: ClientAuthView,
+    meta: { isPublic: true, clientAuthMode: 'login' },
+  },
+  // The barber's sign-in on the barbershop's own page, with its theme (only its barbers get in).
+  {
+    path: '/:slug/panel/login',
     name: 'barber-login',
     component: () => import('@/Home/BarberPageLoginView.vue'),
     meta: { isPublic: true, authMode: 'login' },
   },
+  // Old address of the barber's sign-in, still in e-mails already sent.
+  { path: '/:slug/entrar', redirect: (to) => ({ name: 'barber-login', params: to.params, query: to.query }) },
   // Opens the booking modal on top of the portfolio, as its own history entry.
   {
     path: '/:slug/portfolio/agendar',

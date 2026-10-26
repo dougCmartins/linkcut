@@ -118,7 +118,7 @@ Lighthouse no perfil de celular do PageSpeed (Moto G Power, 4G lento), com o bui
 | `/` | 97 | 0 | 2,4 s |
 | `/:slug` | 95 | 0 | 2,6 s |
 | `/:slug/agendar` | 95 | 0,006 | 2,6 s |
-| `/:slug/entrar` | 93 | 0 | 3,0 s |
+| `/:slug/panel/login` (antes `/:slug/entrar`) | 93 | 0 | 3,0 s |
 | `/entrar` | 96 | 0 | 2,4 s |
 | `/conta/entrar` | 94 | 0 | 2,8 s |
 

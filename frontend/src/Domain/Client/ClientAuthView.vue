@@ -5,12 +5,15 @@ import { useRoute, useRouter } from 'vue-router'
 import AuthHeading from '@/components/ui/AuthHeading.vue'
 import AuthSplitLayout from '@/components/ui/AuthSplitLayout.vue'
 import AuthSwitch from '@/components/ui/AuthSwitch.vue'
+import AvatarImage from '@/components/ui/AvatarImage.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { AUTH_PHOTOS } from '@/assets/auth/authPhotos'
 import { credentialsSchema } from '@/Domain/Identity/auth.schemas'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { usePageMeta } from '@/composables/usePageMeta'
+import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
+import { usePublicPage } from '@/Domain/Settings/usePublicPage'
 import ClientPasswordForm from './ClientPasswordForm.vue'
 import ClientGoogleSignInLink from './ClientGoogleSignInLink.vue'
 import { isGoogleLoginEnabled } from './googleLogin'
@@ -19,9 +22,9 @@ import { CodePurpose } from './client.model'
 import { useClientStore } from './client.store'
 
 /**
- * The client's entrance, one page for /conta/entrar (e-mail and password, or "Esqueci minha senha") and
- * /conta/finalizar?email=… (first access: a code to the booking e-mail, then the password). Both routes share this
- * component, so switching only swaps the form and the photo.
+ * The client's entrance, one page for /<slug>/login (with the barbershop's theme, name and photo), /conta/entrar
+ * (no barbershop known on this device) and /conta/finalizar?email=… (first access: a code to the booking e-mail,
+ * then the password). The routes share this component, so switching only swaps the form and the photo.
  */
 type Mode = 'login' | 'register' | 'reset'
 
@@ -30,6 +33,11 @@ const route = useRoute()
 const router = useRouter()
 const apiErrors = useApiErrors()
 const clientStore = useClientStore()
+
+// /<slug>/login loads the barbershop (theme, name, photo); the other routes have no slug and load nothing.
+const publicPage = usePublicPage()
+const hasBarbershop = computed(() => typeof route.params.slug === 'string')
+const barbershop = computed(() => (hasBarbershop.value ? (publicPage.page?.profile ?? null) : null))
 
 const isResetting = ref(false)
 const mode = computed<Mode>(() => (route.meta.clientAuthMode === 'register' ? 'register' : isResetting.value ? 'reset' : 'login'))
@@ -40,11 +48,13 @@ watch(
 
 const linkEmail = computed(() => (typeof route.query.email === 'string' ? route.query.email : ''))
 const keptQuery = computed(() => (typeof route.query.redirect === 'string' ? { redirect: route.query.redirect } : {}))
-const photo = computed(() =>
-  mode.value === 'register'
+const photo = computed(() => {
+  const url = barbershop.value?.backgroundUrl || (hasBarbershop.value ? publicPage.page?.portfolio.coverUrl : null)
+  if (url) return { src: url, srcset: `${url} 1080w`, alt: t('barberLogin.photoAlt', { name: barbershop.value?.name ?? '' }) }
+  return mode.value === 'register'
     ? { ...AUTH_PHOTOS.signUp, alt: t('authPage.photos.signUp') }
-    : { ...AUTH_PHOTOS.login, alt: t('authPage.photos.login') },
-)
+    : { ...AUTH_PHOTOS.login, alt: t('authPage.photos.login') }
+})
 
 const email = ref('')
 const password = ref('')
@@ -75,7 +85,12 @@ usePageMeta(
 </script>
 
 <template>
-  <AuthSplitLayout :photo="photo" :photo-key="mode">
+  <PublicPageStatus v-if="hasBarbershop && !barbershop" :status="publicPage.status" @retry="publicPage.reload()" />
+  <AuthSplitLayout v-else :photo="photo" :photo-key="mode">
+    <div v-if="barbershop" class="mb-6 flex items-center gap-3">
+      <AvatarImage :src="barbershop.avatarUrl" :alt="t('bioLink.avatarAlt', { name: barbershop.name })" size="md" />
+      <p class="font-display text-lg font-extrabold break-words">{{ barbershop.name }}</p>
+    </div>
     <section v-if="mode === 'reset'">
       <AuthHeading :title="t('authPage.client.reset.title')" :subtitle="t('authPage.client.reset.subtitle')" />
       <ClientPasswordForm :purpose="CodePurpose.Password" :initial-email="email" @done="goOn" />

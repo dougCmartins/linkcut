@@ -6,7 +6,7 @@ import { logSecurityEvent } from '@/utils/logger'
 export const LOGIN_ROUTE = 'login'
 export const BARBER_LOGIN_ROUTE = 'barber-login'
 
-/** Where to sign in: the page this device used last (/<slug>/entrar), else "Encontrar minha página" (/entrar). */
+/** Where to sign in: the page this device used last (/<slug>/panel/login), else "Encontrar minha página" (/entrar). */
 export function loginLocation(redirect?: string, slug: string | null = lastBarberSlug()): RouteLocationRaw {
   const query = redirect ? { redirect } : {}
   return slug ? { name: BARBER_LOGIN_ROUTE, params: { slug }, query } : { name: LOGIN_ROUTE, query }
