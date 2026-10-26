@@ -102,6 +102,16 @@ export async function login(email: string, password: string): Promise<ClientSess
   return toSession(data)
 }
 
+/** Trades the one-time code from the Google return for the same session as the password login. */
+export async function exchangeGoogle(code: string): Promise<ClientSession> {
+  const { data } = await http<SessionBody>('/client/auth/google/exchange', {
+    method: 'POST',
+    auth: false,
+    body: { code },
+  })
+  return toSession(data)
+}
+
 export async function refreshSession(refreshToken: string): Promise<ClientSession> {
   const { data } = await http<SessionBody>('/client/token/refresh', {
     method: 'POST',

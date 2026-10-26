@@ -55,4 +55,44 @@ describe('ClientAuthView', () => {
     expect(resetHeading).toBeTruthy()
     expect(await screen.findByRole('heading', { level: 1, name: 'Entre na sua conta' })).toBeTruthy()
   })
+
+  it('offers Google on the login and on the first access, and keeps an in-app return path', async () => {
+    // Arrange
+    const { router } = await renderAt('/conta/entrar?redirect=/conta/perfil')
+
+    // Act
+    const loginLink = screen.getByRole('link', { name: 'Continuar com Google' })
+    await router.push('/conta/finalizar?redirect=/conta/perfil')
+    const registerLink = await screen.findByRole('link', { name: 'Continuar com Google' })
+
+    // Assert
+    expect(returnPath(loginLink)).toBe('/conta/perfil')
+    expect(loginLink.getAttribute('target')).toBeNull()
+    expect(returnPath(registerLink)).toBe('/conta/perfil')
+  })
+
+  it('sends an external return path to the client home and shows a refused Google sign-in', async () => {
+    // Arrange / Act
+    await renderAt('/conta/entrar?redirect=https://evil.test&erro=google')
+
+    // Assert
+    expect(screen.getByRole('alert').textContent).toContain('Não foi possível entrar com o Google')
+    expect(returnPath(screen.getByRole('link', { name: 'Continuar com Google' }))).toBe('/conta')
+  })
+
+  it('hides Google while the client is resetting the password', async () => {
+    // Arrange
+    await renderAt('/conta/entrar')
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Esqueci minha senha' }))
+
+    // Assert
+    expect(await screen.findByRole('heading', { level: 1, name: 'Criar nova senha' })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Continuar com Google' })).toBeNull()
+  })
 })
+
+function returnPath(link: Element): string | null {
+  return new URL(link.getAttribute('href') ?? '', 'http://localhost').searchParams.get('volta')
+}

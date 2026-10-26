@@ -16,7 +16,11 @@ final class EnsureClientPassword
     {
         /** @var Client $client */
         $client = auth('client')->user();
-        if (! Hash::check($data->password, (string) $client->password)) {
+        // A Google-only account has no password to type. The session is the confirmation.
+        if (empty($client->password)) {
+            return;
+        }
+        if (! Hash::check((string) $data->password, (string) $client->password)) {
             throw ValidationException::withMessages(['password' => 'current_password']);
         }
     }

@@ -11,6 +11,7 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.SendLimitReached]: 'sendLimitReached',
   [ApiErrorCode.ChannelUnavailable]: 'channelUnavailable',
   [ApiErrorCode.InvalidCode]: 'invalidCode',
+  [ApiErrorCode.GoogleCodeInvalid]: 'googleCodeInvalid',
   [ApiErrorCode.CodeExpired]: 'codeExpired',
   [ApiErrorCode.TooManyAttempts]: 'tooManyAttempts',
   [ApiErrorCode.InvalidRefreshToken]: 'sessionExpired',
