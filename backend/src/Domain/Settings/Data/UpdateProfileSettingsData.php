@@ -19,7 +19,10 @@ use Spatie\LaravelData\DataCollection;
 /** "Link" tab, saved as a whole. Images are referenced by the id returned by the upload. */
 final class UpdateProfileSettingsData extends Data
 {
-    /** @param DataCollection<int, SocialLinkData> $socials */
+    /**
+     * @param  DataCollection<int, SocialLinkData>  $socials
+     * @param  DataCollection<int, ProfileLinkData>  $links
+     */
     public function __construct(
         #[Required, StringType, Min(2), Max(40)]
         public readonly string $name,
@@ -27,6 +30,8 @@ final class UpdateProfileSettingsData extends Data
         public readonly string $whatsapp_number,
         #[DataCollectionOf(SocialLinkData::class), Max(10)]
         public readonly DataCollection $socials,
+        #[DataCollectionOf(ProfileLinkData::class)]
+        public readonly DataCollection $links,
         #[Required]
         public readonly AddressInputData $address,
         #[Nullable, StringType, Max(30)]

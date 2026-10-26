@@ -7,6 +7,7 @@ namespace Domain\Settings\Tests\Feature;
 use Domain\Identity\Models\User;
 use Domain\Settings\Models\Service;
 use Domain\Settings\Tests\Concerns\SettingsPayloads;
+use Domain\Tenant\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
@@ -227,5 +228,67 @@ final class SettingsEditorTest extends TestCase
         // Assert
         $this->assertNotSame('Barbearia A', $otherView->json('profile.name'));
         $this->assertSame('Barbearia A', $ownerView->json('profile.name'));
+    }
+
+    public function test_profile_links_keep_their_order_and_stay_on_their_barbershop(): void
+    {
+        // Arrange
+        $owner = $this->actingAsBarber();
+        Tenant::query()->whereKey($owner->tenant_id)->update(['slug' => 'rafael']);
+        $links = [
+            ['title' => 'Site', 'url' => 'https://example.com/site', 'icon' => 'link'],
+            ['title' => 'Mapa', 'url' => 'https://example.com/map', 'icon' => null],
+        ];
+
+        // Act
+        $saved = $this->putJson('/api/settings/profile', $this->profilePayload(['links' => $links]));
+        $this->app['auth']->forgetGuards();
+        $public = $this->getJson('/api/public/rafael');
+        $other = User::factory()->create();
+        Tenant::query()->whereKey($other->tenant_id)->update(['slug' => 'navalha']);
+        Passport::actingAs($other);
+        $this->putJson('/api/settings/profile', $this->profilePayload())->assertOk();
+        $this->app['auth']->forgetGuards();
+
+        // Assert
+        $saved->assertOk();
+        $saved->assertJsonPath('links.0.title', 'Site');
+        $saved->assertJsonPath('links.0.icon', 'link');
+        $saved->assertJsonPath('links.1.title', 'Mapa');
+        $saved->assertJsonPath('links.1.icon', null);
+        $public->assertOk();
+        $public->assertJsonPath('profile.links.0.title', 'Site');
+        $public->assertJsonPath('profile.links.1.title', 'Mapa');
+        $this->getJson('/api/public/navalha')->assertOk()->assertJsonCount(0, 'profile.links');
+        $this->getJson('/api/public/rafael')->assertOk()->assertJsonPath('profile.links.0.title', 'Site');
+    }
+
+    public function test_profile_links_reject_http_broken_addresses_and_urls_longer_than_300(): void
+    {
+        // Arrange
+        $this->actingAsBarber();
+        $http = $this->profilePayload([
+            'links' => [['title' => 'Inseguro', 'url' => 'http://example.com', 'icon' => null]],
+        ]);
+        $tooLong = $this->profilePayload([
+            'links' => [['title' => 'Longo', 'url' => 'https://'.str_repeat('a', 293), 'icon' => null]],
+        ]);
+        $notAddress = $this->profilePayload([
+            'links' => [['title' => 'Vazio', 'url' => 'https://', 'icon' => null], ['title' => 'Espaço', 'url' => 'https://meu site.com', 'icon' => null]],
+        ]);
+
+        // Act
+        $insecure = $this->putJson('/api/settings/profile', $http);
+        $overLimit = $this->putJson('/api/settings/profile', $tooLong);
+        $broken = $this->putJson('/api/settings/profile', $notAddress);
+
+        // Assert
+        $insecure->assertUnprocessable();
+        $this->assertSame(['starts_with'], $insecure->json('errors')['links.0.url']);
+        $overLimit->assertUnprocessable();
+        $this->assertContains('max', $overLimit->json('errors')['links.0.url']);
+        $broken->assertUnprocessable();
+        $this->assertSame(['url'], $broken->json('errors')['links.0.url']);
+        $this->assertSame(['url'], $broken->json('errors')['links.1.url']);
     }
 }

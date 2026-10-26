@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SmartImage from '@/components/ui/SmartImage.vue'
 import SocialLinks from '@/components/ui/SocialLinks.vue'
+import ProfileLinkIcon from '@/components/ui/ProfileLinkIcon.vue'
 import { buttonSkinClasses } from '@/components/ui/buttonSkin'
 import { useButtonStyle } from '@/composables/useButtonStyle'
 import type { ProfileSettings } from './settings.model'
@@ -35,6 +36,10 @@ const secondaryClass = computed(() => [baseClass, buttonSkinClasses(buttonStyle.
         <span :class="primaryClass">{{ t('bioLink.book') }}</span>
         <span :class="secondaryClass">{{ t('bioLink.portfolio') }}</span>
         <span :class="secondaryClass">{{ t('bioLink.whatsapp') }}</span>
+        <span v-for="(link, index) in profile.links" :key="index" :class="[secondaryClass, 'gap-2']">
+          <ProfileLinkIcon v-if="link.icon" :icon="link.icon" class="size-4" />
+          {{ link.title }}
+        </span>
       </div>
       <SocialLinks class="mt-6 scale-90" :links="profile.socials" :label="t('bioLink.socials')" />
     </div>

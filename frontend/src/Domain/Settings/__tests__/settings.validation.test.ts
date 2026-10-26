@@ -28,6 +28,31 @@ describe('validateProfile', () => {
     expect(errors.whatsappNumber?.key).toBe('phone')
   })
 
+  it('requires an https url and a title on each free link', () => {
+    // Arrange
+    const { profile } = createTestSettings()
+    profile.links = [
+      { title: '  ', url: '', icon: null },
+      { title: 'Site', url: 'http://example.com', icon: null },
+      { title: 'Mapa', url: `https://${'a'.repeat(293)}`, icon: 'map' },
+      { title: 'Vazio', url: 'https://', icon: null },
+      { title: 'Espaço', url: 'https://meu site.com', icon: null },
+      { title: 'Certo', url: 'https://meusite.com.br/agenda', icon: 'link' },
+    ]
+
+    // Act
+    const errors = validateProfile(profile)
+
+    // Assert
+    expect(errors['links.0.title']?.key).toBe('required')
+    expect(errors['links.0.url']?.key).toBe('required')
+    expect(errors['links.1.url']?.key).toBe('https')
+    expect(errors['links.2.url']?.key).toBe('tooLong')
+    expect(errors['links.3.url']?.key).toBe('url')
+    expect(errors['links.4.url']?.key).toBe('url')
+    expect(errors['links.5.url']).toBeUndefined()
+  })
+
   it('only accepts https social links', () => {
     // Arrange
     const { profile } = createTestSettings()
