@@ -22,7 +22,7 @@ export default {
           title: 'Quais dados tratamos',
           items: [
             'Barbeiro: nome, e-mail, senha (guardada com criptografia), WhatsApp, endereço e fotos da barbearia, serviços, horários, lançamentos financeiros e a data em que aceitou estes termos.',
-            'Cliente: nome, e-mail, WhatsApp e horários agendados. Ao agendar, criamos uma conta de cliente com o seu e-mail. Você entra com senha ou, se quiser, com o Google. Nesse caso guardamos só o identificador da conta Google, e não a senha do Google.',
+            'Cliente: nome, e-mail, WhatsApp e horários agendados. Ao agendar, criamos uma conta de cliente com o seu e-mail. Você entra com senha ou, se quiser, com o Google. Nesse caso guardamos só o identificador da conta Google, e não a senha do Google. Depois de um atendimento concluído, você pode deixar uma nota de 1 a 5 e um comentário opcional. O primeiro nome, a nota e o comentário podem aparecer na página da barbearia se ela ligar essa opção, até o barbeiro ocultar a avaliação ou você excluir a conta.',
             'Localização: só se você tocar em "compartilhar localização" no agendamento. As coordenadas passam pelo servidor apenas para calcular a distância até a barbearia; guardamos só a distância.',
             'Visitante: nenhum dado pessoal. Guardamos só no seu navegador o tema escolhido e a sua escolha de privacidade.',
             'Registros de acesso: endereço IP, data e hora, endereço da página e resultado, sem senhas, tokens nem dados do navegador.',
@@ -72,7 +72,7 @@ export default {
           items: [
             'Confirmar se tratamos seus dados, acessá-los e corrigi-los (clientes corrigem nome e WhatsApp em "Minha conta").',
             'Portabilidade: baixe todos os seus dados em "Minha conta" (cliente) ou em Configurações → Segurança (barbeiro).',
-            'Exclusão: clientes excluem a conta em "Minha conta" (os agendamentos ficam na barbearia sem o seu nome e contato); barbeiros excluem a barbearia e tudo dela em Configurações → Segurança.',
+            'Exclusão: clientes excluem a conta em "Minha conta" (os agendamentos ficam na barbearia sem o seu nome e contato, e as avaliações são apagadas); barbeiros excluem a barbearia e tudo dela em Configurações → Segurança.',
             'Retirar o consentimento e pedir informações sobre com quem compartilhamos.',
             'Para qualquer pedido, escreva para {email}; respondemos em até 15 dias. Você também pode reclamar à ANPD (Autoridade Nacional de Proteção de Dados).',
           ],

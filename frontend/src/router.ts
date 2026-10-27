@@ -56,6 +56,12 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Domain/Settings/SettingsView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/painel/reviews',
+    name: 'reviews',
+    component: () => import('@/Domain/Review/ReviewsPanelView.vue'),
+    meta: { requiresAuth: true },
+  },
   // Client area (one account for every barbershop where the client booked).
   {
     path: '/conta',
@@ -73,6 +79,12 @@ export const routes: RouteRecordRaw[] = [
     path: '/conta/perfil',
     name: 'client-profile',
     component: () => import('@/Domain/Client/ClientProfileView.vue'),
+    meta: { requiresClient: true },
+  },
+  {
+    path: '/conta/review/:appointment',
+    name: 'client-review',
+    component: () => import('@/Domain/Review/ClientReviewView.vue'),
     meta: { requiresClient: true },
   },
   // Kept for links that have no barbershop (e-mails, Google's return): sends on to the last /<slug>/login.

@@ -11,8 +11,12 @@ use Domain\Client\Data\ClientPasswordConfirmationData;
 use Domain\Client\Models\Client;
 use Domain\Finance\Actions\AnonymizeRevenueClients;
 use Domain\Finance\Data\BookingRequestIdsData;
+use Domain\Review\Actions\DeleteClientReviews;
+use Domain\Review\Data\ClientReviewsQueryData;
 use Domain\Schedule\Actions\AnonymizeClientBookings;
 use Domain\Schedule\Data\ClientBookingsQueryData;
+use Domain\Settings\Support\PublicSettingsCache;
+use Domain\Tenant\Context\CurrentTenant;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +29,10 @@ final class DeleteClientAccount
         private readonly EnsureClientPassword $ensurePassword,
         private readonly AnonymizeClientBookings $anonymizeBookings,
         private readonly AnonymizeRevenueClients $anonymizeRevenue,
+        private readonly DeleteClientReviews $deleteReviews,
         private readonly DeleteClient $deleteClient,
+        private readonly CurrentTenant $tenant,
+        private readonly PublicSettingsCache $cache,
     ) {}
 
     public function handle(ClientPasswordConfirmationData $data): void
@@ -33,11 +40,17 @@ final class DeleteClientAccount
         $this->ensurePassword->handle($data);
         /** @var Client $client */
         $client = auth('client')->user();
+        $tenantIds = [];
 
-        DB::transaction(function () use ($client): void {
+        DB::transaction(function () use ($client, &$tenantIds): void {
             $bookingIds = $this->anonymizeBookings->handle(new ClientBookingsQueryData(client_id: $client->id, email: $client->email));
             $this->anonymizeRevenue->handle(new BookingRequestIdsData(ids: $bookingIds));
+            $tenantIds = $this->deleteReviews->handle(new ClientReviewsQueryData(client_id: $client->id));
             $this->deleteClient->handle(new ClientIdData(client_id: $client->id));
         });
+
+        foreach ($tenantIds as $tenantId) {
+            $this->tenant->run($tenantId, fn () => $this->cache->forget());
+        }
     }
 }

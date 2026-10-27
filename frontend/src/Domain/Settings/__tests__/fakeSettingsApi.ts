@@ -49,6 +49,8 @@ export function createTestSettings(): AppSettings {
         { label: 'Agenda', value: 'Exclusiva' },
       ],
       photos: [{ imageId: 4, url: testImage(4).url, alt: 'Degradê com risca lateral' }],
+      showRating: false,
+      showReviews: false,
     },
     schedule: {
       services: [
@@ -153,6 +155,8 @@ export function settingsBody(settings = createTestSettings()) {
       story: portfolio.story,
       highlights: portfolio.highlights,
       photos: portfolio.photos.map((photo) => ({ image_id: photo.imageId, url: photo.url, alt: photo.alt })),
+      show_rating: portfolio.showRating,
+      show_reviews: portfolio.showReviews,
     },
     schedule: scheduleBody(settings.schedule, true),
     theme: themeBody(settings.theme),
@@ -183,6 +187,8 @@ export function publicPageBody(settings = createTestSettings()) {
       photos: portfolio.photos.map((photo) => ({ url: photo.url, alt: photo.alt })),
     },
     theme: themeBody(settings.theme),
+    rating: { average: null as number | null, count: 0 },
+    featured_reviews: [] as { first_name: string; rating: number; comment: string }[],
   }
 }
 

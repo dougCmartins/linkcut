@@ -30,6 +30,10 @@ export const ApiErrorCode = {
   SlugUnavailable: 'SLUG_UNAVAILABLE',
   EmailAlreadyRegistered: 'EMAIL_ALREADY_REGISTERED',
   CancellationTooLate: 'CANCELLATION_TOO_LATE',
+  ReviewNotAllowed: 'REVIEW_NOT_ALLOWED',
+  ReviewAlreadyExists: 'REVIEW_ALREADY_EXISTS',
+  ReviewNotFeatured: 'REVIEW_NOT_FEATURED',
+  ReviewNotFound: 'REVIEW_NOT_FOUND',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

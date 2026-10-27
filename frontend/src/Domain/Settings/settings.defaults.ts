@@ -26,7 +26,7 @@ export function createEmptySettings(): AppSettings {
       links: [],
       address: emptyAddress(),
     },
-    portfolio: { cover: null, quote: '', story: '', highlights: [], photos: [] },
+    portfolio: { cover: null, quote: '', story: '', highlights: [], photos: [], showRating: false, showReviews: false },
     schedule: {
       services: [],
       weeklyHours: [],

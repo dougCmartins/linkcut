@@ -22,5 +22,7 @@ final class PortfolioSettingsData extends Data
         public readonly DataCollection $highlights,
         #[DataCollectionOf(PortfolioPhotoData::class)]
         public readonly DataCollection $photos,
+        public readonly bool $show_rating,
+        public readonly bool $show_reviews,
     ) {}
 }

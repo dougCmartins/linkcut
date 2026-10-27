@@ -17,7 +17,7 @@ final class ShowClientBooking
         $booking = BookingRequest::withoutTenantScope()
             ->whereKey($data->booking_id)
             ->where('client_id', $data->client_id)
-            ->first(['id', 'tenant_id', 'service_name', 'date', 'starts_at', 'ends_at', 'status'])
+            ->first(['id', 'tenant_id', 'service_name', 'date', 'starts_at', 'ends_at', 'status', 'client_name'])
             ?? throw new BookingRequestNotFoundException;
 
         return new ClientBookingData(
@@ -28,6 +28,7 @@ final class ShowClientBooking
             starts_at: $booking->starts_at,
             ends_at: $booking->ends_at,
             status: $booking->status,
+            client_name: (string) $booking->client_name,
         );
     }
 }

@@ -27,6 +27,10 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.SlugUnavailable]: 'slugUnavailable',
   [ApiErrorCode.EmailAlreadyRegistered]: 'emailAlreadyRegistered',
   [ApiErrorCode.CancellationTooLate]: 'cancellationTooLate',
+  [ApiErrorCode.ReviewNotAllowed]: 'reviewNotAllowed',
+  [ApiErrorCode.ReviewAlreadyExists]: 'reviewAlreadyExists',
+  [ApiErrorCode.ReviewNotFeatured]: 'reviewNotFeatured',
+  [ApiErrorCode.ReviewNotFound]: 'reviewNotFound',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

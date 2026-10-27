@@ -35,6 +35,8 @@ final class ShowPortfolioSettings
             story: $portfolio->story,
             highlights: new DataCollection(HighlightData::class, $highlights),
             photos: new DataCollection(PortfolioPhotoData::class, $photos),
+            show_rating: $portfolio->show_rating,
+            show_reviews: $portfolio->show_reviews,
         );
     }
 }

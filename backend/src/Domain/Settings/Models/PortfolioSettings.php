@@ -13,7 +13,15 @@ final class PortfolioSettings extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = ['tenant_id', 'cover_image_id', 'quote', 'story'];
+    protected $fillable = ['tenant_id', 'cover_image_id', 'quote', 'story', 'show_rating', 'show_reviews'];
+
+    protected function casts(): array
+    {
+        return [
+            'show_rating' => 'boolean',
+            'show_reviews' => 'boolean',
+        ];
+    }
 
     /** @return BelongsTo<Image, $this> */
     public function cover(): BelongsTo

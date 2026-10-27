@@ -12,6 +12,7 @@ import StickyBookingBar from './StickyBookingBar.vue'
 import { useQueryOverlay } from '@/composables/useQueryOverlay'
 import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
 import { usePublicPage } from '@/Domain/Settings/usePublicPage'
+import ReviewCarousel from '@/Domain/Review/ReviewCarousel.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -27,6 +28,7 @@ const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet
 const share = useQueryOverlay('compartilhar')
 const pageUrl = computed(() => `${window.location.origin}/${publicPage.slug}/portfolio`)
 const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index) => ({ id: String(index), ...photo })))
+const featuredReviews = computed(() => publicPage.page?.featuredReviews ?? [])
 </script>
 
 <template>
@@ -57,6 +59,7 @@ const photos = computed(() => (portfolio.value?.photos ?? []).map((photo, index)
 
     <div class="mx-auto -mt-24 flex w-full max-w-md flex-col gap-10 px-4">
       <AboutCard :name="name" :portfolio="portfolio" />
+      <ReviewCarousel v-if="featuredReviews.length" :reviews="featuredReviews" />
       <WorkGallery v-if="photos.length" :photos="photos" :title="t('portfolio.galleryTitle')" :subtitle="t('portfolio.gallerySubtitle')" />
       <PrivacyLinks />
     </div>
