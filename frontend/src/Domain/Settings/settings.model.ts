@@ -17,6 +17,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = Object.values(SettingsSectio
 export const SettingsTab = {
   Link: 'link',
   Portfolio: 'portfolio',
+  Reviews: 'avaliacoes',
   Schedule: 'agenda',
   Appearance: 'aparencia',
   Security: 'seguranca',
@@ -131,6 +132,9 @@ export interface PortfolioSettings {
   story: string
   highlights: Highlight[]
   photos: PortfolioPhoto[]
+  /** Average under the public photo, and comments on the portfolio. Both start off. */
+  showRating: boolean
+  showReviews: boolean
 }
 
 /** A service the client can book. */
@@ -206,10 +210,24 @@ export interface PublicPortfolio {
   photos: { url: string; alt: string }[]
 }
 
+export interface PublicRating {
+  /** Null when the barber hides the average, or nobody has a visible rating. */
+  average: number | null
+  count: number
+}
+
+export interface FeaturedReview {
+  firstName: string
+  rating: number
+  comment: string
+}
+
 export interface PublicPage {
   profile: PublicProfile
   portfolio: PublicPortfolio
   theme: ThemeSettings
+  rating: PublicRating
+  featuredReviews: FeaturedReview[]
 }
 
 export function imageUrl(source: ImageSource): string {

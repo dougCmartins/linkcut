@@ -18,6 +18,8 @@ final class PublicSettingsCache
 
     public const BOOKING_OPTIONS = 'booking-options';
 
+    public const REVIEWS = 'reviews';
+
     private const TTL_SECONDS = 600;
 
     public function __construct(private readonly CurrentTenant $tenant) {}
@@ -35,7 +37,11 @@ final class PublicSettingsCache
 
     public function forget(): void
     {
-        Cache::deleteMultiple([$this->key(self::PUBLIC_PAGE), $this->key(self::BOOKING_OPTIONS)]);
+        Cache::deleteMultiple([
+            $this->key(self::PUBLIC_PAGE),
+            $this->key(self::BOOKING_OPTIONS),
+            $this->key(self::REVIEWS),
+        ]);
     }
 
     private function key(string $part): string

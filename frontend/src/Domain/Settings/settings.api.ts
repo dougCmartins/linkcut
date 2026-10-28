@@ -69,6 +69,8 @@ interface PortfolioBody {
   story: string | null
   highlights: HighlightBody[]
   photos: { image_id: number; url: string; alt: string }[]
+  show_rating?: boolean
+  show_reviews?: boolean
 }
 
 interface ServiceBody {
@@ -114,6 +116,8 @@ interface PublicPageBody {
   profile: Omit<ProfileBody, 'avatar' | 'background'> & { avatar_url: string | null; background_url: string | null }
   portfolio: Omit<PortfolioBody, 'cover' | 'photos'> & { cover_url: string | null; photos: { url: string; alt: string }[] }
   theme: ThemeBody
+  rating?: { average: number | null; count: number }
+  featured_reviews?: { first_name: string; rating: number; comment: string }[]
 }
 
 const toSocials = (socials: SocialLinkBody[]): SocialLink[] =>
@@ -159,6 +163,8 @@ function toPortfolio(body: PortfolioBody): PortfolioSettings {
     story: body.story ?? '',
     highlights: toHighlights(body.highlights),
     photos: body.photos.map((photo) => ({ imageId: photo.image_id, url: photo.url, alt: photo.alt })),
+    showRating: body.show_rating ?? false,
+    showReviews: body.show_reviews ?? false,
   }
 }
 
@@ -235,6 +241,8 @@ function portfolioBody(portfolio: PortfolioSettings) {
     story: portfolio.story,
     highlights: portfolio.highlights,
     photos: portfolio.photos.map((photo) => ({ image_id: photo.imageId, alt: photo.alt })),
+    show_rating: portfolio.showRating,
+    show_reviews: portfolio.showReviews,
   }
 }
 
@@ -329,6 +337,15 @@ export async function fetchPublicPage(slug: string): Promise<PublicPage> {
       photos: data.portfolio.photos,
     },
     theme: toTheme(data.theme),
+    rating: {
+      average: typeof data.rating?.average === 'number' ? data.rating.average : null,
+      count: data.rating?.count ?? 0,
+    },
+    featuredReviews: (data.featured_reviews ?? []).map((review) => ({
+      firstName: review.first_name,
+      rating: review.rating,
+      comment: review.comment,
+    })),
   }
 }
 

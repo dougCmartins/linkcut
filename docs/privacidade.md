@@ -50,10 +50,10 @@ O app **não grava cookies**: a API é stateless (Bearer token).
 ## Direitos do titular
 - **Cliente:**
   - corrige nome e WhatsApp em "Minha conta";
-  - baixa os dados ("Baixar meus dados": conta e horários em JSON, `GET /api/client/me/export`). A conta diz se está ligada ao Google (`google_linked`), sem o identificador do Google;
-  - exclui a conta. A exclusão anonimiza os agendamentos e o financeiro das barbearias, **inclusive os agendamentos antigos feitos com o mesmo e-mail antes de existir a conta**.
+  - baixa os dados ("Baixar meus dados": conta, horários e avaliações em JSON, `GET /api/client/me/export`). A conta diz se está ligada ao Google (`google_linked`), sem o identificador do Google;
+  - exclui a conta. A exclusão anonimiza os agendamentos e o financeiro das barbearias, **inclusive os agendamentos antigos feitos com o mesmo e-mail antes de existir a conta**, e apaga as avaliações. O primeiro nome, a nota e o comentário podem aparecer na página da barbearia se ela ligar a opção, até ela ocultar a avaliação ou o cliente excluir a conta.
 - **Barbeiro**, em Configurações → Segurança → "Seus dados":
-  - baixa tudo da barbearia em JSON (perfil, configurações, serviços, horários, agendamentos e financeiro, `GET /api/account/export`);
+  - baixa tudo da barbearia em JSON (perfil, configurações, serviços, horários, agendamentos, avaliações e financeiro, `GET /api/account/export`);
   - exclui a barbearia, com a senha e o link digitado de novo (`DELETE /api/account`). Apaga a barbearia, os usuários, os acessos, os agendamentos, o financeiro, as inscrições de push e os arquivos de imagem.
 - Outros pedidos (confirmação, informação sobre compartilhamento) pelo e-mail do encarregado (`VITE_PRIVACY_EMAIL`), com resposta em até 15 dias.
 

@@ -55,4 +55,5 @@ export interface ClientAppointment {
   endTime: string
   status: AppointmentStatus
   barbershop: BarbershopContact
+  hasReview: boolean
 }

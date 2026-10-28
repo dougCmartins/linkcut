@@ -36,4 +36,19 @@ final class PlainTextTest extends TestCase
     {
         $this->assertSame('cliente', PlainText::name('https://evil.example'));
     }
+
+    public function test_comment_drops_tags_and_links_and_blank_becomes_null(): void
+    {
+        // Arrange
+        $comment = '  Ótimo corte <b>mesmo</b> https://evil.example  www.golpe.com ';
+
+        // Act
+        $clean = PlainText::text($comment);
+        $blank = PlainText::text('https://evil.example');
+
+        // Assert
+        $this->assertSame('Ótimo corte mesmo', $clean);
+        $this->assertNull($blank);
+        $this->assertNull(PlainText::text(null));
+    }
 }

@@ -46,6 +46,7 @@ final class DatabaseSeeder extends Seeder
             // Only the demo account gets a history, expenses and booking requests; Navalha Norte starts empty.
             app(FinanceDemoSeeder::class)->forTenant($rafael);
             app(ScheduleDemoSeeder::class)->forTenant($rafael);
+            app(ReviewsDemoSeeder::class)->forTenant($rafael);
         });
     }
 

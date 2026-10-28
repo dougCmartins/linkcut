@@ -18,3 +18,4 @@ require base_path('src/Domain/Client/Routes/api.php');
 require base_path('src/Domain/Orchestrator/ClientAppointments/Routes/api.php');
 require base_path('src/Domain/Orchestrator/ClientAccount/Routes/api.php');
 require base_path('src/Domain/Orchestrator/BarbershopAccount/Routes/api.php');
+require base_path('src/Domain/Orchestrator/Review/Routes/api.php');

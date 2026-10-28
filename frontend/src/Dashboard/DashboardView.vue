@@ -148,13 +148,15 @@ async function undo(): Promise<void> {
           />
         </h1>
         <!-- Same tab: a new window in Instagram/WhatsApp browsers closes everything when it is closed. -->
-        <RouterLink
-          :to="publicPath ?? '/painel'"
-          class="inline-block min-h-4 text-xs font-semibold text-accent"
-          :class="{ invisible: !publicPath }"
-        >
-          {{ t('dashboard.openPublicPage') }} →
-        </RouterLink>
+        <p>
+          <RouterLink
+            :to="publicPath ?? '/painel'"
+            class="inline-block min-h-4 text-xs font-semibold text-accent"
+            :class="{ invisible: !publicPath }"
+          >
+            {{ t('dashboard.openPublicPage') }} →
+          </RouterLink>
+        </p>
       </div>
       <RouterLink
         to="/painel/configuracoes"

@@ -92,6 +92,13 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
       <RouterLink v-else :to="{ name: 'booking', params: { slug: appointment.barbershop.slug } }" :class="linkClass">
         {{ t('client.appointments.bookAgain') }} →
       </RouterLink>
+      <RouterLink
+        v-if="appointment.status === AppointmentStatus.Completed && !appointment.hasReview"
+        :to="{ name: 'client-review', params: { appointment: String(appointment.id) } }"
+        :class="linkClass"
+      >
+        {{ t('reviews.rate') }}
+      </RouterLink>
     </div>
 
     <template v-if="isUpcoming">

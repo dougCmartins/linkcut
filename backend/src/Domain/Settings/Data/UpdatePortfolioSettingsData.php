@@ -31,5 +31,7 @@ final class UpdatePortfolioSettingsData extends Data
         public readonly ?string $quote = null,
         #[Nullable, StringType, Max(1200)]
         public readonly ?string $story = null,
+        public readonly bool $show_rating = false,
+        public readonly bool $show_reviews = false,
     ) {}
 }

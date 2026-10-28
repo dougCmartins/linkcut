@@ -102,6 +102,10 @@ final class AppServiceProvider extends ServiceProvider
             Limit::perHour(20)->by($request->ip()),
         ]);
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        // One client rating their visits. The limit follows the account, not the IP.
+        RateLimiter::for('client-reviews', fn (Request $request) => Limit::perMinute(10)->by(
+            'client-reviews:'.($request->user('client')?->getAuthIdentifier() ?? $request->ip()),
+        ));
     }
 
     /** The SMS "log" driver writes codes to a file: never allowed in production while SMS is on. */

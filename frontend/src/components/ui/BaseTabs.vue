@@ -56,10 +56,10 @@ function onKeydown(event: KeyboardEvent): void {
       @click="activeTab = tab.id"
     >
       {{ tab.label }}
+      <!-- Always reserved, so showing the unsaved dot does not resize the menu. -->
       <span
-        v-if="tab.hasBadge"
         class="size-1.5 rounded-full"
-        :class="tab.id === activeTab ? 'bg-on-accent' : 'bg-accent'"
+        :class="tab.hasBadge ? (tab.id === activeTab ? 'bg-on-accent' : 'bg-accent') : 'invisible'"
         aria-hidden="true"
       />
     </button>
