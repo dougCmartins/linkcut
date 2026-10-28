@@ -3,7 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 import { useApiErrors } from '@/composables/useApiErrors'
-import { SaveResult } from '@/Domain/Settings/settings.model'
+import LinkPreview from '@/Domain/Settings/LinkPreview.vue'
+import PhoneFrame from '@/Domain/Settings/PhoneFrame.vue'
+import { imageUrl, SaveResult } from '@/Domain/Settings/settings.model'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import StarRating from './StarRating.vue'
@@ -22,6 +24,15 @@ const error = ref('')
 const hidingId = ref<number | null>(null)
 
 const featuredCount = computed(() => featuredIds.value.length)
+
+/** Stars under the photo in the phone, from the visible ratings already on screen. */
+const previewRating = computed(() => {
+  if (!settings.isLoaded || !settings.drafts.portfolio.showRating) return null
+  const visible = reviews.value.filter((review) => !review.hiddenAt)
+  if (visible.length === 0) return null
+  const average = visible.reduce((sum, review) => sum + review.rating, 0) / visible.length
+  return { average: Math.round(average * 10) / 10, count: visible.length }
+})
 
 function syncFeatured(): void {
   featuredIds.value = reviews.value
@@ -111,13 +122,9 @@ onMounted(() => void load())
 </script>
 
 <template>
-  <main class="mx-auto w-full max-w-md px-4 pt-6 pb-12">
-    <header class="flex items-center gap-3">
-      <RouterLink to="/painel" class="text-sm font-bold text-accent" :aria-label="t('reviews.back')">←</RouterLink>
-      <h1 class="text-xl">{{ t('reviews.panelTitle') }}</h1>
-    </header>
-
-    <div v-if="settings.isLoaded" class="mt-6 flex flex-col gap-4 rounded-card bg-surface p-4 ring-1 ring-line shadow-soft">
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+    <div class="grid gap-5">
+    <div v-if="settings.isLoaded" class="flex flex-col gap-4 rounded-card bg-surface p-4 ring-1 ring-line shadow-soft">
       <ToggleSwitch
         :model-value="settings.drafts.portfolio.showRating"
         :label="t('reviews.showRating')"
@@ -132,9 +139,9 @@ onMounted(() => void load())
       />
     </div>
 
-    <p v-if="loading" class="mt-6 text-sm text-muted" role="status">{{ t('reviews.loading') }}</p>
-    <p v-else-if="reviews.length === 0" class="mt-6 text-sm text-muted">{{ t('reviews.empty') }}</p>
-    <ul v-else class="mt-6 flex flex-col gap-3">
+    <p v-if="loading" class="text-sm text-muted" role="status">{{ t('reviews.loading') }}</p>
+    <p v-else-if="reviews.length === 0" class="text-sm text-muted">{{ t('reviews.empty') }}</p>
+    <ul v-else class="flex flex-col gap-3">
       <li v-for="review in reviews" :key="review.id" class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft">
         <div class="flex items-center gap-2">
           <p class="text-sm font-bold">{{ review.firstName }}</p>
@@ -181,6 +188,17 @@ onMounted(() => void load())
         </div>
       </li>
     </ul>
-    <p v-if="error" class="mt-4 text-sm font-semibold text-danger" role="alert">{{ error }}</p>
-  </main>
+    <p v-if="error" class="text-sm font-semibold text-danger" role="alert">{{ error }}</p>
+    </div>
+    <div class="lg:sticky lg:top-6">
+      <PhoneFrame :theme="settings.drafts.theme">
+        <LinkPreview
+          :profile="settings.drafts.profile"
+          :avatar-url="imageUrl(settings.drafts.profile.avatar)"
+          :background-url="imageUrl(settings.drafts.profile.background)"
+          :rating="previewRating"
+        />
+      </PhoneFrame>
+    </div>
+  </div>
 </template>

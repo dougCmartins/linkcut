@@ -6,9 +6,20 @@ import SocialLinks from '@/components/ui/SocialLinks.vue'
 import ProfileLinkIcon from '@/components/ui/ProfileLinkIcon.vue'
 import { buttonSkinClasses } from '@/components/ui/buttonSkin'
 import { useButtonStyle } from '@/composables/useButtonStyle'
+import { formatAverage } from '@/Domain/Review/review.api'
+import StarRating from '@/Domain/Review/StarRating.vue'
 import type { ProfileSettings } from './settings.model'
 
-defineProps<{ profile: ProfileSettings; avatarUrl: string; backgroundUrl: string }>()
+withDefaults(
+  defineProps<{
+    profile: ProfileSettings
+    avatarUrl: string
+    backgroundUrl: string
+    /** Shown under the photo only when the barber leaves the average on. */
+    rating?: { average: number; count: number } | null
+  }>(),
+  { rating: null },
+)
 const { t } = useI18n()
 const buttonStyle = useButtonStyle()
 
@@ -28,7 +39,16 @@ const secondaryClass = computed(() => [baseClass, buttonSkinClasses(buttonStyle.
       <div class="size-20 overflow-hidden rounded-full ring-4 ring-surface shadow-float">
         <SmartImage :src="avatarUrl" alt="" class="size-full object-cover" />
       </div>
-      <p class="mt-3 font-display text-xl leading-tight font-extrabold tracking-tight break-words">{{ profile.name }}</p>
+      <div v-if="rating" class="mt-2 flex flex-col items-center gap-0.5">
+        <p class="flex items-center gap-1 text-xs font-bold tabular-nums">
+          <StarRating :value="rating.average" size="xs" />
+          <span>{{ formatAverage(rating.average) }}</span>
+        </p>
+        <p class="text-[10px] font-semibold text-muted">{{ t('reviews.reviewCount', { count: rating.count }, rating.count) }}</p>
+      </div>
+      <p class="font-display text-xl leading-tight font-extrabold tracking-tight break-words" :class="rating ? 'mt-2' : 'mt-3'">
+        {{ profile.name }}
+      </p>
       <p class="mt-1 text-xs font-semibold text-accent">{{ profile.handle }}</p>
       <p class="mt-2 text-xs leading-relaxed text-muted break-words">{{ profile.bio }}</p>
 

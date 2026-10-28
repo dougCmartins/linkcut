@@ -17,6 +17,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = Object.values(SettingsSectio
 export const SettingsTab = {
   Link: 'link',
   Portfolio: 'portfolio',
+  Reviews: 'avaliacoes',
   Schedule: 'agenda',
   Appearance: 'aparencia',
   Security: 'seguranca',

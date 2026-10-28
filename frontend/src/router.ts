@@ -58,9 +58,7 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: '/painel/reviews',
-    name: 'reviews',
-    component: () => import('@/Domain/Review/ReviewsPanelView.vue'),
-    meta: { requiresAuth: true },
+    redirect: { name: 'settings', query: { aba: 'avaliacoes' } },
   },
   // Client area (one account for every barbershop where the client booked).
   {

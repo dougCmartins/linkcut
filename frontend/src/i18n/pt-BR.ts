@@ -141,7 +141,6 @@ export default {
     carouselTitle: 'O que dizem',
     reviewCount: '{count} avaliação | {count} avaliações',
     offCarousel: 'Sem mensagem, fora do carrossel',
-    panelTitle: 'Avaliações',
     showRating: 'Mostrar a média no link',
     showRatingHint: 'Estrelas e a nota, logo abaixo da foto.',
     showReviews: 'Mostrar depoimentos na história',
@@ -237,7 +236,6 @@ export default {
     reject: 'Recusar',
     requestMeta: '{date} às {time}',
     openPublicPage: 'Ver minha página',
-    reviews: 'Avaliações',
     settings: 'Configurações',
     periodOf: 'Resumo de {month}',
     monthToDate: 'Mês até hoje',
@@ -381,6 +379,7 @@ export default {
     tabs: {
       link: 'Link',
       portfolio: 'Portfólio',
+      avaliacoes: 'Avaliações',
       agenda: 'Agenda',
       aparencia: 'Aparência',
       seguranca: 'Segurança',
