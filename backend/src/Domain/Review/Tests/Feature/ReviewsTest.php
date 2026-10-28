@@ -193,6 +193,25 @@ final class ReviewsTest extends TestCase
         $hiddenResponse->assertUnprocessable()->assertJsonPath('code', 'REVIEW_NOT_FEATURED');
     }
 
+    public function test_featured_ids_must_be_a_list_of_numbers(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $this->actingAsOwner($owner);
+
+        // Act
+        $text = $this->putJson('/api/reviews/featured', ['review_ids' => ['abc']]);
+        $nested = $this->putJson('/api/reviews/featured', ['review_ids' => [[1]]]);
+        $missing = $this->putJson('/api/reviews/featured', []);
+        $empty = $this->putJson('/api/reviews/featured', ['review_ids' => []]);
+
+        // Assert
+        $text->assertUnprocessable()->assertJsonValidationErrors(['review_ids.0']);
+        $nested->assertUnprocessable()->assertJsonValidationErrors(['review_ids.0']);
+        $missing->assertUnprocessable()->assertJsonValidationErrors(['review_ids']);
+        $empty->assertOk();
+    }
+
     public function test_another_barber_cannot_list_hide_or_feature_the_review(): void
     {
         // Arrange
