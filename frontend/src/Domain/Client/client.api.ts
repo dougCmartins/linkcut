@@ -28,6 +28,7 @@ interface AppointmentBody {
   starts_at: string
   ends_at: string
   status: AppointmentStatus
+  has_review?: boolean
   barbershop: {
     name: string
     slug: string
@@ -70,6 +71,7 @@ const toAppointment = (body: AppointmentBody): ClientAppointment => ({
     whatsappUrl: body.barbershop.whatsapp_url,
     avatarUrl: body.barbershop.avatar_url ?? null,
   },
+  hasReview: body.has_review === true,
 })
 
 /** Always the same answer (no account discovery); the e-mail only goes when it makes sense. */

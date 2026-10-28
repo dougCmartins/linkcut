@@ -19,5 +19,6 @@ final class ClientAppointmentData extends Data
         public readonly string $ends_at,
         public readonly BookingStatus $status,
         public readonly BarbershopContactData $barbershop,
+        public readonly bool $has_review,
     ) {}
 }

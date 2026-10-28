@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/vue'
 import BioLinkView from '../BioLinkView.vue'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
-import { createTestSettings, installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
+import { createTestSettings, installFakeSettingsApi, publicPageBody } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 import { ThemePalette } from '@/types/theme'
 import { renderWithPlugins } from '@/utils/testRender'
 
@@ -127,5 +127,33 @@ describe('BioLinkView', () => {
 
     // Assert
     await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/rafael'))
+  })
+
+  it('shows the stars and the average only when the page has one', async () => {
+    // Arrange
+    installFakeSettingsApi()
+
+    // Act
+    const hidden = await renderBioLink()
+    await screen.findByRole('heading', { name: 'Rafael Costa' })
+
+    // Assert
+    expect(screen.queryByText('4,8')).toBeNull()
+    expect(screen.queryByText('23 avaliações')).toBeNull()
+    hidden.unmount()
+
+    // Arrange
+    const body = publicPageBody()
+    body.rating = { average: 4.8, count: 23 }
+    installFakeSettingsApi(createTestSettings(), {
+      'GET /public/rafael': () => ({ status: 200, body }),
+    })
+
+    // Act
+    await renderBioLink()
+
+    // Assert
+    expect(await screen.findByText('4,8')).toBeTruthy()
+    expect(screen.getByText('23 avaliações')).toBeTruthy()
   })
 })

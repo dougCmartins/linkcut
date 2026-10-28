@@ -23,4 +23,20 @@ final class PlainText
 
         return Str::limit($text !== '' ? $text : __('client_mail.default_name'), self::NAME_MAX, '');
     }
+
+    /** A review comment: no tags, no links. Empty after cleaning is "no comment". */
+    public static function text(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $text = strip_tags($value);
+        $text = preg_replace('~(https?://|www\.)\S*~iu', '', $text) ?? '';
+        $text = preg_replace('/[\[\]()<>*_`#|\\\\{}~]/u', '', $text) ?? '';
+        $text = preg_replace('~\b\S+\.(com|net|org|br|io|app|xyz|me|info|link)\b\S*~iu', '', $text) ?? '';
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? '');
+
+        return $text === '' ? null : $text;
+    }
 }

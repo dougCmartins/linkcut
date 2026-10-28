@@ -6,6 +6,7 @@ import BaseTabs, { type TabItem } from '@/components/ui/BaseTabs.vue'
 import AppearanceSettingsTab from './AppearanceSettingsTab.vue'
 import LinkSettingsTab from './LinkSettingsTab.vue'
 import PortfolioSettingsTab from './PortfolioSettingsTab.vue'
+import ReviewsPanelView from '@/Domain/Review/ReviewsPanelView.vue'
 import SaveBar from './SaveBar.vue'
 import ScheduleSettingsTab from './ScheduleSettingsTab.vue'
 import SecuritySettingsTab from './SecuritySettingsTab.vue'
@@ -21,6 +22,7 @@ const TAB_ID_PREFIX = 'settings'
 const TAB_COMPONENTS: Record<SettingsTab, Component> = {
   [SettingsTab.Link]: LinkSettingsTab,
   [SettingsTab.Portfolio]: PortfolioSettingsTab,
+  [SettingsTab.Reviews]: ReviewsPanelView,
   [SettingsTab.Schedule]: ScheduleSettingsTab,
   [SettingsTab.Appearance]: AppearanceSettingsTab,
   [SettingsTab.Security]: SecuritySettingsTab,

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SmartImage from '@/components/ui/SmartImage.vue'
-import { splitParagraphs, type PortfolioSettings } from './settings.model'
+import StarRating from '@/Domain/Review/StarRating.vue'
+import { fetchReviews } from '@/Domain/Review/review.api'
+import { splitParagraphs, type FeaturedReview, type PortfolioSettings } from './settings.model'
 
 const props = defineProps<{
   portfolio: PortfolioSettings
@@ -14,6 +16,27 @@ const { t } = useI18n()
 
 const paragraphs = computed(() => splitParagraphs(props.portfolio.story))
 const highlights = computed(() => props.portfolio.highlights.filter((highlight) => highlight.value.trim()))
+const featured = ref<FeaturedReview[]>([])
+
+/** The phone shows the chosen comments only. A failed read leaves the preview without them. */
+async function loadFeatured(): Promise<void> {
+  if (!props.portfolio.showReviews) {
+    featured.value = []
+    return
+  }
+  try {
+    const reviews = await fetchReviews()
+    featured.value = reviews
+      .filter((review) => review.comment && !review.hiddenAt && review.featuredPosition !== null)
+      .sort((a, b) => (a.featuredPosition ?? 0) - (b.featuredPosition ?? 0))
+      .map((review) => ({ firstName: review.firstName, rating: review.rating, comment: review.comment ?? '' }))
+  } catch {
+    featured.value = []
+  }
+}
+
+onMounted(() => void loadFeatured())
+watch(() => props.portfolio.showReviews, () => void loadFeatured())
 </script>
 
 <template>
@@ -42,6 +65,22 @@ const highlights = computed(() => props.portfolio.highlights.filter((highlight) 
           <li v-for="highlight in highlights" :key="highlight.label" class="min-w-0 rounded-lg bg-raised p-2 ring-1 ring-line">
             <p class="truncate text-[8px] font-semibold tracking-wider text-muted uppercase">{{ highlight.label }}</p>
             <p class="mt-0.5 text-[10px] leading-tight font-extrabold break-words">{{ highlight.value }}</p>
+          </li>
+        </ul>
+      </div>
+      <div v-if="featured.length" class="mt-4">
+        <p class="text-xs font-extrabold">{{ t('reviews.carouselTitle') }}</p>
+        <ul class="scrollbar-none mt-2 flex gap-2 overflow-x-auto">
+          <li
+            v-for="(review, index) in featured"
+            :key="index"
+            class="w-40 shrink-0 rounded-xl bg-surface p-3 ring-1 ring-line"
+          >
+            <p class="text-xs font-bold break-words">{{ review.firstName }}</p>
+            <div class="mt-1">
+              <StarRating :value="review.rating" size="xs" />
+            </div>
+            <p class="mt-1 text-[10px] leading-snug break-words">{{ review.comment }}</p>
           </li>
         </ul>
       </div>

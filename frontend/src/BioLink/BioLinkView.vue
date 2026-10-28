@@ -12,6 +12,8 @@ import SocialLinks from '@/components/ui/SocialLinks.vue'
 import { useQueryOverlay } from '@/composables/useQueryOverlay'
 import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
 import { usePublicPage } from '@/Domain/Settings/usePublicPage'
+import { formatAverage } from '@/Domain/Review/review.api'
+import StarRating from '@/Domain/Review/StarRating.vue'
 import { buildWhatsappUrl } from '@/utils/phone'
 
 const { t } = useI18n()
@@ -29,6 +31,11 @@ const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet
 const share = useQueryOverlay('compartilhar')
 const pageUrl = computed(() => `${window.location.origin}/${publicPage.slug}`)
 const whatsappUrl = computed(() => (profile.value ? buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage) : ''))
+const ratingAverage = computed(() => {
+  const average = publicPage.page?.rating.average
+  return average == null ? '' : formatAverage(average)
+})
+const ratingCount = computed(() => publicPage.page?.rating.count ?? 0)
 </script>
 
 <template>
@@ -51,7 +58,14 @@ const whatsappUrl = computed(() => (profile.value ? buildWhatsappUrl(profile.val
     <div class="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center px-5 pt-20 pb-10">
       <header class="flex flex-col items-center text-center">
         <AvatarImage :src="profile.avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" />
-        <h1 class="mt-5 text-3xl leading-none break-words">{{ profile.name }}</h1>
+        <div v-if="ratingAverage" class="mt-2.5 flex flex-col items-center gap-1">
+          <p class="flex h-4 items-center gap-2 text-base font-bold tabular-nums">
+            <StarRating :value="publicPage.page?.rating.average ?? 0" />
+            <span>{{ ratingAverage }}</span>
+          </p>
+          <p class="text-xs font-semibold text-muted">{{ t('reviews.reviewCount', { count: ratingCount }, ratingCount) }}</p>
+        </div>
+        <h1 class="text-3xl leading-none break-words" :class="ratingAverage ? 'mt-2.5' : 'mt-5'">{{ profile.name }}</h1>
         <p v-if="profile.handle" class="mt-1.5 text-sm font-semibold text-accent">{{ profile.handle }}</p>
         <p v-if="profile.bio" class="mt-3 max-w-xs text-[15px] leading-relaxed text-muted break-words">{{ profile.bio }}</p>
       </header>

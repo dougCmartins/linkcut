@@ -26,6 +26,8 @@ function renderModal(
       profile: { ...settings.profile, avatarUrl: '', backgroundUrl: '', address },
       portfolio: { coverUrl: '', quote: '', story: '', highlights: [], photos: [] },
       theme: settings.theme,
+      rating: { average: null, count: 0 },
+      featuredReviews: [],
     }
   })
   return { ...rendered, ...fake }

@@ -40,6 +40,8 @@ final class UpdatePortfolioSettings
                 'cover_image_id' => $data->cover_image_id,
                 'quote' => $data->quote ?? '',
                 'story' => $data->story ?? '',
+                'show_rating' => $data->show_rating,
+                'show_reviews' => $data->show_reviews,
             ]);
 
             PortfolioHighlight::query()->delete();
