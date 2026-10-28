@@ -629,6 +629,7 @@ Antes de criar arquivo novo, recuse o caminho abaixo. Estas são as falhas já v
 - Domínio novo porque a tabela existe, ou porque há uma Action só. O contexto é o problema em curso. Dono e loja, neste problema, são `name` e `store_name` do cliente. Transação e operação só entram quando esse contexto for o trabalho.
 - Controller que consulta Model, valida na mão ou devolve o model cru.
 - Projeto novo sem Docker e Makefile, ou com banco diferente de MySQL, quando ninguém pediu a troca.
+- Seeder que chama `Model::query()->create([...])` e espalha `fake()` nos campos. Quem conhece as colunas é a factory da model. A seeder faz `Review::factory()->create()` (ou `count()` e `state()`). Quantidade, tenant e destaque ficam na seeder. Valor padrão e Faker ficam na factory.
 
 ---
 
@@ -651,5 +652,6 @@ Antes de criar arquivo novo, recuse o caminho abaixo. Estas são as falhas já v
 - [ ] O Orchestrator vive em `src/Domain/Orchestrator`, só chama Actions e não tem Model próprio
 - [ ] Raw SQL só é usado com placeholders e documentado
 - [ ] Projeto novo tem Docker, Makefile e MySQL, salvo pedido explícito em contrário
+- [ ] Seeder grava pela factory da model (`Model::factory()`). Sem `create([...])` manual e sem Faker na seeder
 
 Esse documento consolida as práticas de arquitetura backend adotadas em projetos Laravel com foco em DDD pragmático, tipagem estrita, separação de camadas e observabilidade — servindo como referência para qualquer desenvolvedor que queira aplicar esses padrões de forma consistente.
