@@ -13,10 +13,12 @@ use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\DataCollection;
 
-/** The public page plus the rating and the comments. The JSON stays flat, like the page alone. */
+/** The public page, the rating and the comments. The JSON stays flat. Products stay in the client area. */
 final class PublicVisitData extends Data
 {
-    /** @param DataCollection<int, FeaturedReviewData> $featured_reviews */
+    /**
+     * @param  DataCollection<int, FeaturedReviewData>  $featured_reviews
+     */
     public function __construct(
         public readonly PublicProfileData $profile,
         public readonly PublicPortfolioData $portfolio,

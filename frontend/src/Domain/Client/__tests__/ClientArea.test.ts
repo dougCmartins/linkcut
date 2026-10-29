@@ -115,6 +115,25 @@ describe('client area 2.0', () => {
     expect(screen.getByRole('heading', { name: 'Rafael Costa' })).toBeTruthy()
     const bookLinks = screen.getAllByRole('link', { name: /^Agendar/ }).map((link) => link.getAttribute('href'))
     expect(bookLinks).toEqual(['/navalha/agendar', '/rafael/agendar'])
+    expect(screen.queryByRole('link', { name: 'Ver produtos' })).toBeNull()
+  })
+
+  it('offers Ver produtos only for a barbershop with active products', async () => {
+    // Arrange
+    installFakeClientApi({
+      'GET /client/appointments': () => ({
+        status: 200,
+        body: APPOINTMENTS.map((item) => ({ ...item, has_products: item.barbershop.slug === 'navalha' })),
+      }),
+    })
+
+    // Act
+    await renderSignedIn(ClientBarbershopsView, '/conta/barbearias')
+    const links = await screen.findAllByRole('link', { name: 'Ver produtos' })
+
+    // Assert
+    expect(links).toHaveLength(1)
+    expect(links[0]?.getAttribute('href')).toBe('/conta/barbearias/navalha/produtos')
   })
 
   it('saves name and WhatsApp in "Minha conta"', async () => {

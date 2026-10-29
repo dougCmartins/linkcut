@@ -17,11 +17,15 @@ const isLoading = ref(!clientStore.appointmentsLoaded)
 const failed = ref(false)
 
 const barbershops = computed(() => {
-  const bySlug = new Map<string, { barbershop: BarbershopContact; visits: number }>()
+  const bySlug = new Map<string, { barbershop: BarbershopContact; visits: number; hasProducts: boolean }>()
   for (const appointment of clientStore.appointments) {
     const entry = bySlug.get(appointment.barbershop.slug)
-    if (entry) entry.visits += 1
-    else bySlug.set(appointment.barbershop.slug, { barbershop: appointment.barbershop, visits: 1 })
+    if (entry) {
+      entry.visits += 1
+      entry.hasProducts = entry.hasProducts || appointment.hasProducts
+    } else {
+      bySlug.set(appointment.barbershop.slug, { barbershop: appointment.barbershop, visits: 1, hasProducts: appointment.hasProducts })
+    }
   }
   return [...bySlug.values()]
 })
@@ -45,7 +49,7 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
     <p v-else-if="failed" class="text-sm font-semibold text-danger" role="alert">{{ t('client.appointments.failed') }}</p>
     <p v-else-if="barbershops.length === 0" class="text-sm text-muted">{{ t('client.barbershops.empty') }}</p>
     <ul v-else class="grid gap-3">
-      <li v-for="{ barbershop, visits } in barbershops" :key="barbershop.slug">
+      <li v-for="{ barbershop, visits, hasProducts } in barbershops" :key="barbershop.slug">
         <article class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft">
           <div class="flex items-center gap-3">
             <BarbershopLogo :name="barbershop.name" :src="barbershop.avatarUrl" size="md" />
@@ -61,6 +65,9 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
             </RouterLink>
             <RouterLink :to="{ name: 'bio-link', params: { slug: barbershop.slug } }" :class="linkClass">
               {{ t('client.barbershops.page') }}
+            </RouterLink>
+            <RouterLink v-if="hasProducts" :to="{ name: 'client-products', params: { slug: barbershop.slug } }" :class="linkClass">
+              {{ t('client.barbershops.products') }}
             </RouterLink>
             <a v-if="barbershop.whatsappUrl" :href="barbershop.whatsappUrl" target="_blank" rel="noopener noreferrer" :class="linkClass">
               {{ t('client.appointments.whatsapp') }}

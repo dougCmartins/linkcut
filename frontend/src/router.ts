@@ -74,6 +74,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresClient: true },
   },
   {
+    path: '/conta/barbearias/:slug/produtos',
+    name: 'client-products',
+    component: () => import('@/Domain/Catalog/ClientProductsView.vue'),
+    meta: { requiresClient: true },
+  },
+  {
     path: '/conta/perfil',
     name: 'client-profile',
     component: () => import('@/Domain/Client/ClientProfileView.vue'),

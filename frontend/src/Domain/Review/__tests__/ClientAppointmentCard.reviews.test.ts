@@ -14,6 +14,7 @@ function appointment(status: AppointmentStatus, hasReview: boolean): ClientAppoi
     endTime: '10:45',
     status,
     hasReview,
+    hasProducts: false,
     barbershop: {
       name: 'Rafael Costa',
       slug: 'rafael',
