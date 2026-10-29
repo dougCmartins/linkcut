@@ -1,6 +1,11 @@
 # linkcut: próximos passos
 
-**Situação:** a Etapa 11 está quase toda na `main`, com as PRs 1, 2, 3, 4 e 6 (#40–#44). Falta a PR 5, o login com Google para clientes.
+**Situação (29/10):**
+- A Etapa 11 está na `main` (#40–#46), com o login com Google desligado até haver as chaves.
+- Os módulos 2.1 (links livres, #47) e 2.2 (avaliações, #48) estão feitos.
+- O 2.3 (vitrine) está com o Cursor.
+- Depois vem a **Equipe** (seção 5), a próxima etapa grande.
+- O mapa do sistema está em `docs/arquitetura.md`.
 
 **Para quem é:** este documento é o roteiro para continuar o trabalho, inclusive no Cursor. Cada item vira uma PR. Depois, cada PR passa pela revisão do Claude.
 
@@ -171,6 +176,50 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
 2. **PRs do Dependabot (#30 a #37):** revisar uma por uma e fazer o merge das que passarem no CI. Atualizações grandes (major) só com o changelog lido.
 3. **Teste do esqueleto do histórico:** um teste vitest que verifica que `HistoryView` mostra `role="status"` com o esqueleto enquanto carrega (`frontend/src/Domain/Finance/History/__tests__`).
 4. **Depois, quando crescer:** FrankenPHP em modo worker. Ver os cuidados em `docs/escala.md`, passo 2; não é para agora.
+
+---
+
+## 5. Próxima etapa grande: Equipe (de barbeiro sozinho a barbearia completa)
+**Visão do dono:** o linkcut continua sendo **gestão**, não marketplace.
+- O cliente não procura barbearias perto dele dentro do app: chega pelo Instagram ou pela internet.
+- As barbearias que ele usa aparecem em "Minhas barbearias", como hoje.
+- O que muda é o lado do barbeiro: ele pode virar uma barbearia com funcionários.
+
+**Ordem:** terminar a vitrine (2.3) e lançar a versão para barbeiro sozinho. Só depois começar a Equipe.
+
+### O mínimo da Equipe
+1. **Barbeiros da equipe (subusuários):**
+   - o dono cadastra os funcionários, que recebem um convite por e-mail e entram com o próprio login;
+   - o funcionário vê a própria agenda e os próprios atendimentos;
+   - o dono vê e gerencia tudo.
+2. **Agenda por barbeiro:**
+   - cada um tem os próprios horários e os serviços que faz;
+   - no agendamento público, o cliente escolhe o barbeiro ou "qualquer um disponível";
+   - o dono pode passar um atendimento de um barbeiro para outro.
+3. **Comissão:**
+   - percentual por serviço, com a opção de um valor diferente por barbeiro;
+   - ao concluir o atendimento, a comissão fica registrada para o barbeiro;
+   - relatório do mês com o faturamento e o valor a receber de cada um.
+
+**Sem quebrar quem trabalha sozinho:**
+- toda barbearia passa a ter um "barbeiro", que é o próprio dono, criado por migração para as barbearias que já existem;
+- nada muda na tela de quem trabalha sozinho;
+- "Minha equipe" só aparece ao adicionar o segundo barbeiro.
+
+**Referência:** o `barber-saas` já tem profissionais e agendamento com serviços. Ele serve de modelo, mas o código precisa ser adaptado ao tenant do linkcut, não copiado.
+
+### Perguntas para o dono (responder quando a etapa começar)
+- **Base da comissão:** sobre o preço cheio ou sobre o preço menos o custo do serviço?
+- **Limite da equipe:** o plano Equipe tem limite de barbeiros (ex.: até 5)?
+- **Funcionário e financeiro:** o funcionário vê o próprio faturamento ou só a agenda?
+
+### Fica para depois (plano pago mais caro)
+- Modo secretária: papel de recepção que agenda pelo balcão para todos os barbeiros.
+- Programa de fidelidade.
+- Várias unidades.
+- Assinatura de clientes (clube mensal; depende do gateway de pagamento).
+
+**Quando a Equipe existir:** rever a paginação do histórico (cursor com "Carregar mais") e a exportação em fila. Uma barbearia com equipe pode passar de 50 mil atendimentos por ano. Para barbeiro sozinho (uns 5 mil por ano), a paginação atual basta.
 
 ---
 

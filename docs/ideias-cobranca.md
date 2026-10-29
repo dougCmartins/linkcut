@@ -12,7 +12,8 @@
 | Recurso | Por que alguém pagaria | Custo para nós | Esforço |
 |---|---|---|---|
 | **Sinal via Pix no agendamento** (ex.: R$ 10, abatido no corte) | acaba com a falta sem aviso, a maior dor | gateway (Asaas ou Mercado Pago, ~1% por Pix) | grande |
-| **Mais de um barbeiro na barbearia** (agenda por profissional) | barbearias com equipe pagam mais | nenhum | grande |
+| **Equipe: barbeiros funcionários, agenda por barbeiro e comissão** (ver `docs/proximos-passos.md`, seção 5) | barbearias com equipe pagam mais | nenhum | grande |
+| **Modo secretária e fidelidade** | recepção e retenção de clientes em barbearias maiores | nenhum | médio cada |
 | **Cartão fidelidade** ("10 cortes = 1 grátis") | o cliente volta | nenhum | médio |
 | **Pacotes ou clube de assinatura** ("4 cortes por mês por R$ 120") | receita recorrente para o barbeiro | gateway | médio/grande |
 | **Relatórios do financeiro**: lucro por serviço, clientes que sumiram, exportação | decisão de negócio | nenhum | médio |
@@ -30,8 +31,9 @@
 | Produtos na vitrine | até 50 | ilimitado | ilimitado |
 | Categorias na vitrine | — | ✅ | ✅ |
 | Links livres na página | sem limite por enquanto (decidir: limitar no grátis?) | ilimitado | ilimitado |
-| Sinal via Pix, fidelidade, relatórios, sem a marca linkcut | — | ✅ | ✅ |
-| Vários barbeiros | — | — | ✅ |
+| Sinal via Pix, relatórios, sem a marca linkcut | — | ✅ | ✅ |
+| Barbeiros da equipe, agenda por barbeiro e comissão | — | — | ✅ |
+| Modo secretária e fidelidade | — | — | plano acima do Equipe (futuro, mais caro) |
 
 **Cobrança:** assinatura mensal via **Asaas** (Pix, boleto e cartão, com recorrência) ou Mercado Pago. O mesmo gateway serve para a assinatura do barbeiro e para o sinal Pix dos clientes.
 
@@ -39,7 +41,8 @@
 1. **Planos e limites:** tabela de planos, limite de 60 por mês no grátis, tela "Meu plano" e período de teste do Pro.
 2. **Assinatura via Asaas:** o barbeiro paga o Pro.
 3. **Sinal via Pix:** o recurso Pro com mais apelo.
-4. Depois: fidelidade e pacotes, vários barbeiros.
+4. **Equipe:** barbeiros funcionários, agenda por barbeiro e comissão.
+5. Depois, num plano mais caro: modo secretária, fidelidade, várias unidades e pacotes ou assinatura de clientes.
 
 **Antes de começar, conversar com 3 a 5 barbeiros:**
 - o preço;
@@ -64,4 +67,4 @@
 - SMS: sem verba.
 - WhatsApp pela API oficial: cara.
 - Chat dentro do app.
-- Marketplace de barbearias.
+- Marketplace de barbearias, isto é, o cliente procurando barbearias perto dele dentro do app. O linkcut é gestão: o cliente chega pelo Instagram ou pela internet, e as barbearias que ele usa aparecem em "Minhas barbearias".
