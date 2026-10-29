@@ -16,6 +16,7 @@ import { AppointmentStatus } from '@/types/appointmentStatus'
 import { useMonthToDateStore } from '@/Domain/Finance/monthToDate.store'
 import { HEALTHY_MARGIN_PERCENT, formatMarginPercent } from '@/Domain/Finance/financialSummary'
 import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
+import { useLiveRefresh } from '@/composables/useLiveRefresh'
 import type { BookingRequest } from '@/Domain/Schedule/booking.model'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { hasAddress, imageUrl } from '@/Domain/Settings/settings.model'
@@ -91,6 +92,9 @@ onMounted(() => {
 
 // "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
 const busyRequestId = ref<number | null>(null)
+// New requests and cancellations show up without F5: on a push, when the app comes back to the front, and every
+// 30 s while the dashboard is visible. Skipped while the barber is accepting, refusing or concluding.
+useLiveRefresh(() => agendaStore.load({ silent: true }), { isBusy: () => busyRequestId.value !== null })
 const lastCompleted = useUndoWindow<{ id: number; priceInCents: number }>()
 /** Message of the last agenda change the API refused. */
 const agendaError = ref('')
