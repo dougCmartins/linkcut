@@ -207,6 +207,24 @@ async function submit(): Promise<void> {
   }
 }
 
+/**
+ * Enter in a text field goes to the next field instead of sending the request: on a phone the keyboard's
+ * "Ir"/"Enter" would otherwise book before the client finished (the browser submits a form on Enter).
+ */
+function onFieldEnter(event: KeyboardEvent): void {
+  const field = event.target
+  if (!(field instanceof HTMLInputElement) || event.isComposing) return
+  event.preventDefault()
+  const form = field.form
+  if (!form) return
+  const fields = Array.from(form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')).filter(
+    (element) => !element.disabled && element.type !== 'hidden',
+  )
+  const next = fields[fields.indexOf(field) + 1]
+  if (next) next.focus()
+  else field.blur()
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') emit('close')
 }
@@ -277,7 +295,7 @@ onBeforeUnmount(() => {
         @close="emit('close')"
       />
 
-      <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="onSubmit">
+      <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="onSubmit" @keydown.enter="onFieldEnter">
         <div class="flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6">
           <section class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft" aria-labelledby="booking-where">
             <h3 id="booking-where" class="text-xs font-bold tracking-wide text-muted uppercase">{{ t('booking.whereTitle') }}</h3>

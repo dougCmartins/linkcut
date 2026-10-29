@@ -23,7 +23,9 @@ async function enable(): Promise<void> {
     if (!subscription) return void (state.value = permission === 'denied' ? 'denied' : 'idle')
     await saveClientPushSubscription(subscription, props.pushUrl)
     state.value = 'on'
-  } catch {
+  } catch (caught) {
+    // Shown in the browser console so a failure on a given browser can be traced (no personal data in it).
+    console.warn('client_push_failed', caught instanceof Error ? `${caught.name}: ${caught.message}` : caught)
     state.value = 'failed'
   }
 }
