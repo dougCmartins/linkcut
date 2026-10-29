@@ -17,6 +17,8 @@
 | **Pacotes ou clube de assinatura** ("4 cortes por mês por R$ 120") | receita recorrente para o barbeiro | gateway | médio/grande |
 | **Relatórios do financeiro**: lucro por serviço, clientes que sumiram, exportação | decisão de negócio | nenhum | médio |
 | **Página sem a marca "linkcut"** e **domínio próprio** | profissionalismo | baixo | pequeno/médio |
+| **Vitrine sem limite** (o grátis tem até 50 produtos) | quem vende muito produto na cadeira | baixo (fotos no disco) | pequeno: o limite já existe (`PRODUCTS_LIMIT`) |
+| **Categorias na vitrine** (cabelo, barba, acessórios) | organizar uma vitrine grande | nenhum | médio: telas de categoria, ordem e agrupamento na página |
 | Lembrete por WhatsApp automático | o cliente lê mais o WhatsApp | API oficial é cara: **fora por enquanto** | — |
 
 ## Proposta de planos (a validar com barbeiros)
@@ -25,6 +27,9 @@
 | Página, agenda e financeiro básico | ✅ | ✅ | ✅ |
 | Lembrete por e-mail e área do cliente | ✅ | ✅ | ✅ |
 | Agendamentos por mês | até 60 | ilimitado | ilimitado |
+| Produtos na vitrine | até 50 | ilimitado | ilimitado |
+| Categorias na vitrine | — | ✅ | ✅ |
+| Links livres na página | sem limite por enquanto (decidir: limitar no grátis?) | ilimitado | ilimitado |
 | Sinal via Pix, fidelidade, relatórios, sem a marca linkcut | — | ✅ | ✅ |
 | Vários barbeiros | — | — | ✅ |
 
@@ -41,10 +46,19 @@
 - o limite de 60 agendamentos por mês;
 - se o sinal via Pix é o que mais os faz pagar.
 
+### Vitrine: decisões já tomadas
+- **Hoje:** limite total de 50 produtos por barbearia, numa lista única, sem paginação e sem categorias. Uma barbearia típica tem de 5 a 20 produtos.
+- **Por que não limite por categoria:** criando várias categorias, o barbeiro contorna o limite. Só valeria limitando também as categorias: duas regras para explicar.
+- **Quando houver planos:** "50 no grátis, ilimitado no pago" é só trocar a regra do `PRODUCTS_LIMIT`.
+- **Se o limite sumir:**
+  - no painel, paginação por cursor de 50 em 50, com "Carregar mais" e busca por nome;
+  - na página pública, os primeiros 6 a 8 produtos e um "Ver todos", sem rolagem infinita, para o rodapé continuar acessível.
+- **Categorias:** entram quando houver barbearias com vitrines grandes, como recurso do plano pago.
+
 ## Outras ideias para a área do cliente (ainda não feitas)
 - **Remarcar:** escolher outro horário em vez de cancelar.
-- **Avaliação após o atendimento:** nota e comentário na página da barbearia; precisa de moderação.
-- **Push no celular do cliente:** lembrete sem e-mail. O push já existe para o barbeiro.
+- ~~**Avaliação após o atendimento**~~: feita (#48). O barbeiro escolhe se mostra a média e os destaques.
+- ~~**Push no celular do cliente**~~: feito (#43).
 
 ## Fora de cogitação (decisões já tomadas)
 - SMS: sem verba.
