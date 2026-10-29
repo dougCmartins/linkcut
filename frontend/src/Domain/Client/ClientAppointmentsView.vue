@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useApiErrors } from '@/composables/useApiErrors'
+import { useLiveRefresh } from '@/composables/useLiveRefresh'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 import { toIsoDate } from '@/utils/date'
 import ClientAppointmentCard from './ClientAppointmentCard.vue'
@@ -39,6 +40,9 @@ async function cancel(id: number): Promise<void> {
     cancellingId.value = null
   }
 }
+
+// The barbershop's answer (confirmed or refused) shows up without F5. A failed background round keeps the list.
+useLiveRefresh(() => clientStore.loadAppointments().catch(() => undefined), { isBusy: () => cancellingId.value !== null })
 
 onMounted(async () => {
   try {

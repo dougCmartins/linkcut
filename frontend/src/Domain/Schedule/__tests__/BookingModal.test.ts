@@ -132,6 +132,32 @@ describe('BookingModal', () => {
     expect(card.getAttribute('href')).toBe('/conta/finalizar?email=joao@example.com')
   })
 
+  it('Enter in a field goes to the next one and does not send the request before the client finishes', async () => {
+    // Arrange
+    const { calls } = renderModal()
+    await fillValidBooking()
+    const name = screen.getByLabelText('Nome')
+    const email = screen.getByLabelText('E-mail')
+
+    // Act
+    const pressEnter = (field: HTMLElement) => {
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      field.dispatchEvent(event)
+      return event.defaultPrevented
+    }
+    const nameEnterPrevented = pressEnter(name)
+    const focusedAfterName = document.activeElement
+    const emailEnterPrevented = pressEnter(email)
+
+    // Assert
+    expect(nameEnterPrevented).toBe(true)
+    expect(focusedAfterName).toBe(screen.getByLabelText('WhatsApp'))
+    expect(emailEnterPrevented).toBe(true)
+    expect(document.activeElement?.tagName).toBe('TEXTAREA')
+    expect(calls.some((call) => call.method === 'POST')).toBe(false)
+    expect(screen.queryByText('Solicitação enviada!')).toBeNull()
+  })
+
   it('keeps the submit button disabled while the e-mail is invalid', async () => {
     // Arrange
     renderModal()

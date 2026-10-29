@@ -25,6 +25,7 @@ const inputClass =
         autocomplete="name"
         :placeholder="t('booking.namePlaceholder')"
         :class="inputClass"
+        enterkeyhint="next"
         @input="emit('update:clientName', ($event.target as HTMLInputElement).value)"
       />
     </label>
@@ -37,6 +38,7 @@ const inputClass =
         autocomplete="tel"
         :placeholder="t('booking.whatsappPlaceholder')"
         :class="inputClass"
+        enterkeyhint="next"
         @input="emit('update:clientWhatsapp', ($event.target as HTMLInputElement).value)"
       />
     </label>
@@ -49,6 +51,7 @@ const inputClass =
         autocomplete="email"
         :placeholder="t('booking.emailPlaceholder')"
         :class="inputClass"
+        enterkeyhint="next"
         @input="emit('update:clientEmail', ($event.target as HTMLInputElement).value)"
       />
     </label>
