@@ -146,12 +146,28 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
 ### 2.3 Produtos (vitrine)
 - **O que é:** só vitrine, **sem venda nem pagamento**.
 - **Cada produto tem:** nome, preço, foto (reaproveitar o `UploadImage` e as imagens do Settings), descrição curta, ativo/inativo e ordem.
+- **Limite:** 50 por barbearia (`PRODUCTS_LIMIT`).
 - **Backend:** domínio novo `Catalog` (ver `backend/src/Domain/Catalog` do repositório `barber-saas` como referência).
-- **Painel:** CRUD.
-- **Página pública:**
-  - seção "Produtos";
-  - botão "Tenho interesse", que abre o WhatsApp da barbearia com uma mensagem pronta (o mesmo padrão do `whatsapp_message`).
-- **Cache:** os produtos entram no cache público e invalidam ao salvar.
+- **Painel do barbeiro:** CRUD.
+- **Onde aparece: só na área do cliente** (decisão do dono, 29/10).
+  - **A página pública não mostra produtos.** Ela é como um Linktree: foto, nome, bio, botões e redes, nada além dos links.
+  - **Área do cliente:** o cliente logado vê os produtos ativos **das barbearias onde já agendou**, agrupados por barbearia. Pode ser na tela "Minhas barbearias" ou numa aba "Produtos".
+  - **Botão "Tenho interesse":** abre o WhatsApp da barbearia com uma mensagem pronta ("Olá! Tenho interesse em {nome}.").
+  - **Endpoint:** fica sob `auth:client` e só devolve produtos de barbearias com as quais o cliente tem agendamento (senão, 404).
+- **Cache:** a lista por barbearia pode ficar no cache por tenant e ser invalidada ao salvar um produto. Não entra no cache da página pública.
+
+**Futuro: sugestão de produtos com IA.** Não é para agora; anotado a pedido do dono.
+- **O que muda:** em vez de mostrar todos os produtos da barbearia, a área do cliente mostra os mais indicados **para aquele cliente**.
+- **Como a IA decide:** ela olha o histórico do cliente e monta um "dossiê" com os padrões (ex.: faz barba toda semana, prefere degradê, cabelo cacheado). Usa:
+  - o visagismo (formato do rosto e cortes recomendados, item 2.4);
+  - os últimos cortes e serviços escolhidos;
+  - a frequência de barba;
+  - os procedimentos feitos.
+- **De onde vêm os produtos:** o cadastro continua único, o que o barbeiro cadastrou. A IA só escolhe e ordena entre esses e explica o motivo em uma frase ("Para barba toda semana: óleo X").
+- **Cuidados:**
+  - LGPD: o dossiê é dado pessoal; avisar o cliente e permitir desligar;
+  - custo por análise: rodar na fila, com cache por cliente;
+  - funcionar sem IA: sem dossiê, mostra a lista normal.
 
 ### 2.4 Visagismo com IA (portar do `barber-saas`)
 - **De onde vem:** o repositório `barber-saas`.
