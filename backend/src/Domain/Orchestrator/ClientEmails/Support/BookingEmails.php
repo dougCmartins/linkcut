@@ -76,7 +76,8 @@ final class BookingEmails
             message: new PushMessageData(
                 title: __("notification.client_{$kind->value}.title", $replace),
                 body: __("notification.client_{$kind->value}.body", $replace),
-                url: '/conta',
+                // Opens the client area of this barbershop (its theme and its appointments).
+                url: '/'.$barbershop->slug.'/account',
                 tag: "booking-{$booking->id}",
             ),
         ));

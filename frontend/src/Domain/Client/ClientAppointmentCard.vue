@@ -5,6 +5,7 @@ import { AppointmentStatus } from '@/types/appointmentStatus'
 import { googleCalendarUrl, icsDataUrl, type CalendarEvent } from '@/utils/calendar'
 import { formatDayMonth, fromIsoDate } from '@/utils/date'
 import BarbershopLogo from './BarbershopLogo.vue'
+import { CLIENT_BOOK_ROUTE, CLIENT_REVIEW_ROUTE } from './client.guard'
 import type { ClientAppointment } from './client.model'
 
 /**
@@ -18,8 +19,10 @@ const props = withDefaults(
     isCancelling?: boolean
     /** Why the last cancel failed (e.g. too close to the time). */
     error?: string
+    /** False inside the barbershop's own client area, where its name and logo are already in the header. */
+    showBarbershop?: boolean
   }>(),
-  { isCancelling: false, error: '' },
+  { isCancelling: false, error: '', showBarbershop: true },
 )
 const emit = defineEmits<{ cancel: [id: number] }>()
 const { t } = useI18n()
@@ -33,6 +36,11 @@ const STATUS_CLASSES: Record<AppointmentStatus, string> = {
   [AppointmentStatus.Rejected]: 'bg-danger/10 text-danger',
   [AppointmentStatus.Cancelled]: 'bg-raised text-muted',
 }
+/** Still "waiting" after its day passed: the barbershop never answered, so it reads "Não confirmado". */
+const statusKey = computed(() =>
+  props.appointment.status === AppointmentStatus.Pending && !props.isUpcoming ? 'expired' : props.appointment.status,
+)
+const statusClass = computed(() => (statusKey.value === 'expired' ? 'bg-raised text-muted' : STATUS_CLASSES[props.appointment.status]))
 const when = computed(() =>
   t('client.appointments.when', {
     date: formatDayMonth(fromIsoDate(props.appointment.date)),
@@ -61,14 +69,17 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
 <template>
   <article class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft">
     <div class="flex items-center gap-3">
-      <BarbershopLogo :name="appointment.barbershop.name" :src="appointment.barbershop.avatarUrl" />
-      <p class="min-w-0 flex-1 font-display text-sm font-extrabold break-words">{{ appointment.barbershop.name }}</p>
-      <span class="shrink-0 rounded-full px-3 py-1 text-xs font-bold" :class="STATUS_CLASSES[appointment.status]">
-        {{ t(`client.appointments.status.${appointment.status}`) }}
+      <template v-if="showBarbershop">
+        <BarbershopLogo :name="appointment.barbershop.name" :src="appointment.barbershop.avatarUrl" />
+        <p class="min-w-0 flex-1 font-display text-sm font-extrabold break-words">{{ appointment.barbershop.name }}</p>
+      </template>
+      <h3 v-else class="min-w-0 flex-1 text-base break-words">{{ appointment.serviceName }}</h3>
+      <span class="shrink-0 rounded-full px-3 py-1 text-xs font-bold" :class="statusClass">
+        {{ t(`client.appointments.status.${statusKey}`) }}
       </span>
     </div>
 
-    <h3 class="mt-3 text-base break-words">{{ appointment.serviceName }}</h3>
+    <h3 v-if="showBarbershop" class="mt-3 text-base break-words">{{ appointment.serviceName }}</h3>
     <p class="text-sm font-semibold tabular-nums">{{ when }}</p>
     <p v-if="isUpcoming && appointment.barbershop.address" class="mt-1 text-sm text-muted break-words">
       {{ appointment.barbershop.address }}
@@ -89,12 +100,12 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
           {{ t('client.appointments.whatsapp') }}
         </a>
       </template>
-      <RouterLink v-else :to="{ name: 'booking', params: { slug: appointment.barbershop.slug } }" :class="linkClass">
+      <RouterLink v-else :to="{ name: CLIENT_BOOK_ROUTE, params: { slug: appointment.barbershop.slug } }" :class="linkClass">
         {{ t('client.appointments.bookAgain') }} →
       </RouterLink>
       <RouterLink
         v-if="appointment.status === AppointmentStatus.Completed && !appointment.hasReview"
-        :to="{ name: 'client-review', params: { appointment: String(appointment.id) } }"
+        :to="{ name: CLIENT_REVIEW_ROUTE, params: { slug: appointment.barbershop.slug, appointment: String(appointment.id) } }"
         :class="linkClass"
       >
         {{ t('reviews.rate') }}

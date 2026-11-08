@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import ClientGoogleSignInLink from '@/Domain/Client/ClientGoogleSignInLink.vue'
 import ClientPushOffer from '@/Domain/Client/ClientPushOffer.vue'
@@ -12,6 +13,8 @@ import { isGoogleLoginEnabled } from '@/Domain/Client/googleLogin'
 defineProps<{ summary: string; registerEmail?: string | null; pushUrl?: string | null }>()
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
+// Booked from the client area: closing goes back to the list, where the new request already shows.
+const route = useRoute()
 </script>
 
 <template>
@@ -36,7 +39,7 @@ const { t } = useI18n()
       <span class="mt-2 block text-sm font-bold text-accent">{{ t('booking.registerAction') }} →</span>
     </RouterLink>
     <BaseButton class="mt-6" variant="secondary" elevated block @click="emit('done')">
-      {{ t('booking.successDone') }}
+      {{ route.meta.clientArea ? t('booking.seeAppointments') : t('booking.successDone') }}
     </BaseButton>
   </div>
 </template>

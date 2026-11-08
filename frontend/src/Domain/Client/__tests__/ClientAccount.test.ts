@@ -58,8 +58,8 @@ describe('client area', () => {
     await fireEvent.update(screen.getByLabelText('Crie uma senha'), CLIENT_PASSWORD)
     await fireEvent.click(screen.getByRole('button', { name: 'Criar senha e entrar' }))
 
-    // Assert
-    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/conta'))
+    // Assert: no barbershop in the address, so the list of the client's barbershops
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/account'))
     expect(calls[0]?.body).toEqual({ email: 'ana@example.com', purpose: 'registration' })
     expect(calls[1]?.body).toEqual({ email: 'ana@example.com', code: RIGHT_CODE, password: CLIENT_PASSWORD })
     expect(JSON.parse(localStorage.getItem('linkcut.client-session') ?? '{}').accessToken).toBe('client-access-1')
@@ -84,7 +84,7 @@ describe('client area', () => {
   it('signs in with e-mail and password and goes back to the page asked for', async () => {
     // Arrange
     installFakeClientApi()
-    const { router } = await renderAt(ClientAuthView, '/conta/entrar?redirect=/conta')
+    const { router } = await renderAt(ClientAuthView, '/conta/entrar?redirect=/rafael/account/profile')
 
     // Act
     await fireEvent.update(screen.getByLabelText('E-mail'), 'ana@example.com')
@@ -95,7 +95,7 @@ describe('client area', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Entrar' }))
 
     // Assert
-    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/conta'))
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/rafael/account/profile'))
   })
 
   it('"Esqueci minha senha" sets a new password with a code', async () => {
@@ -112,17 +112,32 @@ describe('client area', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha e entrar' }))
 
     // Assert
-    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/conta'))
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/account'))
     expect(calls[0]?.body).toEqual({ email: 'ana@example.com', purpose: 'password' })
     expect(calls[1]?.path).toBe('/client/password')
   })
 
-  it('lists upcoming appointments with directions and past ones with "Agendar de novo", using the client token', async () => {
+  it('a past visit offers "Agendar de novo" inside the client area of that barbershop', async () => {
+    // Arrange
+    installFakeClientApi()
+
+    // Act
+    await renderAt(ClientAppointmentsView, '/rafael/account', () => {
+      signIn()
+    })
+
+    // Assert
+    expect(await screen.findByText('Corte')).toBeTruthy()
+    expect(screen.queryByText('Barba')).toBeNull()
+    expect(screen.getByRole('link', { name: /Agendar de novo/ }).getAttribute('href')).toBe('/rafael/account/book')
+  })
+
+  it('lists upcoming appointments with directions, using the client token', async () => {
     // Arrange
     const { calls } = installFakeClientApi()
 
     // Act
-    await renderAt(ClientAppointmentsView, '/conta', () => {
+    await renderAt(ClientAppointmentsView, '/navalha/account', () => {
       signIn()
       useAuthStore().session = null
     })
@@ -132,8 +147,7 @@ describe('client area', () => {
     expect(screen.getByText('Confirmado')).toBeTruthy()
     expect(screen.getByRole('link', { name: /Como chegar/ }).getAttribute('href')).toContain('google.com/maps')
     expect(screen.getByRole('link', { name: 'Falar no WhatsApp' }).getAttribute('href')).toBe('https://wa.me/5511999998888')
-    expect(screen.getByRole('link', { name: /Agendar de novo/ }).getAttribute('href')).toBe('/rafael/agendar')
-    expect(calls[0]?.headers.Authorization).toBe('Bearer client-access-1')
+    expect(calls.find((call) => call.path === '/client/appointments')?.headers.Authorization).toBe('Bearer client-access-1')
   })
 })
 
@@ -149,11 +163,12 @@ describe('client guard', () => {
     installClientGuard(router)
 
     // Act
-    await router.push('/conta')
+    await router.push('/rafael/account')
 
-    // Assert
-    expect(router.currentRoute.value.name).toBe('client-login')
-    expect(router.currentRoute.value.query.redirect).toBe('/conta')
+    // Assert: the sign-in of that barbershop, coming back to its client area
+    expect(router.currentRoute.value.name).toBe('barbershop-client-login')
+    expect(router.currentRoute.value.params.slug).toBe('rafael')
+    expect(router.currentRoute.value.query.redirect).toBe('/rafael/account')
   })
 
   it('a barber session does not open the client area', async () => {
@@ -170,7 +185,7 @@ describe('client guard', () => {
     }
 
     // Act
-    await router.push('/conta')
+    await router.push('/account')
 
     // Assert
     expect(router.currentRoute.value.name).toBe('client-login')

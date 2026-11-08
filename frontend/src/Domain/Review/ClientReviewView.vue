@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useApiErrors } from '@/composables/useApiErrors'
 import ClientLayout from '@/Domain/Client/ClientLayout.vue'
+import { CLIENT_APPOINTMENTS_ROUTE } from '@/Domain/Client/client.guard'
 import { useClientStore } from '@/Domain/Client/client.store'
 import StarRating from './StarRating.vue'
 import { submitReview } from './review.api'
@@ -19,6 +20,7 @@ const comment = ref('')
 const sending = ref(false)
 const error = ref('')
 const appointmentId = computed(() => Number(route.params.appointment))
+const backTo = computed(() => ({ name: CLIENT_APPOINTMENTS_ROUTE, params: { slug: String(route.params.slug) } }))
 
 async function send(): Promise<void> {
   if (rating.value === null || sending.value) return
@@ -27,7 +29,7 @@ async function send(): Promise<void> {
   try {
     await submitReview(appointmentId.value, rating.value, comment.value)
     if (clientStore.appointmentsLoaded) await clientStore.loadAppointments()
-    await router.push('/conta')
+    await router.push(backTo.value)
   } catch (caught) {
     error.value = t(`errors.api.${messageKey(caught)}`)
     sending.value = false
@@ -37,7 +39,7 @@ async function send(): Promise<void> {
 
 <template>
   <ClientLayout :title="t('reviews.title')">
-    <RouterLink to="/conta" class="text-sm font-bold text-accent">← {{ t('reviews.back') }}</RouterLink>
+    <RouterLink :to="backTo" class="text-sm font-bold text-accent">← {{ t('reviews.back') }}</RouterLink>
 
     <form class="mt-6 flex flex-col gap-5" @submit.prevent="send">
       <div>

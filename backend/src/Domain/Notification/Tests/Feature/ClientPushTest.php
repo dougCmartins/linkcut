@@ -100,6 +100,6 @@ final class ClientPushTest extends TestCase
         Queue::assertPushed(SendPushToClient::class, fn (SendPushToClient $job): bool => $job->data->client_id === $client->id
             && $job->data->message->title === 'Horário confirmado ✅'
             && str_contains($job->data->message->body, '20/10 às 10:00')
-            && $job->data->message->url === '/conta');
+            && $job->data->message->url === '/rafael/account');
     }
 }

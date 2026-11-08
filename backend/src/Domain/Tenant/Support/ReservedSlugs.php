@@ -11,7 +11,7 @@ namespace Domain\Tenant\Support;
 final class ReservedSlugs
 {
     public const LIST = [
-        'admin', 'ajuda', 'api', 'app', 'assets', 'cadastrar', 'conta', 'entrar', 'icons', 'login',
+        'account', 'admin', 'ajuda', 'api', 'app', 'assets', 'cadastrar', 'conta', 'entrar', 'icons', 'login',
         'painel', 'privacidade', 'public', 'pulse', 'suporte', 'termos', 'www',
     ];
 
