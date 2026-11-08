@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { BARBERSHOP_CLIENT_LOGIN_ROUTE } from '@/Domain/Client/client.guard'
+import {
+  BARBERSHOP_CLIENT_LOGIN_ROUTE,
+  CLIENT_APPOINTMENTS_ROUTE,
+  CLIENT_BARBERSHOPS_ROUTE,
+  CLIENT_BOOK_ROUTE,
+  CLIENT_PROFILE_ROUTE,
+  CLIENT_REVIEW_ROUTE,
+  clientAccountLocation,
+} from '@/Domain/Client/client.guard'
 import { lastVisitedSlug } from '@/Domain/Settings/publicPage.store'
 
 declare module 'vue-router' {
@@ -11,6 +19,8 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     /** Client-area page: needs the client's session (see Domain/Client/client.guard.ts). */
     requiresClient?: boolean
+    /** Client area inside a barbershop (/<slug>/account…): its own header and menu, no light/dark toggle. */
+    clientArea?: boolean
     /** linkcut's entrance (/, /cadastrar, /entrar): one page, the mode picks the form and the photo. */
     authMode?: 'sign-up' | 'login'
     /** The client's entrance (/<slug>/login, /conta/entrar, /conta/finalizar): same idea. */
@@ -60,30 +70,20 @@ export const routes: RouteRecordRaw[] = [
     path: '/painel/reviews',
     redirect: { name: 'settings', query: { aba: 'avaliacoes' } },
   },
-  // Client area (one account for every barbershop where the client booked).
+  // Client area without a barbershop: the barbershops where the client booked, each opening /<slug>/account.
   {
-    path: '/conta',
-    name: 'client-appointments',
-    component: () => import('@/Domain/Client/ClientAppointmentsView.vue'),
-    meta: { requiresClient: true },
-  },
-  {
-    path: '/conta/barbearias',
-    name: 'client-barbershops',
+    path: '/account',
+    name: CLIENT_BARBERSHOPS_ROUTE,
     component: () => import('@/Domain/Client/ClientBarbershopsView.vue'),
     meta: { requiresClient: true },
   },
-  {
-    path: '/conta/perfil',
-    name: 'client-profile',
-    component: () => import('@/Domain/Client/ClientProfileView.vue'),
-    meta: { requiresClient: true },
-  },
+  // Old addresses of the client area (e-mails, pushes and bookmarks already out there).
+  { path: '/conta', redirect: () => clientAccountLocation(lastVisitedSlug()) },
+  { path: '/conta/barbearias', redirect: { name: CLIENT_BARBERSHOPS_ROUTE } },
+  { path: '/conta/perfil', redirect: () => clientAccountLocation(lastVisitedSlug(), CLIENT_PROFILE_ROUTE) },
   {
     path: '/conta/review/:appointment',
-    name: 'client-review',
-    component: () => import('@/Domain/Review/ClientReviewView.vue'),
-    meta: { requiresClient: true },
+    redirect: (to) => clientAccountLocation(lastVisitedSlug(), CLIENT_REVIEW_ROUTE, { appointment: String(to.params.appointment) }),
   },
   // Kept for links that have no barbershop (e-mails, Google's return): sends on to the last /<slug>/login.
   {
@@ -117,7 +117,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/Portfolio/PortfolioView.vue'),
     meta: { isPublic: true },
   },
-  // The client's sign-in, with the barbershop's theme. The client area itself stays at /conta.
+  // The client's sign-in, with the barbershop's theme; it opens /<slug>/account.
   {
     path: '/:slug/login',
     name: BARBERSHOP_CLIENT_LOGIN_ROUTE,
@@ -130,6 +130,32 @@ export const routes: RouteRecordRaw[] = [
     name: 'barber-login',
     component: () => import('@/Home/BarberPageLoginView.vue'),
     meta: { isPublic: true, authMode: 'login' },
+  },
+  // The client area inside the barbershop: its theme, its name and only its appointments.
+  {
+    path: '/:slug/account',
+    name: CLIENT_APPOINTMENTS_ROUTE,
+    component: () => import('@/Domain/Client/ClientAppointmentsView.vue'),
+    meta: { isPublic: true, requiresClient: true, clientArea: true },
+  },
+  // "Agendar" from the client area: the booking opens on top of it, and closing goes back to it.
+  {
+    path: '/:slug/account/book',
+    name: CLIENT_BOOK_ROUTE,
+    component: () => import('@/Domain/Client/ClientAppointmentsView.vue'),
+    meta: { isPublic: true, requiresClient: true, clientArea: true, openBooking: true },
+  },
+  {
+    path: '/:slug/account/profile',
+    name: CLIENT_PROFILE_ROUTE,
+    component: () => import('@/Domain/Client/ClientProfileView.vue'),
+    meta: { isPublic: true, requiresClient: true, clientArea: true },
+  },
+  {
+    path: '/:slug/account/review/:appointment',
+    name: CLIENT_REVIEW_ROUTE,
+    component: () => import('@/Domain/Review/ClientReviewView.vue'),
+    meta: { isPublic: true, requiresClient: true, clientArea: true },
   },
   // Old address of the barber's sign-in, still in e-mails already sent.
   { path: '/:slug/entrar', redirect: (to) => ({ name: 'barber-login', params: to.params, query: to.query }) },

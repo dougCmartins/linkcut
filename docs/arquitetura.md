@@ -154,7 +154,8 @@ src/
 | `/:slug/login` | cliente | login com o tema da barbearia |
 | `/:slug/panel/login` | barbeiro | login com o tema da barbearia |
 | `/painel`, `/painel/historico`, `/painel/despesas`, `/painel/configuracoes` | barbeiro | painel |
-| `/conta`, `/conta/perfil`, `/conta/barbearias`, `/conta/review/:id` | cliente | área do cliente |
+| `/:slug/account`, `/:slug/account/book`, `/:slug/account/profile`, `/:slug/account/review/:id` | cliente | área do cliente dentro da barbearia (só os horários dela, com o tema dela) |
+| `/account` | cliente | as barbearias onde o cliente agendou; os antigos `/conta…` redirecionam |
 
 ## Ambiente de desenvolvimento
 - **Subir:** `make up` (ver `Makefile`) sobe o `docker-compose.yml`:

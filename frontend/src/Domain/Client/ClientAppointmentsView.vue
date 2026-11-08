@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { useLiveRefresh } from '@/composables/useLiveRefresh'
 import { AppointmentStatus } from '@/types/appointmentStatus'
@@ -11,10 +12,12 @@ import type { ClientAppointment } from './client.model'
 import { useClientStore } from './client.store'
 
 /**
- * /conta: the client's appointments at every barbershop where they booked, each with its logo. Upcoming ones
- * (waiting or confirmed) show where to go and can be cancelled; past ones offer "Agendar de novo".
+ * /<slug>/account: the client's appointments at this barbershop. Upcoming ones (waiting or confirmed) show where to
+ * go and can be cancelled; past ones offer "Agendar de novo". /<slug>/account/book is the same page with the booking
+ * open on top of it.
  */
 const { t } = useI18n()
+const route = useRoute()
 const apiErrors = useApiErrors()
 const clientStore = useClientStore()
 
@@ -26,8 +29,19 @@ const cancelError = ref<{ id: number; message: string } | null>(null)
 const today = toIsoDate(new Date())
 const isUpcoming = (appointment: ClientAppointment) =>
   appointment.date >= today && (appointment.status === AppointmentStatus.Pending || appointment.status === AppointmentStatus.Confirmed)
-const upcoming = computed(() => clientStore.appointments.filter(isUpcoming).reverse())
-const past = computed(() => clientStore.appointments.filter((appointment) => !isUpcoming(appointment)))
+// The client's own list, already loaded for every barbershop: only this one is shown here.
+const slug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : null))
+const here = computed(() => clientStore.appointments.filter((appointment) => appointment.barbershop.slug === slug.value))
+const upcoming = computed(() => here.value.filter(isUpcoming).reverse())
+const past = computed(() => here.value.filter((appointment) => !isUpcoming(appointment)))
+
+// Closing the booking (back to /<slug>/account) shows the new request at once.
+watch(
+  () => route.meta.openBooking,
+  (isOpen, wasOpen) => {
+    if (wasOpen && !isOpen) void clientStore.loadAppointments().catch(() => undefined)
+  },
+)
 
 async function cancel(id: number): Promise<void> {
   cancellingId.value = id
@@ -68,6 +82,7 @@ onMounted(async () => {
             v-for="item in upcoming"
             :key="item.id"
             :appointment="item"
+            :show-barbershop="false"
             is-upcoming
             :is-cancelling="cancellingId === item.id"
             :error="cancelError?.id === item.id ? cancelError.message : ''"
@@ -78,7 +93,7 @@ onMounted(async () => {
       <section v-if="past.length" class="mt-8" aria-labelledby="past-title">
         <h2 id="past-title" class="mb-3 text-sm font-bold">{{ t('client.appointments.past') }}</h2>
         <div class="grid gap-3">
-          <ClientAppointmentCard v-for="item in past" :key="item.id" :appointment="item" :is-upcoming="false" />
+          <ClientAppointmentCard v-for="item in past" :key="item.id" :appointment="item" :show-barbershop="false" :is-upcoming="false" />
         </div>
       </section>
     </template>

@@ -40,13 +40,27 @@ describe('client area 2.0', () => {
     installFakeClientApi()
 
     // Act
-    const { container } = await renderSignedIn(ClientAppointmentsView, '/conta')
+    const { container } = await renderSignedIn(ClientBarbershopsView, '/account')
 
     // Assert
-    await screen.findByText('Barba')
+    await screen.findByRole('heading', { name: 'Navalha' })
     expect(container.querySelector('img[src="/storage/images/navalha.webp"]')).toBeTruthy()
     expect(screen.getByText('RC')).toBeTruthy()
-    expect(screen.getByRole('navigation', { name: 'Menu da sua conta' })).toBeTruthy()
+  })
+
+  it('inside a barbershop, shows only its appointments, the menu and "Agendar"', async () => {
+    // Arrange
+    installFakeClientApi()
+
+    // Act
+    await renderSignedIn(ClientAppointmentsView, '/navalha/account')
+
+    // Assert
+    expect(await screen.findByText('Barba')).toBeTruthy()
+    expect(screen.queryByText('Corte')).toBeNull()
+    const menu = screen.getByRole('navigation', { name: 'Menu da sua conta' })
+    expect(menu.querySelector('[aria-current="page"]')?.textContent).toContain('Horários')
+    expect(screen.getByRole('link', { name: 'Agendar' }).getAttribute('href')).toBe('/navalha/account/book')
   })
 
   it('cancels an upcoming appointment after asking, and shows it cancelled', async () => {
@@ -62,7 +76,7 @@ describe('client area 2.0', () => {
         body: APPOINTMENTS.map((item) => (item.id === 2 && cancelled ? { ...item, status: 'cancelled' } : item)),
       }),
     })
-    await renderSignedIn(ClientAppointmentsView, '/conta')
+    await renderSignedIn(ClientAppointmentsView, '/navalha/account')
     await screen.findByText('Barba')
 
     // Act
@@ -78,7 +92,7 @@ describe('client area 2.0', () => {
   it('explains when it is too late to cancel from the app', async () => {
     // Arrange
     installFakeClientApi({ 'POST /client/appointments/2/cancel': () => envelope('CANCELLATION_TOO_LATE', 409) })
-    await renderSignedIn(ClientAppointmentsView, '/conta')
+    await renderSignedIn(ClientAppointmentsView, '/navalha/account')
     await screen.findByText('Barba')
 
     // Act
@@ -94,7 +108,7 @@ describe('client area 2.0', () => {
     installFakeClientApi()
 
     // Act
-    await renderSignedIn(ClientAppointmentsView, '/conta')
+    await renderSignedIn(ClientAppointmentsView, '/navalha/account')
     await screen.findByText('Barba')
 
     // Assert
@@ -103,18 +117,18 @@ describe('client area 2.0', () => {
     expect(screen.getByRole('link', { name: 'Outro app (.ics)' }).getAttribute('href')).toMatch(/^data:text\/calendar/)
   })
 
-  it('"Minhas barbearias" lists every barbershop where the client booked, to book again', async () => {
+  it('"Minhas barbearias" lists every barbershop where the client booked, each opening its client area', async () => {
     // Arrange
     installFakeClientApi()
 
     // Act
-    await renderSignedIn(ClientBarbershopsView, '/conta/barbearias')
+    await renderSignedIn(ClientBarbershopsView, '/account')
 
     // Assert
     expect(await screen.findByRole('heading', { name: 'Navalha' })).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Rafael Costa' })).toBeTruthy()
-    const bookLinks = screen.getAllByRole('link', { name: /^Agendar/ }).map((link) => link.getAttribute('href'))
-    expect(bookLinks).toEqual(['/navalha/agendar', '/rafael/agendar'])
+    const openLinks = screen.getAllByRole('link', { name: 'Abrir' }).map((link) => link.getAttribute('href'))
+    expect(openLinks).toEqual(['/navalha/account', '/rafael/account'])
   })
 
   it('saves name and WhatsApp in "Minha conta"', async () => {
@@ -125,7 +139,7 @@ describe('client area 2.0', () => {
         body: { ...CLIENT, name: call.body?.name, phone: '11988887777', emails_enabled: true },
       }),
     })
-    await renderSignedIn(ClientProfileView, '/conta/perfil')
+    await renderSignedIn(ClientProfileView, '/rafael/account/profile')
 
     // Act
     await fireEvent.update(screen.getByLabelText('Nome'), 'Ana Lima')
@@ -143,7 +157,7 @@ describe('client area 2.0', () => {
     installFakeClientApi({
       'PUT /client/me/password': () => envelope('VALIDATION_FAILED', 422, null, { current_password: ['current_password'] }),
     })
-    await renderSignedIn(ClientProfileView, '/conta/perfil')
+    await renderSignedIn(ClientProfileView, '/rafael/account/profile')
 
     // Act
     await fireEvent.update(screen.getByLabelText('Senha atual'), 'errada123')
@@ -159,7 +173,7 @@ describe('client area 2.0', () => {
     installFakeClientApi({
       'PUT /client/me/password': () => ({ status: 200, body: clientSessionBody('client-access-new', 'client-refresh-new') }),
     })
-    await renderSignedIn(ClientProfileView, '/conta/perfil')
+    await renderSignedIn(ClientProfileView, '/rafael/account/profile')
 
     // Act
     await fireEvent.update(screen.getByLabelText('Senha atual'), 'segredo123')
@@ -174,7 +188,7 @@ describe('client area 2.0', () => {
   it('deletes the account with the password and forgets the session', async () => {
     // Arrange
     const { calls } = installFakeClientApi({ 'DELETE /client/me': () => ({ status: 204 }) })
-    const { router } = await renderSignedIn(ClientProfileView, '/conta/perfil')
+    const { router } = await renderSignedIn(ClientProfileView, '/rafael/account/profile')
 
     // Act
     await fireEvent.click(screen.getByRole('button', { name: 'Excluir minha conta' }))
@@ -182,7 +196,8 @@ describe('client area 2.0', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Excluir definitivamente' }))
 
     // Assert
-    await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('client-login'))
+    await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('barbershop-client-login'))
+    expect(router.currentRoute.value.params.slug).toBe('rafael')
     expect(router.currentRoute.value.query.conta).toBe('excluida')
     expect(calls.at(-1)).toMatchObject({ method: 'DELETE', path: '/client/me', body: { password: 'segredo123' } })
     expect(useClientStore().session).toBeNull()
@@ -194,7 +209,7 @@ describe('client area 2.0', () => {
     const exported = { client: { email: 'ana@example.com' }, appointments: [] }
     installFakeClientApi({ 'GET /client/me/export': () => ({ status: 200, body: exported }) })
     const save = vi.spyOn(download, 'downloadJson').mockImplementation(() => undefined)
-    await renderSignedIn(ClientProfileView, '/conta/perfil')
+    await renderSignedIn(ClientProfileView, '/rafael/account/profile')
 
     // Act
     await fireEvent.click(await screen.findByRole('button', { name: /Baixar meus dados/ }))

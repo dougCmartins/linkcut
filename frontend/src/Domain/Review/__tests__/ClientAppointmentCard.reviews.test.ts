@@ -33,7 +33,7 @@ describe('ClientAppointmentCard reviews', () => {
     })
 
     // Assert
-    expect(completed.getByRole('link', { name: 'Avaliar' }).getAttribute('href')).toBe('/conta/review/7')
+    expect(completed.getByRole('link', { name: 'Avaliar' }).getAttribute('href')).toBe('/rafael/account/review/7')
 
     // Act
     completed.unmount()

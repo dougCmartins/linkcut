@@ -3,12 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BarbershopLogo from './BarbershopLogo.vue'
 import ClientLayout from './ClientLayout.vue'
+import { CLIENT_APPOINTMENTS_ROUTE } from './client.guard'
 import type { BarbershopContact } from './client.model'
 import { useClientStore } from './client.store'
 
 /**
- * /conta/barbearias: every barbershop where the client booked (newest visit first), to book again or get in
- * touch. Built from the appointments: no list of other barbershops (no marketplace).
+ * /account: every barbershop where the client booked (newest visit first). "Abrir" goes to its client area
+ * (/<slug>/account), with its theme. Built from the appointments: no list of other barbershops (no marketplace).
  */
 const { t } = useI18n()
 const clientStore = useClientStore()
@@ -37,10 +38,13 @@ onMounted(async () => {
 })
 
 const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
+const openClass =
+  'inline-flex h-11 items-center justify-center rounded-button bg-accent px-5 font-display text-sm font-bold text-on-accent shadow-soft transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent'
 </script>
 
 <template>
   <ClientLayout :title="t('client.barbershops.title')">
+    <p class="-mt-2 mb-4 text-sm text-muted">{{ t('client.barbershops.subtitle') }}</p>
     <p v-if="isLoading" class="text-sm text-muted" role="status">{{ t('client.appointments.loading') }}</p>
     <p v-else-if="failed" class="text-sm font-semibold text-danger" role="alert">{{ t('client.appointments.failed') }}</p>
     <p v-else-if="barbershops.length === 0" class="text-sm text-muted">{{ t('client.barbershops.empty') }}</p>
@@ -55,19 +59,13 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
             </div>
           </div>
           <p v-if="barbershop.address" class="mt-3 text-sm text-muted break-words">{{ barbershop.address }}</p>
-          <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-            <RouterLink :to="{ name: 'booking', params: { slug: barbershop.slug } }" :class="linkClass">
-              {{ t('client.barbershops.book') }} →
+          <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <RouterLink :to="{ name: CLIENT_APPOINTMENTS_ROUTE, params: { slug: barbershop.slug } }" :class="openClass">
+              {{ t('client.barbershops.open') }}
             </RouterLink>
             <RouterLink :to="{ name: 'bio-link', params: { slug: barbershop.slug } }" :class="linkClass">
               {{ t('client.barbershops.page') }}
             </RouterLink>
-            <a v-if="barbershop.whatsappUrl" :href="barbershop.whatsappUrl" target="_blank" rel="noopener noreferrer" :class="linkClass">
-              {{ t('client.appointments.whatsapp') }}
-            </a>
-            <a v-if="barbershop.mapsUrl" :href="barbershop.mapsUrl" target="_blank" rel="noopener noreferrer" :class="linkClass">
-              {{ t('booking.directions') }}
-            </a>
           </div>
         </article>
       </li>
