@@ -11,6 +11,7 @@ export const CLIENT_APPOINTMENTS_ROUTE = 'client-appointments'
 export const CLIENT_BOOK_ROUTE = 'client-book'
 export const CLIENT_PROFILE_ROUTE = 'client-profile'
 export const CLIENT_REVIEW_ROUTE = 'client-review'
+export const CLIENT_PRODUCTS_ROUTE = 'client-products'
 /** /account: the barbershops where the client booked (no barbershop chosen yet). */
 export const CLIENT_BARBERSHOPS_ROUTE = 'client-barbershops'
 export const CLIENT_HOME = '/account'

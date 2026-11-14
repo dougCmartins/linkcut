@@ -3,7 +3,7 @@
 **Situação (29/10):**
 - A Etapa 11 está na `main` (#40–#46), com o login com Google desligado até haver as chaves.
 - Os módulos 2.1 (links livres, #47) e 2.2 (avaliações, #48) estão feitos.
-- O 2.3 (vitrine) está com o Cursor.
+- O 2.3 (vitrine) está pronto: o barbeiro cadastra em Configurações → Produtos, e o cliente vê na aba "Produtos" em `/:slug/account/products`.
 - Depois vem a **Equipe** (seção 5), a próxima etapa grande.
 - O mapa do sistema está em `docs/arquitetura.md`.
 
@@ -151,7 +151,7 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
 - **Painel do barbeiro:** CRUD.
 - **Onde aparece: só na área do cliente** (decisão do dono, 29/10).
   - **A página pública não mostra produtos.** Ela é como um Linktree: foto, nome, bio, botões e redes, nada além dos links.
-  - **Área do cliente:** o cliente logado vê os produtos ativos **das barbearias onde já agendou**, agrupados por barbearia. Pode ser na tela "Minhas barbearias" ou numa aba "Produtos".
+  - **Área do cliente:** o cliente logado vê os produtos ativos **das barbearias onde já agendou**, agrupados por barbearia. Feito como a aba "Produtos" da área do cliente (`/:slug/account/products`), que só aparece quando a barbearia tem produto ativo.
   - **Botão "Tenho interesse":** abre o WhatsApp da barbearia com uma mensagem pronta ("Olá! Tenho interesse em {nome}.").
   - **Endpoint:** fica sob `auth:client` e só devolve produtos de barbearias com as quais o cliente tem agendamento (senão, 404).
 - **Cache:** a lista por barbearia pode ficar no cache por tenant e ser invalidada ao salvar um produto. Não entra no cache da página pública.

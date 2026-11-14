@@ -14,8 +14,7 @@ import { fetchClientProducts } from './catalog.api'
 import type { ShowcaseProduct } from './catalog.model'
 
 /**
- * /conta/barbearias/:slug/produtos: active products of one barbershop the client already booked.
- * The phone's back button returns to Minhas barbearias.
+ * /<slug>/account/products: active products of a barbershop the client already booked, inside its client area.
  */
 const { t } = useI18n()
 const route = useRoute()
@@ -50,15 +49,11 @@ watch(slug, async (value) => {
 </script>
 
 <template>
-  <ClientLayout :title="barbershop?.name || t('catalog.title')">
-    <RouterLink :to="{ name: 'client-barbershops' }" class="text-sm font-bold text-accent">
-      ← {{ t('client.barbershops.title') }}
-    </RouterLink>
-
-    <p v-if="isLoading" class="mt-4 text-sm text-muted" role="status">{{ t('catalog.loading') }}</p>
-    <p v-else-if="error" class="mt-4 text-sm font-semibold text-danger" role="alert">{{ error }}</p>
-    <p v-else-if="products.length === 0" class="mt-4 text-sm text-muted">{{ t('catalog.empty') }}</p>
-    <ul v-else class="mt-4 flex flex-col gap-4" :aria-label="t('catalog.sectionTitle')">
+  <ClientLayout :title="t('catalog.title')">
+    <p v-if="isLoading" class="text-sm text-muted" role="status">{{ t('catalog.loading') }}</p>
+    <p v-else-if="error" class="text-sm font-semibold text-danger" role="alert">{{ error }}</p>
+    <p v-else-if="products.length === 0" class="text-sm text-muted">{{ t('catalog.empty') }}</p>
+    <ul v-else class="flex flex-col gap-4" :aria-label="t('catalog.sectionTitle')">
       <li v-for="product in products" :key="product.id">
         <BaseCard class="overflow-hidden">
           <div v-if="product.imageUrl" class="aspect-square overflow-hidden">

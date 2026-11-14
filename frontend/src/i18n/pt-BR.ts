@@ -758,6 +758,7 @@ export default {
       appointments: 'Horários',
       barbershops: 'Barbearias',
       profile: 'Minha conta',
+      products: 'Produtos',
       book: 'Agendar',
       page: 'Página da barbearia',
       otherBarbershops: 'Outras barbearias',

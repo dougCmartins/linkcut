@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { usePublicPage } from '@/Domain/Settings/usePublicPage'
 import {
   CLIENT_APPOINTMENTS_ROUTE,
   CLIENT_BOOK_ROUTE,
+  CLIENT_PRODUCTS_ROUTE,
   CLIENT_PROFILE_ROUTE,
   clientLoginLocation,
 } from './client.guard'
@@ -14,7 +15,7 @@ import { useClientStore } from './client.store'
 
 /**
  * Frame of the client area. Inside a barbershop (/<slug>/account…): its photo and name, "Agendar", "Sair" and the
- * menu (Horários · Minha conta), at the bottom of the screen on a phone. Without a barbershop (/account): only the
+ * menu (Horários · Produtos · Minha conta; Produtos only with an active product), at the bottom of the screen on a phone. Without a barbershop (/account): only the
  * greeting and "Sair".
  */
 defineProps<{ title: string }>()
@@ -31,8 +32,21 @@ const firstName = computed(() => clientStore.client?.name.trim().split(' ')[0] ?
 
 const LINKS = [
   { name: CLIENT_APPOINTMENTS_ROUTE, key: 'appointments', icon: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z' },
+  { name: CLIENT_PRODUCTS_ROUTE, key: 'products', icon: 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0' },
   { name: CLIENT_PROFILE_ROUTE, key: 'profile', icon: 'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z' },
 ] as const
+
+// "Produtos" only when this barbershop has an active product (also kept while the client is on that tab).
+const hasProducts = computed(() =>
+  clientStore.appointments.some((item) => item.barbershop.slug === slug.value && item.hasProducts),
+)
+const links = computed(() =>
+  LINKS.filter((link) => link.name !== CLIENT_PRODUCTS_ROUTE || hasProducts.value || route.name === CLIENT_PRODUCTS_ROUTE),
+)
+
+onMounted(() => {
+  if (slug.value) void clientStore.ensureAppointments().catch(() => undefined)
+})
 
 /** "Horários" stays lit while the booking is open on top of it. */
 function isActive(name: string): boolean {
@@ -93,8 +107,8 @@ async function logout(): Promise<void> {
         :aria-label="t('client.menu.label')"
         class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:static sm:mt-5 sm:rounded-full sm:border-0 sm:bg-surface sm:p-1 sm:ring-1 sm:ring-line sm:shadow-soft"
       >
-        <ul class="mx-auto grid max-w-md grid-cols-2 gap-1">
-          <li v-for="link in LINKS" :key="link.name">
+        <ul class="mx-auto grid max-w-md gap-1" :class="links.length === 3 ? 'grid-cols-3' : 'grid-cols-2'">
+          <li v-for="link in links" :key="link.name">
             <RouterLink
               :to="{ name: link.name, params: { slug } }"
               :aria-current="isActive(link.name) ? 'page' : undefined"

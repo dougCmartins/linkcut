@@ -56,6 +56,7 @@ describe('ClientAppointmentCard status', () => {
     endTime: '15:00',
     status,
     hasReview: false,
+    hasProducts: false,
     barbershop: { name: 'Rafael Costa', slug: 'rafael', address: '', mapsUrl: '', whatsappUrl: '', avatarUrl: null },
   })
 

@@ -63,6 +63,27 @@ describe('client area 2.0', () => {
     expect(screen.getByRole('link', { name: 'Agendar' }).getAttribute('href')).toBe('/navalha/account/book')
   })
 
+  it('shows "Produtos" in the menu only when the barbershop has an active product', async () => {
+    // Arrange
+    const withProducts = APPOINTMENTS.map((item) => ({ ...item, has_products: item.barbershop.slug === 'navalha' }))
+    installFakeClientApi({ 'GET /client/appointments': () => ({ status: 200, body: withProducts }) })
+
+    // Act
+    const navalha = await renderSignedIn(ClientAppointmentsView, '/navalha/account')
+    const productsLink = await screen.findByRole('link', { name: 'Produtos' })
+
+    // Assert
+    expect(productsLink.getAttribute('href')).toBe('/navalha/account/products')
+
+    // Act
+    navalha.unmount()
+    await renderSignedIn(ClientAppointmentsView, '/rafael/account')
+    await screen.findByText('Corte')
+
+    // Assert
+    expect(screen.queryByRole('link', { name: 'Produtos' })).toBeNull()
+  })
+
   it('cancels an upcoming appointment after asking, and shows it cancelled', async () => {
     // Arrange
     let cancelled = false

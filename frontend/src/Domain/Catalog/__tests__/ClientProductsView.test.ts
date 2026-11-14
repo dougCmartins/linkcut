@@ -5,7 +5,7 @@ import { clientSessionBody, installFakeClientApi } from '@/Domain/Client/__tests
 import { useClientStore } from '@/Domain/Client/client.store'
 import { renderWithPlugins } from '@/utils/testRender'
 
-async function renderProducts(path = '/conta/barbearias/navalha/produtos') {
+async function renderProducts(path = '/navalha/account/products') {
   const rendered = renderWithPlugins(ClientProductsView, {}, () => {
     const now = Date.now()
     const body = clientSessionBody()
