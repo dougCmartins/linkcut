@@ -315,71 +315,75 @@ onBeforeUnmount(() => {
       />
 
       <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="onSubmit" @keydown.enter="onFieldEnter">
-        <fieldset
-          :disabled="isSubmitting"
-          :aria-busy="isSubmitting"
-          class="min-w-0 flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6 transition-opacity disabled:opacity-60"
-        >
-          <section class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft" aria-labelledby="booking-where">
-            <h3 id="booking-where" class="text-xs font-bold tracking-wide text-muted uppercase">{{ t('booking.whereTitle') }}</h3>
-            <p class="mt-1.5 text-[15px] leading-snug font-semibold break-words">{{ formatAddress(barbershopAddress) }}</p>
-            <a
-              :href="mapsUrl(barbershopAddress)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="mt-2 inline-flex items-center gap-1 text-sm font-bold text-accent"
-            >
-              {{ t('booking.directions') }} →
-            </a>
-          </section>
+        <!-- The scrolling area is a div: a fieldset does not clip its content when it scrolls (Android Chrome and the
+             Instagram browser drew the days over the footer). The fieldset inside only locks the fields. -->
+        <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6">
+          <fieldset
+            :disabled="isSubmitting"
+            :aria-busy="isSubmitting"
+            class="min-w-0 space-y-7 transition-opacity disabled:opacity-60"
+          >
+            <section class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft" aria-labelledby="booking-where">
+              <h3 id="booking-where" class="text-xs font-bold tracking-wide text-muted uppercase">{{ t('booking.whereTitle') }}</h3>
+              <p class="mt-1.5 text-[15px] leading-snug font-semibold break-words">{{ formatAddress(barbershopAddress) }}</p>
+              <a
+                :href="mapsUrl(barbershopAddress)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-2 inline-flex items-center gap-1 text-sm font-bold text-accent"
+              >
+                {{ t('booking.directions') }} →
+              </a>
+            </section>
 
-          <fieldset class="min-w-0">
-            <legend class="text-sm font-bold">{{ t('booking.stepService') }}</legend>
-            <p class="mt-0.5 mb-3 text-xs text-muted">{{ t('booking.stepServiceHint') }}</p>
-            <div role="group" :aria-label="t('booking.stepService')" class="grid gap-3">
-              <ServiceCard
-                v-for="service in services"
-                :key="service.id"
-                :service="service"
-                :selected="form.serviceIds.includes(service.id)"
-                @toggle="toggleService"
+            <fieldset class="min-w-0">
+              <legend class="text-sm font-bold">{{ t('booking.stepService') }}</legend>
+              <p class="mt-0.5 mb-3 text-xs text-muted">{{ t('booking.stepServiceHint') }}</p>
+              <div role="group" :aria-label="t('booking.stepService')" class="grid gap-3">
+                <ServiceCard
+                  v-for="service in services"
+                  :key="service.id"
+                  :service="service"
+                  :selected="form.serviceIds.includes(service.id)"
+                  @toggle="toggleService"
+                />
+              </div>
+              <p v-if="totalLabel" class="mt-3 text-right font-display text-sm font-extrabold" role="status">{{ totalLabel }}</p>
+            </fieldset>
+
+            <fieldset class="min-w-0">
+              <legend class="mb-1 text-sm font-bold">{{ t('booking.stepDay') }}</legend>
+              <DayPicker
+                :days="days"
+                :unavailable-dates="unavailableDates"
+                :selected-date="form.date"
+                :label="t('booking.stepDay')"
+                @select="form.date = $event"
               />
-            </div>
-            <p v-if="totalLabel" class="mt-3 text-right font-display text-sm font-extrabold" role="status">{{ totalLabel }}</p>
-          </fieldset>
+            </fieldset>
 
-          <fieldset class="min-w-0">
-            <legend class="mb-1 text-sm font-bold">{{ t('booking.stepDay') }}</legend>
-            <DayPicker
-              :days="days"
-              :unavailable-dates="unavailableDates"
-              :selected-date="form.date"
-              :label="t('booking.stepDay')"
-              @select="form.date = $event"
-            />
-          </fieldset>
+            <fieldset class="min-w-0">
+              <legend class="mb-1 text-sm font-bold">{{ t('booking.stepTime') }}</legend>
+              <TimeSlotPicker
+                :times="times"
+                :selected-time="form.time"
+                :label="t('booking.stepTime')"
+                :empty-text="timeEmptyText"
+                @select="form.time = $event"
+              />
+            </fieldset>
 
-          <fieldset class="min-w-0">
-            <legend class="mb-1 text-sm font-bold">{{ t('booking.stepTime') }}</legend>
-            <TimeSlotPicker
-              :times="times"
-              :selected-time="form.time"
-              :label="t('booking.stepTime')"
-              :empty-text="timeEmptyText"
-              @select="form.time = $event"
-            />
+            <fieldset class="min-w-0">
+              <legend class="mb-2 text-sm font-bold">{{ t('booking.stepContact') }}</legend>
+              <BookingForm
+                v-model:client-name="form.clientName"
+                v-model:client-whatsapp="form.clientWhatsapp"
+                v-model:client-email="form.clientEmail"
+                v-model:client-notes="form.clientNotes"
+              />
+            </fieldset>
           </fieldset>
-
-          <fieldset class="min-w-0">
-            <legend class="mb-2 text-sm font-bold">{{ t('booking.stepContact') }}</legend>
-            <BookingForm
-              v-model:client-name="form.clientName"
-              v-model:client-whatsapp="form.clientWhatsapp"
-              v-model:client-email="form.clientEmail"
-              v-model:client-notes="form.clientNotes"
-            />
-          </fieldset>
-        </fieldset>
+        </div>
 
         <div class="border-t border-line bg-page px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <p v-if="submitError" class="mb-3 text-sm font-semibold text-danger" role="alert">{{ submitError }}</p>
