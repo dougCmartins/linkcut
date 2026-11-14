@@ -2,6 +2,8 @@
 import { computed, defineAsyncComponent, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PaletteToggle from '@/components/ui/PaletteToggle.vue'
+import UndoToast from '@/components/ui/UndoToast.vue'
+import { useI18n } from 'vue-i18n'
 import { useConsentStore } from '@/Legal/consent.store'
 import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
@@ -19,6 +21,7 @@ const BookingModal = defineAsyncComponent(() => import('@/Domain/Schedule/Bookin
 const CookieBanner = defineAsyncComponent(() => import('@/Legal/CookieBanner.vue'))
 const consent = useConsentStore()
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const bookingStore = useBookingStore()
@@ -67,6 +70,17 @@ watch(
   },
 )
 
+// A booking that finished after the modal closed: its answer stays a few seconds at the bottom of the page.
+const NOTICE_MS = 8000
+let noticeTimer: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => bookingStore.notice,
+  (notice) => {
+    clearTimeout(noticeTimer)
+    if (notice) noticeTimer = setTimeout(() => bookingStore.showNotice(null), NOTICE_MS)
+  },
+)
+
 function closeBooking(): void {
   bookingStore.closeModal()
   // Back to the page it was opened from, or (a shared /agendar link) to the page under it, without leaving the app.
@@ -79,5 +93,11 @@ function closeBooking(): void {
   <PaletteToggle v-if="route.meta.isPublic && !route.meta.clientArea" class="fixed top-4 right-4 z-40" />
   <RouterView />
   <BookingModal v-if="bookingStore.isModalOpen && publicPageStore.bookingOptions" @close="closeBooking" />
+  <UndoToast
+    v-if="bookingStore.notice && !bookingStore.isModalOpen"
+    :message="bookingStore.notice.message"
+    :action-label="t('booking.notice.ok')"
+    @action="bookingStore.showNotice(null)"
+  />
   <CookieBanner v-if="!consent.hasDecided || consent.isPanelOpen" />
 </template>

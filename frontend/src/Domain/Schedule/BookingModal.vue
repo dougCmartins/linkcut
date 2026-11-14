@@ -12,6 +12,7 @@ import { createBookingRequest, fetchAvailability } from './booking.api'
 import type { AvailableDay } from './booking.model'
 import { isOnVacation, isScheduleLocked } from './availability'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
+import { useBookingStore, type BookingNotice } from './booking.store'
 import { createEmptySettings } from '@/Domain/Settings/settings.defaults'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { GeolocationStatus, useGeolocation } from '@/composables/useGeolocation'
@@ -38,6 +39,7 @@ const legal = useLegalOverlay()
 const { hasErrorCode, messageKey } = useApiErrors()
 const publicPageStore = usePublicPageStore()
 const clientStore = useClientStore()
+const bookingStore = useBookingStore()
 const dialog = useTemplateRef<HTMLElement>('dialog')
 
 // App.vue opens the modal only after the booking options loaded; the fallback just keeps the types simple.
@@ -136,16 +138,21 @@ const timeEmptyText = computed(() => {
   return isOnVacation(fromIsoDate(form.date), schedule.value.vacation) ? schedule.value.vacation.message : t('booking.noTimes')
 })
 
-const canSubmit = computed(
+const isFilled = computed(
   () =>
     form.serviceIds.length > 0 &&
     form.date !== null &&
     form.time !== null &&
     form.clientName.trim().length >= MIN_NAME_LENGTH &&
     isValidBrazilianPhone(form.clientWhatsapp) &&
-    isValidEmail(form.clientEmail) &&
-    !isSubmitting.value,
+    isValidEmail(form.clientEmail),
 )
+const canSubmit = computed(() => isFilled.value && !isSubmitting.value)
+/**
+ * From "Solicitar agendamento" until the answer (location included) nothing can change: what is sent is what the
+ * client saw. Closing the modal meanwhile does not cancel it; the answer then shows as a notice on the page.
+ */
+let isClosed = false
 
 // The free times depend on the length of the chosen services together.
 watch(() => form.serviceIds, loadAvailability)
@@ -166,13 +173,14 @@ function onSubmit(): void {
 
 async function answerLocation(share: boolean): Promise<void> {
   isAskingLocation.value = false
+  isSubmitting.value = true
   if (share) await geolocation.request()
   await submit()
 }
 
 async function submit(): Promise<void> {
   const slug = publicPageStore.slug
-  if (!canSubmit.value || !slug || !form.date || !form.time) return
+  if (!isFilled.value || !slug || !form.date || !form.time) return
   isSubmitting.value = true
   submitError.value = ''
   try {
@@ -193,8 +201,12 @@ async function submit(): Promise<void> {
       date: formatDayMonth(fromIsoDate(confirmation.date)),
       time: confirmation.time,
     })
+    if (isClosed) finishInBackground({ kind: 'sent', message: t('booking.notice.sent', { summary: submittedSummary.value }) })
   } catch (caught) {
-    if (hasErrorCode(caught, ApiErrorCode.SlotUnavailable)) {
+    if (isClosed) {
+      const reason = hasErrorCode(caught, ApiErrorCode.SlotUnavailable) ? t('booking.slotTaken') : t(`errors.api.${messageKey(caught)}`)
+      finishInBackground({ kind: 'failed', message: t('booking.notice.failed', { reason }) })
+    } else if (hasErrorCode(caught, ApiErrorCode.SlotUnavailable)) {
       // Someone took this time a moment ago: show the times that are still free.
       submitError.value = t('booking.slotTaken')
       form.time = null
@@ -205,6 +217,12 @@ async function submit(): Promise<void> {
   } finally {
     isSubmitting.value = false
   }
+}
+
+/** The modal was closed while sending: the answer goes to the page, and the client's list catches up. */
+function finishInBackground(notice: BookingNotice): void {
+  bookingStore.showNotice(notice)
+  if (notice.kind === 'sent' && clientStore.isSignedIn) void clientStore.loadAppointments().catch(() => undefined)
 }
 
 /**
@@ -237,6 +255,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  isClosed = true
   document.body.style.overflow = ''
   window.removeEventListener('keydown', onKeydown)
 })
@@ -296,7 +315,11 @@ onBeforeUnmount(() => {
       />
 
       <form v-else class="flex min-h-0 flex-1 flex-col" @submit.prevent="onSubmit" @keydown.enter="onFieldEnter">
-        <div class="flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6">
+        <fieldset
+          :disabled="isSubmitting"
+          :aria-busy="isSubmitting"
+          class="min-w-0 flex-1 space-y-7 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-2 pb-6 transition-opacity disabled:opacity-60"
+        >
           <section class="rounded-card bg-surface p-4 ring-1 ring-line shadow-soft" aria-labelledby="booking-where">
             <h3 id="booking-where" class="text-xs font-bold tracking-wide text-muted uppercase">{{ t('booking.whereTitle') }}</h3>
             <p class="mt-1.5 text-[15px] leading-snug font-semibold break-words">{{ formatAddress(barbershopAddress) }}</p>
@@ -356,7 +379,7 @@ onBeforeUnmount(() => {
               v-model:client-notes="form.clientNotes"
             />
           </fieldset>
-        </div>
+        </fieldset>
 
         <div class="border-t border-line bg-page px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <p v-if="submitError" class="mb-3 text-sm font-semibold text-danger" role="alert">{{ submitError }}</p>

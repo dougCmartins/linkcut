@@ -3,6 +3,7 @@ import { fireEvent, screen } from '@testing-library/vue'
 import BookingModal from '../BookingModal.vue'
 import { SLUG, TODAY, installFakeScheduleApi, requestRow, type ScheduleOptions } from './fakeScheduleApi'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
+import { useBookingStore } from '../booking.store'
 import type { BarbershopAddress, ScheduleSettings } from '@/Domain/Settings/settings.model'
 import { createTestSettings } from '@/Domain/Settings/__tests__/fakeSettingsApi'
 import { renderWithPlugins } from '@/utils/testRender'
@@ -264,6 +265,42 @@ describe('BookingModal and the barbershop address', () => {
     expect(question).toBeTruthy()
     await screen.findByText('Solicitação enviada!')
     expect(calls.at(-1)?.body).toMatchObject({ client_latitude: -23.5614, client_longitude: -46.6559 })
+  })
+
+  it('locks the fields while sending, so nothing typed after "Solicitar" is lost', async () => {
+    // Arrange: the device takes its time to answer the location
+    const getCurrentPosition = vi.fn()
+    Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true })
+    renderModal()
+    await fillValidBooking()
+
+    // Act
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar e enviar' }))
+
+    // Assert
+    expect(screen.getByLabelText('Nome').matches(':disabled')).toBe(true)
+    expect(screen.getByRole('button', { name: 'Enviando…' }).hasAttribute('disabled')).toBe(true)
+  })
+
+  it('closing while sending does not cancel: the answer shows as a notice on the page', async () => {
+    // Arrange: the location answers only after the modal closed
+    let answerLocation: PositionCallback = () => {}
+    const getCurrentPosition = vi.fn((success: PositionCallback) => (answerLocation = success))
+    Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true })
+    const { unmount, calls } = renderModal()
+    await fillValidBooking()
+    await fireEvent.click(screen.getByRole('button', { name: 'Solicitar Agendamento' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Compartilhar e enviar' }))
+
+    // Act
+    unmount()
+    answerLocation({ coords: { latitude: -23.5614, longitude: -46.6559 } } as GeolocationPosition)
+
+    // Assert
+    await vi.waitFor(() => expect(useBookingStore().notice?.kind).toBe('sent'))
+    expect(useBookingStore().notice?.message).toContain('Agendamento enviado')
+    expect(calls.at(-1)?.body).toMatchObject({ client_name: 'João Silva', time: '11:00' })
   })
 
   it('"Enviar sem localização" books without asking the device', async () => {
