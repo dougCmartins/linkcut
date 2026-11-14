@@ -82,7 +82,7 @@ src/Domain/<Domínio>/
 
 ### Autenticação
 - **Barbeiro:**
-  1. e-mail e senha em `/:slug/panel/login`;
+  1. e-mail e senha em `/entrar` (o e-mail identifica a barbearia) ou em `/:slug/panel/login` (só os barbeiros daquela barbearia);
   2. código de 6 dígitos por e-mail (2FA);
   3. o token de acesso fica na memória e o refresh token no `localStorage`, com rotação.
 - **Cliente:**
@@ -148,7 +148,7 @@ src/
 ### Rotas principais
 | Rota | Quem | Tela |
 |---|---|---|
-| `/`, `/cadastrar`, `/entrar` | barbeiro | cadastro e "Encontrar minha página" |
+| `/`, `/cadastrar`, `/entrar` | barbeiro | criar conta e entrar com e-mail e senha |
 | `/:slug` | público | link na bio |
 | `/:slug/portfolio` | público | "Sobre", com o carrossel de avaliações |
 | `/:slug/agendar` | público | agendamento |

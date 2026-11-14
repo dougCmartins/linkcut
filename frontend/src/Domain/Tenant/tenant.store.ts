@@ -18,7 +18,7 @@ function rememberSlug(slug: string | null): void {
     if (slug) localStorage.setItem(LAST_SLUG_KEY, slug)
     else localStorage.removeItem(LAST_SLUG_KEY)
   } catch {
-    // Storage blocked: "Encontrar minha página" (/entrar) still works.
+    // Storage blocked: the sign-in at /entrar still works (the e-mail finds the barbershop).
   }
 }
 

@@ -11,8 +11,11 @@ import { LoginStep, type Credentials, type TwoFactorChannel } from './auth.model
 import { useAuthStore } from './auth.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 
-/** Barber sign-in on the barbershop's own page (/<slug>/panel/login): e-mail and password, then the code. */
-const props = defineProps<{ slug: string }>()
+/**
+ * Barber sign-in: e-mail and password, then the code. On the barbershop's own page (/<slug>/panel/login) only its
+ * barbers get in; on linkcut's /entrar (no slug) the e-mail alone finds the barbershop.
+ */
+const props = withDefaults(defineProps<{ slug?: string | null }>(), { slug: null })
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()

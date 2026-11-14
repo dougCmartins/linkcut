@@ -7,7 +7,7 @@
 ### Entrada (`/`, `/cadastrar`, `/entrar`)
 - As três rotas abrem **a mesma tela**: o formulário à esquerda e uma foto à direita (só em telas largas; o celular não baixa a foto).
 - A `/` e a `/cadastrar` abrem em "Criar minha página grátis", com "Já tem conta? Entrar" embaixo.
-- A `/entrar` é **"Encontrar minha página"**: o barbeiro digita o e-mail e recebe por e-mail o link de entrada da página dele. A resposta é a mesma para qualquer e-mail. Se o aparelho já entrou antes, aparece o atalho "Continuar em linkcut.app/<link>".
+- A `/entrar` é o **login comum, como em qualquer app**: e-mail e senha, depois o código. Cada e-mail pertence a uma conta só, então o e-mail já identifica a barbearia. E-mail ou senha errados dão o mesmo erro.
 - Trocar de modo muda só o formulário e a foto, sem recarregar a página. O endereço acompanha o modo e o "Voltar" do navegador funciona.
 - Barbeiro já conectado que abre uma dessas rotas vai direto para o `/painel`.
 

@@ -15,18 +15,11 @@ export default {
     failed: 'Não foi possível ativar agora. Você ainda recebe tudo por e-mail.',
     needsInstall: 'No iPhone, toque em Compartilhar → "Adicionar à Tela de Início" e abra por lá para receber avisos.',
   },
-  findPage: {
-    title: 'Entre no seu painel',
-    subtitle: 'Cada barbearia entra pela sua própria página. Digite o e-mail da sua conta e enviamos o link.',
-    continueOn: 'Continuar em {address}',
-    send: 'Enviar meu link de entrada',
-    sent: 'Pronto! Se {email} tiver uma barbearia, o link de entrada chega em instantes. Veja também a caixa de spam.',
-  },
   barberLogin: {
     metaTitle: 'Entrar no painel · {name}',
     photoAlt: 'Foto da {name}',
     notYours: 'Não é a sua barbearia?',
-    findMine: 'Encontrar minha página',
+    findMine: 'Entrar com outra conta',
   },
   authPage: {
     photos: {

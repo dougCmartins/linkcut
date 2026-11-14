@@ -116,4 +116,19 @@ final class StartLoginTest extends TestCase
         }
         $this->assertSame(0, TwoFactorChallenge::query()->count());
     }
+
+    public function test_signing_in_from_linkcut_without_a_page_uses_the_accounts_barbershop(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+
+        // Act
+        $accepted = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password']);
+        $wrongPassword = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'wrong-password']);
+
+        // Assert
+        $accepted->assertCreated()->assertJsonStructure(['challenge_id']);
+        $wrongPassword->assertUnauthorized()->assertJsonPath('code', 'INVALID_CREDENTIALS');
+        $this->assertSame(1, TwoFactorChallenge::query()->count());
+    }
 }

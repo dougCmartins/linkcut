@@ -77,28 +77,24 @@ describe('BarberAuthView', () => {
     expect(signUpLink.getAttribute('href')).toBe('/cadastrar?redirect=/painel/historico')
   })
 
-  it('"Entrar" e-mails the sign-in link of the barber\'s own page (same answer for any e-mail)', async () => {
+  it('"Entrar" signs in with e-mail and password, no link: the e-mail says which barbershop it is', async () => {
     // Arrange
-    const { calls } = installFakeApi({ 'POST /login/link': () => ({ status: 202, body: { sent: true } }) })
+    const { calls } = installFakeApi({
+      'POST /login': () => ({
+        status: 201,
+        body: { challenge_id: 'c-1', preferred_channel: null, destinations: [{ channel: 'email', masked: 'r***@linkcut.app' }] },
+      }),
+    })
     await renderAt('/entrar')
 
     // Act
     await fireEvent.update(screen.getByLabelText('E-mail'), 'rafael@linkcut.app')
-    await fireEvent.click(screen.getByRole('button', { name: 'Enviar meu link de entrada' }))
+    await fireEvent.update(screen.getByLabelText('Senha'), 'linkcut123')
+    await fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
     // Assert
-    expect(await screen.findByText(/Se rafael@linkcut.app tiver uma barbearia/)).toBeTruthy()
-    expect(calls.at(-1)).toMatchObject({ method: 'POST', path: '/login/link', body: { email: 'rafael@linkcut.app' } })
-  })
-
-  it('offers the page this device signed in from last', async () => {
-    // Arrange
-    localStorage.setItem('linkcut.last-slug', 'rafael')
-
-    // Act
-    await renderAt('/entrar')
-
-    // Assert
-    expect(screen.getByRole('link', { name: /Continuar em .*\/rafael/ }).getAttribute('href')).toBe('/rafael/panel/login')
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/login')).toBe(true))
+    expect(calls.find((call) => call.path === '/login')?.body).toEqual({ email: 'rafael@linkcut.app', password: 'linkcut123' })
+    expect(screen.queryByRole('button', { name: /link de entrada/ })).toBeNull()
   })
 })
