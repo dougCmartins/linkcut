@@ -772,6 +772,7 @@ export default {
       book: 'Agendar',
       page: 'Ver página',
       products: 'Ver produtos',
+      back: 'Voltar para a barbearia',
     },
     profile: {
       title: 'Minha conta',

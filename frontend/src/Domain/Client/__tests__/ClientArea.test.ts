@@ -63,6 +63,19 @@ describe('client area 2.0', () => {
     expect(screen.getByRole('link', { name: 'Agendar' }).getAttribute('href')).toBe('/navalha/account/book')
   })
 
+  it('"Minhas barbearias" goes back to the client area of the barbershop the client came from', async () => {
+    // Arrange
+    installFakeClientApi()
+    localStorage.setItem('linkcut.visited-slug', 'rafael')
+
+    // Act
+    await renderSignedIn(ClientBarbershopsView, '/account')
+
+    // Assert
+    const back = await screen.findByRole('link', { name: 'Voltar para a barbearia' })
+    expect(back.getAttribute('href')).toBe('/rafael/account')
+  })
+
   it('shows "Produtos" in the menu only when the barbershop has an active product', async () => {
     // Arrange
     const withProducts = APPOINTMENTS.map((item) => ({ ...item, has_products: item.barbershop.slug === 'navalha' }))

@@ -5,6 +5,7 @@ import BarbershopLogo from './BarbershopLogo.vue'
 import ClientLayout from './ClientLayout.vue'
 import { CLIENT_APPOINTMENTS_ROUTE } from './client.guard'
 import type { BarbershopContact } from './client.model'
+import { lastVisitedSlug } from '@/Domain/Settings/publicPage.store'
 import { useClientStore } from './client.store'
 
 /**
@@ -14,6 +15,8 @@ import { useClientStore } from './client.store'
 const { t } = useI18n()
 const clientStore = useClientStore()
 
+// The barbershop the client came from ("Outras barbearias"): the way back to its client area.
+const backSlug = lastVisitedSlug()
 const isLoading = ref(!clientStore.appointmentsLoaded)
 const failed = ref(false)
 
@@ -44,6 +47,12 @@ const openClass =
 
 <template>
   <ClientLayout :title="t('client.barbershops.title')">
+    <RouterLink v-if="backSlug" :to="{ name: CLIENT_APPOINTMENTS_ROUTE, params: { slug: backSlug } }" :class="['mb-4', linkClass]">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      {{ t('client.barbershops.back') }}
+    </RouterLink>
     <p class="-mt-2 mb-4 text-sm text-muted">{{ t('client.barbershops.subtitle') }}</p>
     <p v-if="isLoading" class="text-sm text-muted" role="status">{{ t('client.appointments.loading') }}</p>
     <p v-else-if="failed" class="text-sm font-semibold text-danger" role="alert">{{ t('client.appointments.failed') }}</p>
