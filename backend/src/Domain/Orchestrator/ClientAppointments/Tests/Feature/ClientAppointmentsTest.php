@@ -150,4 +150,95 @@ final class ClientAppointmentsTest extends TestCase
         $finished->assertStatus(409)->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
         $this->assertSame(BookingStatus::Confirmed, BookingRequest::withoutTenantScope()->findOrFail($soon->id)->status);
     }
+
+    public function test_a_client_sees_only_the_active_products_of_a_barbershop_they_booked(): void
+    {
+        // Arrange
+        $rafael = $this->barbershop();
+        $ana = Client::factory()->registered()->create();
+        $this->bookingRequest($rafael, '2026-10-21', '10:00', BookingStatus::Confirmed, attributes: ['client_id' => $ana->id]);
+        $this->actingAsOwner($rafael);
+        $this->postJson('/api/products', ['name' => 'Pomada', 'price_in_cents' => 4500])->assertCreated();
+        $this->postJson('/api/products', ['name' => 'Óleo', 'price_in_cents' => 3200])->assertCreated();
+        $this->postJson('/api/products', ['name' => 'Escondido', 'price_in_cents' => 1000, 'is_active' => false])->assertCreated();
+        Passport::actingAs($ana, [], 'client');
+
+        // Act
+        $response = $this->getJson('/api/client/barbershops/rafael/products');
+
+        // Assert
+        $response->assertOk()->assertJsonCount(2)
+            ->assertJsonPath('0.name', 'Pomada')
+            ->assertJsonPath('0.price_in_cents', 4500)
+            ->assertJsonPath('1.name', 'Óleo');
+    }
+
+    public function test_saving_a_product_refreshes_the_client_list(): void
+    {
+        // Arrange
+        $rafael = $this->barbershop();
+        $ana = Client::factory()->registered()->create();
+        $this->bookingRequest($rafael, '2026-10-21', '10:00', BookingStatus::Confirmed, attributes: ['client_id' => $ana->id]);
+        $this->actingAsOwner($rafael);
+        $id = $this->postJson('/api/products', ['name' => 'Pomada', 'price_in_cents' => 4500])->json('id');
+        Passport::actingAs($ana, [], 'client');
+        $this->getJson('/api/client/barbershops/rafael/products')->assertOk()->assertJsonPath('0.name', 'Pomada');
+        $this->actingAsOwner($rafael);
+
+        // Act
+        $this->putJson("/api/products/{$id}", ['name' => 'Óleo', 'price_in_cents' => 4500])->assertOk();
+        Passport::actingAs($ana, [], 'client');
+        $list = $this->getJson('/api/client/barbershops/rafael/products');
+
+        // Assert
+        $list->assertOk()->assertJsonPath('0.name', 'Óleo');
+    }
+
+    public function test_products_are_hidden_without_a_booking_or_without_login(): void
+    {
+        // Arrange
+        $rafael = $this->barbershop();
+        $navalha = $this->barbershop('navalha');
+        $ana = Client::factory()->registered()->create();
+        $this->bookingRequest($navalha, '2026-10-21', '10:00', BookingStatus::Cancelled, attributes: ['client_id' => $ana->id]);
+        $this->actingAsOwner($rafael);
+        $this->postJson('/api/products', ['name' => 'Pomada', 'price_in_cents' => 4500])->assertCreated();
+        $this->app['auth']->forgetGuards();
+
+        // Act
+        $guest = $this->getJson('/api/client/barbershops/rafael/products');
+        Passport::actingAs($ana, [], 'client');
+        $stranger = $this->getJson('/api/client/barbershops/rafael/products');
+        $missing = $this->getJson('/api/client/barbershops/nao-existe/products');
+
+        // Assert
+        $guest->assertUnauthorized();
+        $stranger->assertNotFound()->assertJsonPath('code', 'TENANT_NOT_FOUND');
+        $missing->assertNotFound()->assertJsonPath('code', 'TENANT_NOT_FOUND');
+    }
+
+    public function test_appointments_say_which_barbershops_have_active_products(): void
+    {
+        // Arrange
+        $rafael = $this->barbershop();
+        $navalha = $this->barbershop('navalha');
+        $ana = Client::factory()->registered()->create();
+        $this->bookingRequest($rafael, '2026-10-12', '10:00', BookingStatus::Completed, attributes: ['client_id' => $ana->id]);
+        $this->bookingRequest($navalha, '2026-10-21', '15:00', BookingStatus::Confirmed, attributes: ['client_id' => $ana->id]);
+        $this->actingAsOwner($rafael);
+        $this->postJson('/api/products', ['name' => 'Pomada', 'price_in_cents' => 4500])->assertCreated();
+        $this->actingAsOwner($navalha);
+        $this->postJson('/api/products', ['name' => 'Escondido', 'price_in_cents' => 1000, 'is_active' => false])->assertCreated();
+        Passport::actingAs($ana, [], 'client');
+
+        // Act
+        $response = $this->getJson('/api/client/appointments');
+
+        // Assert
+        $response->assertOk()
+            ->assertJsonPath('0.barbershop.slug', 'navalha')
+            ->assertJsonPath('0.has_products', false)
+            ->assertJsonPath('1.barbershop.slug', 'rafael')
+            ->assertJsonPath('1.has_products', true);
+    }
 }

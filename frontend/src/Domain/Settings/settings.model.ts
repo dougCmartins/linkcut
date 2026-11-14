@@ -18,6 +18,7 @@ export const SettingsTab = {
   Link: 'link',
   Portfolio: 'portfolio',
   Reviews: 'avaliacoes',
+  Products: 'produtos',
   Schedule: 'agenda',
   Appearance: 'aparencia',
   Security: 'seguranca',

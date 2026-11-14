@@ -31,6 +31,10 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.ReviewAlreadyExists]: 'reviewAlreadyExists',
   [ApiErrorCode.ReviewNotFeatured]: 'reviewNotFeatured',
   [ApiErrorCode.ReviewNotFound]: 'reviewNotFound',
+  [ApiErrorCode.ProductNotFound]: 'productNotFound',
+  [ApiErrorCode.ProductOrderInvalid]: 'productOrderInvalid',
+  [ApiErrorCode.ProductsLimitReached]: 'productsLimitReached',
+  [ApiErrorCode.TenantNotFound]: 'tenantNotFound',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'

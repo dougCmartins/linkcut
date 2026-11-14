@@ -32,6 +32,8 @@ final class PruneUnusedImages
                 ->whereColumn('portfolio.cover_image_id', 'images.id'))
             ->whereNotExists(fn (QueryBuilder $query) => $query->selectRaw('1')->from((new PortfolioPhoto)->getTable(), 'photo')
                 ->whereColumn('photo.image_id', 'images.id'))
+            ->whereNotExists(fn (QueryBuilder $query) => $query->selectRaw('1')->from('products', 'product')
+                ->whereColumn('product.image_id', 'images.id'))
             ->chunkById(200, function ($images) use (&$pruned): void {
                 Storage::disk(Image::DISK)->delete($images->pluck('path')->all());
                 Image::withoutTenantScope()->whereKey($images->modelKeys())->delete();

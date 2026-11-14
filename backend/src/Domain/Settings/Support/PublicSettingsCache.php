@@ -9,8 +9,8 @@ use Domain\Tenant\Context\CurrentTenant;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * What visitors read from the settings (public page, booking options), cached per tenant. Saving any settings tab
- * forgets it; the TTL only bounds how stale it can get after a direct database change (e.g. a data migration).
+ * Cached per tenant: the public page, booking options, reviews, and the client product list.
+ * Saving any of it forgets the whole set; the TTL only bounds how stale it can get after a direct database change.
  */
 final class PublicSettingsCache
 {
@@ -19,6 +19,8 @@ final class PublicSettingsCache
     public const BOOKING_OPTIONS = 'booking-options';
 
     public const REVIEWS = 'reviews';
+
+    public const PRODUCTS = 'products';
 
     private const TTL_SECONDS = 600;
 
@@ -41,6 +43,7 @@ final class PublicSettingsCache
             $this->key(self::PUBLIC_PAGE),
             $this->key(self::BOOKING_OPTIONS),
             $this->key(self::REVIEWS),
+            $this->key(self::PRODUCTS),
         ]);
     }
 

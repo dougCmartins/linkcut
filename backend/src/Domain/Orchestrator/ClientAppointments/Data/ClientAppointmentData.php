@@ -20,5 +20,7 @@ final class ClientAppointmentData extends Data
         public readonly BookingStatus $status,
         public readonly BarbershopContactData $barbershop,
         public readonly bool $has_review,
+        /** The barbershop has at least one active product. */
+        public readonly bool $has_products,
     ) {}
 }

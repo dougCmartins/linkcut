@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\ClientAppointments\Actions;
 
+use Domain\Catalog\Actions\ListTenantIdsWithActiveProducts;
 use Domain\Client\Models\Client;
 use Domain\Orchestrator\Barbershop\Actions\ListBarbershopContacts;
 use Domain\Orchestrator\ClientAppointments\Data\ClientAppointmentData;
@@ -25,6 +26,7 @@ final class ListClientAppointments
         private readonly ListClientBookings $listBookings,
         private readonly ListBarbershopContacts $listContacts,
         private readonly ListReviewedBookingIds $listReviewed,
+        private readonly ListTenantIdsWithActiveProducts $listShopsWithProducts,
     ) {}
 
     /** @return DataCollection<int, ClientAppointmentData> */
@@ -34,7 +36,9 @@ final class ListClientAppointments
         $client = auth('client')->user();
         $bookings = collect($this->listBookings->handle(new ClientBookingsQueryData(client_id: $client->id))->all());
 
-        $barbershops = $this->listContacts->handle(new TenantIdsData(ids: $bookings->pluck('tenant_id')->unique()->values()->all()));
+        $tenantIds = $bookings->pluck('tenant_id')->unique()->values()->all();
+        $barbershops = $this->listContacts->handle(new TenantIdsData(ids: $tenantIds));
+        $withProducts = array_flip($this->listShopsWithProducts->handle(new TenantIdsData(ids: $tenantIds))->ids);
         $reviewed = array_flip($this->listReviewed->handle(new BookingIdsData(
             ids: $bookings->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
         ))->ids);
@@ -48,6 +52,7 @@ final class ListClientAppointments
             status: $booking->status,
             barbershop: $barbershops[$booking->tenant_id],
             has_review: isset($reviewed[$booking->id]),
+            has_products: isset($withProducts[$booking->tenant_id]),
         ));
 
         return ClientAppointmentData::collect($appointments, DataCollection::class);
