@@ -5,6 +5,7 @@ import {
   CLIENT_BARBERSHOPS_ROUTE,
   CLIENT_BOOK_ROUTE,
   CLIENT_PROFILE_ROUTE,
+  CLIENT_PRODUCTS_ROUTE,
   CLIENT_REVIEW_ROUTE,
   clientAccountLocation,
 } from '@/Domain/Client/client.guard'
@@ -149,6 +150,13 @@ export const routes: RouteRecordRaw[] = [
     path: '/:slug/account/profile',
     name: CLIENT_PROFILE_ROUTE,
     component: () => import('@/Domain/Client/ClientProfileView.vue'),
+    meta: { isPublic: true, requiresClient: true, clientArea: true },
+  },
+  // Only when the barbershop has an active product (the menu hides the tab otherwise).
+  {
+    path: '/:slug/account/products',
+    name: CLIENT_PRODUCTS_ROUTE,
+    component: () => import('@/Domain/Catalog/ClientProductsView.vue'),
     meta: { isPublic: true, requiresClient: true, clientArea: true },
   },
   {

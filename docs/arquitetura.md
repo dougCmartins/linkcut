@@ -65,6 +65,7 @@ src/Domain/<Domínio>/
 | `Client` | conta do cliente (global, sem tenant), login, Google, push |
 | `Notification` | push do barbeiro, `PlainText` (limpeza de texto) |
 | `Review` | avaliações dos atendimentos |
+| `Catalog` | produtos da vitrine (até 50 por barbearia), vistos só pelo cliente logado |
 | `Orchestrator` | fluxos que juntam domínios: agendamento público, concluir atendimento, página pública, exclusão de conta (LGPD) e outros |
 
 **Regra de ouro:** um domínio não chama outro diretamente. Quem cruza domínios é o `Orchestrator`. Exemplo: `CompleteAppointment` muda o status no `Schedule` e lança a receita no `Finance`.
@@ -154,7 +155,7 @@ src/
 | `/:slug/login` | cliente | login com o tema da barbearia |
 | `/:slug/panel/login` | barbeiro | login com o tema da barbearia |
 | `/painel`, `/painel/historico`, `/painel/despesas`, `/painel/configuracoes` | barbeiro | painel |
-| `/:slug/account`, `/:slug/account/book`, `/:slug/account/profile`, `/:slug/account/review/:id` | cliente | área do cliente dentro da barbearia (só os horários dela, com o tema dela) |
+| `/:slug/account`, `/:slug/account/book`, `/:slug/account/products`, `/:slug/account/profile`, `/:slug/account/review/:id` | cliente | área do cliente dentro da barbearia (só os horários e os produtos dela, com o tema dela) |
 | `/account` | cliente | as barbearias onde o cliente agendou; os antigos `/conta…` redirecionam |
 
 ## Ambiente de desenvolvimento

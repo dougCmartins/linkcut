@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\BarbershopAccount\Actions;
 
+use Domain\Catalog\Actions\ListProducts;
 use Domain\Finance\Actions\ListFinanceRecords;
 use Domain\Identity\Actions\ShowAuthenticatedUser;
 use Domain\Review\Actions\ListBarberReviews;
@@ -25,6 +26,7 @@ final class ExportBarbershopData
         private readonly ListAllBookings $listBookings,
         private readonly ListFinanceRecords $listFinance,
         private readonly ListBarberReviews $listReviews,
+        private readonly ListProducts $listProducts,
     ) {}
 
     /** @return array<string, mixed> */
@@ -41,6 +43,7 @@ final class ExportBarbershopData
             'bookings' => $this->listBookings->handle()->toArray(),
             'finance' => $this->listFinance->handle()->toArray(),
             'reviews' => $this->listReviews->handle()->toArray(),
+            'products' => $this->listProducts->handle()->toArray(),
         ];
     }
 }

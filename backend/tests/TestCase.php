@@ -16,16 +16,23 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         Http::preventStrayRequests();
+        // Passport::actingAs also reads the keys, so every test needs them, whatever order the tests run in.
+        $this->ensurePassportKeys();
     }
 
     /** Passport needs keys and a personal access client to issue access tokens. */
     protected function preparePassport(): void
     {
-        if (! file_exists(storage_path('oauth-private.key'))) {
-            Artisan::call('passport:keys', ['--force' => true]);
-        }
+        $this->ensurePassportKeys();
         // Bound to their provider, like passport:ensure-personal-client does.
         Client::factory()->asPersonalAccessTokenClient()->create(['provider' => 'users']);
         Client::factory()->asPersonalAccessTokenClient()->create(['provider' => 'clients']);
+    }
+
+    private function ensurePassportKeys(): void
+    {
+        if (! file_exists(storage_path('oauth-private.key'))) {
+            Artisan::call('passport:keys', ['--force' => true]);
+        }
     }
 }

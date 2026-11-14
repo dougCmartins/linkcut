@@ -34,6 +34,9 @@ export const ApiErrorCode = {
   ReviewAlreadyExists: 'REVIEW_ALREADY_EXISTS',
   ReviewNotFeatured: 'REVIEW_NOT_FEATURED',
   ReviewNotFound: 'REVIEW_NOT_FOUND',
+  ProductNotFound: 'PRODUCT_NOT_FOUND',
+  ProductOrderInvalid: 'PRODUCT_ORDER_INVALID',
+  ProductsLimitReached: 'PRODUCTS_LIMIT_REACHED',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

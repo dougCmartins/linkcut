@@ -56,4 +56,6 @@ export interface ClientAppointment {
   status: AppointmentStatus
   barbershop: BarbershopContact
   hasReview: boolean
+  /** The barbershop has at least one active product. */
+  hasProducts: boolean
 }
