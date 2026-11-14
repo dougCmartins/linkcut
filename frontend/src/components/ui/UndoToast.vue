@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** Bottom notice with an undo action. The parent decides when it shows (v-if). */
+/** Bottom notice with one action (undo, OK…). The parent decides when it shows (v-if). */
 defineProps<{ message: string; actionLabel: string }>()
 const emit = defineEmits<{ action: [] }>()
 </script>

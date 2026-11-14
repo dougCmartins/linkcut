@@ -226,6 +226,11 @@ export default {
     },
     timesFailed: 'Não foi possível carregar os horários. Feche e abra de novo.',
     slotTaken: 'Este horário acabou de ser ocupado. Escolha outro.',
+    notice: {
+      sent: 'Agendamento enviado: {summary}. O barbeiro vai confirmar.',
+      failed: 'O agendamento não foi enviado. {reason}',
+      ok: 'OK',
+    },
     nameLabel: 'Nome',
     namePlaceholder: 'Como podemos te chamar?',
     whatsappLabel: 'WhatsApp',
