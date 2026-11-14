@@ -20,7 +20,7 @@ describe('PortfolioView reviews', () => {
     await screen.findByRole('heading', { name: /Muito prazer/ })
 
     // Assert
-    expect(screen.queryByRole('heading', { name: 'O que dizem' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Nossos clientes' })).toBeNull()
     plain.unmount()
 
     // Arrange
@@ -34,7 +34,7 @@ describe('PortfolioView reviews', () => {
     await renderPortfolio()
 
     // Assert
-    expect(await screen.findByRole('heading', { name: 'O que dizem' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Nossos clientes' })).toBeTruthy()
     expect(screen.getByText('Ana')).toBeTruthy()
     expect(screen.getByText('Corte impecável')).toBeTruthy()
   })
