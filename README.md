@@ -82,7 +82,7 @@ Telas mobile-first. Todas usam a API real, sem dados simulados ([plano da migra�
 | `/:slug` | Link da Bio de cada barbearia (ex.: `/rafael`) |
 | `/:slug/portfolio` | Portfólio / Sobre Mim |
 | `/:slug/agendar` | Modal de agendamento (também abre pelo botão "Agendar") |
-| `/entrar` | "Encontrar minha página": o barbeiro recebe por e-mail o link do login dele |
+| `/entrar` | Login do barbeiro com e-mail e senha (o e-mail identifica a barbearia) |
 | `/:slug/panel/login` | Login do barbeiro na página da barbearia (e-mail + senha + código por e-mail) |
 | `/:slug/login` | Login do cliente na página da barbearia |
 | `/:slug/account` | Área do cliente dentro da barbearia: horários, agendar e Minha conta, com o tema dela |
