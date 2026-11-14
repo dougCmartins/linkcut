@@ -80,7 +80,7 @@ describe('ClientAuthView', () => {
 
     // Assert
     expect(screen.getByRole('alert').textContent).toContain('Não foi possível entrar com o Google')
-    expect(returnPath(screen.getByRole('link', { name: 'Continuar com Google' }))).toBe('/conta')
+    expect(returnPath(screen.getByRole('link', { name: 'Continuar com Google' }))).toBe('/account')
   })
 
   it('has no Google button while the build leaves it off', async () => {

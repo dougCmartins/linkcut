@@ -31,18 +31,30 @@ export const useAgendaStore = defineStore('agenda', () => {
   }
   const hasFailed = ref(false)
 
-  async function load(): Promise<void> {
-    isLoading.value = true
-    hasFailed.value = false
+  /** Only the newest answer is kept: a slow background refresh never overwrites a newer list. */
+  let latestLoad = 0
+
+  /**
+   * Loads the three lists. `silent` (background refresh): no loading state, and on failure the lists already on
+   * screen stay as they are, without the error message.
+   */
+  async function load(options: { silent?: boolean } = {}): Promise<void> {
+    const request = ++latestLoad
+    if (!options.silent) {
+      isLoading.value = true
+      hasFailed.value = false
+    }
     try {
       const [pending, [today, next]] = await Promise.all([fetchPendingRequests(), fetchAppointments()])
+      if (request !== latestLoad) return
       pendingRequests.value = pending
       todayAgenda.value = today
       upcoming.value = next
+      hasFailed.value = false
     } catch {
-      hasFailed.value = true
+      if (request === latestLoad && !options.silent) hasFailed.value = true
     } finally {
-      isLoading.value = false
+      if (!options.silent) isLoading.value = false
       isLoaded.value = true
     }
   }

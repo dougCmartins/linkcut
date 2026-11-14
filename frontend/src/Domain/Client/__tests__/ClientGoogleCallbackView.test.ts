@@ -29,10 +29,10 @@ describe('ClientGoogleCallbackView', () => {
     })
 
     // Act
-    const { router } = await open('/conta/entrar/google?codigo=once&volta=/conta/perfil')
+    const { router } = await open('/conta/entrar/google?codigo=once&volta=/rafael/account/profile')
 
     // Assert
-    await waitFor(() => expect(router.currentRoute.value.path).toBe('/conta/perfil'))
+    await waitFor(() => expect(router.currentRoute.value.path).toBe('/rafael/account/profile'))
     expect(calls.find((call) => call.method === 'POST')?.body).toEqual({ code: 'once', nonce: 'nonce-started-here' })
     expect(localStorage.getItem('linkcut.google-nonce')).toBeNull()
     expect(useClientStore().isSignedIn).toBe(true)
@@ -64,7 +64,7 @@ describe('ClientGoogleCallbackView', () => {
     const { router } = await open(`/conta/entrar/google?codigo=once&volta=${encodeURIComponent('https://evil.test')}`)
 
     // Assert
-    await waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/conta'))
+    await waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/account'))
   })
 
   it('shows an error when Google sent no code', async () => {

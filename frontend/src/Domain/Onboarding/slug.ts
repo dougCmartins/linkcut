@@ -3,6 +3,7 @@
  * Same list as the API (backend/src/Domain/Tenant/Support/ReservedSlugs.php).
  */
 export const RESERVED_SLUGS = [
+  'account',
   'admin',
   'ajuda',
   'api',

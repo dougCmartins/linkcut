@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import TextField from '@/components/ui/TextField.vue'
@@ -13,7 +13,7 @@ import { exportMyData } from './client.api'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import ClientLayout from './ClientLayout.vue'
 import ClientPushOffer from './ClientPushOffer.vue'
-import { clientLoginLocation } from './client.guard'
+import { CLIENT_BARBERSHOPS_ROUTE, clientLoginLocation } from './client.guard'
 import { useClientStore } from './client.store'
 
 /**
@@ -24,6 +24,7 @@ const PASSWORD_MIN_LENGTH = 8
 const NAME_MIN_LENGTH = 2
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const apiErrors = useApiErrors()
 const clientStore = useClientStore()
@@ -123,7 +124,8 @@ async function deleteAccount(): Promise<void> {
   deleteError.value = ''
   try {
     await clientStore.deleteAccount(deletePassword.value)
-    await router.replace(clientLoginLocation({ conta: 'excluida' }))
+    const slug = typeof route.params.slug === 'string' ? route.params.slug : undefined
+    await router.replace(clientLoginLocation({ conta: 'excluida' }, slug))
   } catch (caught) {
     deleteError.value = apiErrors.hasFieldError(caught, 'password') ? t('client.profile.wrongPassword') : errorOf(caught)
   } finally {
@@ -203,6 +205,9 @@ const feedbackClass = (feedback: Feedback) => (feedback?.kind === 'success' ? 't
         </BaseButton>
         <p v-if="exportError" class="text-sm font-semibold text-danger" role="alert">{{ exportError }}</p>
         <PrivacyLinks class="!justify-start" />
+        <RouterLink :to="{ name: CLIENT_BARBERSHOPS_ROUTE }" class="justify-self-start text-sm font-bold text-accent">
+          {{ t('client.menu.otherBarbershops') }} →
+        </RouterLink>
       </BaseCard>
 
       <BaseCard class="grid grid-cols-1 gap-3 p-5">

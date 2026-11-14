@@ -156,6 +156,24 @@ describe('DashboardView', () => {
     expect(screen.getByText('Pedro Martins')).toBeTruthy()
   })
 
+  it('a new request shows up without reloading the page when the push arrives', async () => {
+    // Arrange
+    const worker = new EventTarget()
+    Object.defineProperty(navigator, 'serviceWorker', { value: worker, configurable: true })
+    const requests = [requestRow({ id: 1, client_name: 'Bruno Lima', starts_at: '10:00' })]
+    installFakeApis(requests)
+    renderWithPlugins(DashboardView)
+    await screen.findByText('Bruno Lima')
+
+    // Act: a client books on the public page, and the push reaches this browser
+    requests.push(requestRow({ id: 2, client_name: 'Jose Novo', starts_at: '11:00' }))
+    worker.dispatchEvent(new MessageEvent('message', { data: { type: 'linkcut:push', tag: 'booking' } }))
+
+    // Assert
+    expect(await screen.findByText('Jose Novo')).toBeTruthy()
+    expect(screen.getByText('Bruno Lima')).toBeTruthy()
+  })
+
   it("a visit with several services shows its total and the client's note", async () => {
     // Arrange
     installFakeApis([

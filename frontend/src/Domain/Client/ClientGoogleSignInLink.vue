@@ -15,7 +15,8 @@ const route = useRoute()
 const nonce = newGoogleNonce()
 
 const href = computed(() => {
-  const volta = safeClientRedirect(props.returnTo ?? route.query.redirect)
+  const home = typeof route.params.slug === 'string' ? `/${route.params.slug}/account` : undefined
+  const volta = safeClientRedirect(props.returnTo ?? route.query.redirect, home)
   const base = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
   return `${base}/client/auth/google/redirect?nonce=${nonce}&volta=${encodeURIComponent(volta)}`
 })

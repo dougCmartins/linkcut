@@ -44,7 +44,7 @@ describe('client login on the barbershop page', () => {
     const { router } = await open('/conta', true)
 
     // Assert
-    expect(router.currentRoute.value.fullPath).toBe('/rafael/login?redirect=/conta')
+    expect(router.currentRoute.value.fullPath).toBe('/rafael/login?redirect=/rafael/account')
   })
 
   it('without any barbershop opened here, the client signs in on /conta/entrar', async () => {
@@ -52,7 +52,7 @@ describe('client login on the barbershop page', () => {
     const { router } = await open('/conta', true)
 
     // Assert
-    expect(router.currentRoute.value.fullPath).toBe('/conta/entrar?redirect=/conta')
+    expect(router.currentRoute.value.fullPath).toBe('/conta/entrar?redirect=/account')
   })
 
   it('/conta/entrar sends on to the barbershop login and keeps the notice (e.g. Google refused)', async () => {

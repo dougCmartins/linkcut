@@ -237,6 +237,7 @@ export default {
     successTitle: 'Solicitação enviada!',
     successText: 'O barbeiro irá confirmar em instantes.',
     successDone: 'Fechar',
+    seeAppointments: 'Ver meus horários',
     registerTitle: 'Finalize seu cadastro',
     registerText: 'Crie uma senha para acompanhar seus horários e agendar de novo mais rápido.',
     registerAction: 'Finalizar cadastro',
@@ -748,6 +749,8 @@ export default {
         completed: 'Concluído',
         rejected: 'Recusado',
         cancelled: 'Cancelado',
+        /** Waiting, but the day already passed: the barbershop never answered. */
+        expired: 'Não confirmado',
       },
     },
     menu: {
@@ -755,11 +758,16 @@ export default {
       appointments: 'Horários',
       barbershops: 'Barbearias',
       profile: 'Minha conta',
+      book: 'Agendar',
+      page: 'Página da barbearia',
+      otherBarbershops: 'Outras barbearias',
     },
     barbershops: {
       title: 'Minhas barbearias',
+      subtitle: 'Escolha a barbearia para ver seus horários e agendar.',
       empty: 'As barbearias onde você agendar aparecem aqui.',
       visits: '1 agendamento | {count} agendamentos',
+      open: 'Abrir',
       book: 'Agendar',
       page: 'Ver página',
       products: 'Ver produtos',

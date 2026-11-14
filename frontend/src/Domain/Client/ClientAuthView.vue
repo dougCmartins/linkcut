@@ -62,7 +62,9 @@ const isBusy = ref(false)
 const error = ref('')
 const canSubmit = computed(() => credentialsSchema.safeParse({ email: email.value, password: password.value }).success && !isBusy.value)
 
-const goOn = () => router.replace(safeClientRedirect(route.query.redirect))
+// After /<slug>/login, the client area of that barbershop; without one, the list of barbershops.
+const home = computed(() => (typeof route.params.slug === 'string' ? `/${route.params.slug}/account` : undefined))
+const goOn = () => router.replace(safeClientRedirect(route.query.redirect, home.value))
 
 async function submit(): Promise<void> {
   if (!canSubmit.value) return

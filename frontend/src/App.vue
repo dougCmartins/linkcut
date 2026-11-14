@@ -70,12 +70,13 @@ watch(
 function closeBooking(): void {
   bookingStore.closeModal()
   // Back to the page it was opened from, or (a shared /agendar link) to the page under it, without leaving the app.
-  if (route.meta.openBooking) leaveTo(router, route.path.replace(/\/agendar\/?$/, ''))
+  // From the client area (/<slug>/account/book), back to /<slug>/account.
+  if (route.meta.openBooking) leaveTo(router, route.path.replace(/\/(agendar|book)\/?$/, ''))
 }
 </script>
 
 <template>
-  <PaletteToggle v-if="route.meta.isPublic" class="fixed top-4 right-4 z-40" />
+  <PaletteToggle v-if="route.meta.isPublic && !route.meta.clientArea" class="fixed top-4 right-4 z-40" />
   <RouterView />
   <BookingModal v-if="bookingStore.isModalOpen && publicPageStore.bookingOptions" @close="closeBooking" />
   <CookieBanner v-if="!consent.hasDecided || consent.isPanelOpen" />

@@ -42,7 +42,7 @@
 ### Meus horários
 | ID | Regra |
 |---|---|
-| RF-C17 | `/conta` lista os horários do cliente em **todas as barbearias onde ele agendou**: "Próximos" (aguardando ou confirmados, do mais perto ao mais longe) e "Anteriores" (concluídos, recusados ou passados). |
+| RF-C17 | `/<link>/account` lista os horários do cliente **naquela barbearia** (e `/account` lista as barbearias onde ele agendou): "Próximos" (aguardando ou confirmados, do mais perto ao mais longe) e "Anteriores" (concluídos, recusados ou passados). |
 | RF-C18 | Os próximos mostram o endereço, "Como chegar" e "Falar no WhatsApp". Os anteriores mostram **"Agendar de novo"**, que abre o agendamento daquela barbearia. |
 | RF-C19 | **Sem marketplace:** o cliente só vê as barbearias onde já agendou. Se ele agendar em outra barbearia que usa o linkcut, ela passa a aparecer. Cada barbeiro continua vendo só os próprios pedidos. |
 

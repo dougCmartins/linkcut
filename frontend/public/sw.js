@@ -14,13 +14,19 @@ self.addEventListener('push', (event) => {
     // Not JSON: show the generic title.
   }
   event.waitUntil(
-    self.registration.showNotification(message.title, {
-      body: message.body,
-      tag: message.tag,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      data: { url: message.url },
-    }),
+    Promise.all([
+      self.registration.showNotification(message.title, {
+        body: message.body,
+        tag: message.tag,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: { url: message.url },
+      }),
+      // Open tabs refresh their lists right away (useLiveRefresh), without waiting for the next round.
+      self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then((windows) => windows.forEach((client) => client.postMessage({ type: 'linkcut:push', tag: message.tag }))),
+    ]),
   )
 })
 

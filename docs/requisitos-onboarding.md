@@ -20,7 +20,12 @@
 
 ### Login do cliente (`/<link>/login`)
 - O cliente entra **pela página da barbearia**, com o tema, a foto e o nome dela.
-- A área do cliente continua em `/conta` e mostra todas as barbearias dele.
+- A área do cliente fica **dentro da barbearia**, em `/<link>/account`:
+  - o tema, o nome e a foto dela, e só os horários daquela barbearia;
+  - "Agendar" abre o agendamento por cima do painel (`/<link>/account/book`), e fechar volta para ele;
+  - no celular, o menu (Horários · Minha conta) fica numa barra embaixo.
+- `/account` lista as barbearias onde o cliente agendou; cada uma abre a sua área.
+- Os endereços antigos (`/conta`, `/conta/perfil`, `/conta/review/:id`) levam para a área da última barbearia aberta, para os e-mails já enviados não quebrarem.
 - O aparelho guarda a última barbearia aberta (`linkcut.visited-slug`): "Sair", sessão expirada, exclusão da conta e os links sem barbearia (como `/conta/entrar`, a volta do Google) levam para `/<link>/login`.
 - Sem nenhuma barbearia aberta no aparelho, o login fica em `/conta/entrar`, com o visual do linkcut.
 
