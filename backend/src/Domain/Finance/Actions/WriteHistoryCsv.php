@@ -7,35 +7,27 @@ namespace Domain\Finance\Actions;
 use Carbon\CarbonImmutable;
 use Domain\Finance\Data\PeriodData;
 use Domain\Finance\Models\RevenueEntry;
-use Domain\Tenant\Context\CurrentTenant;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * CSV of the whole period, for Excel in Portuguese: ";" separator, decimal comma, UTF-8 BOM, CRLF,
- * and cells that would run as formulas are neutralized. Streamed row by row (no size limit in memory).
+ * CSV of the whole period, for Excel in Portuguese: ";" separator, decimal comma, UTF-8 BOM, CRLF, and cells that
+ * would run as formulas are neutralized. Rows are read in chunks (lazy), so a long year stays light on memory.
+ * Runs inside the barbershop's tenant (the report job sets it).
  */
-final class ExportHistory
+final class WriteHistoryCsv
 {
     private const BOM = "\xEF\xBB\xBF";
 
     private const FORMULA_START = '/^[=+\-@\t\r]/';
 
-    public function __construct(private readonly CurrentTenant $currentTenant) {}
-
-    public function handle(PeriodData $data): StreamedResponse
+    /** The file name the barber sees in the e-mail. */
+    public static function fileName(PeriodData $data): string
     {
-        $tenantId = $this->currentTenant->id();
-        Log::info('finance_history_exported', ['from' => $data->from, 'to' => $data->to]);
-
-        return response()->streamDownload(function () use ($data, $tenantId): void {
-            $this->currentTenant->run($tenantId, fn () => $this->write($data));
-        }, "historico-linkcut_{$data->from}_a_{$data->to}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return "historico-linkcut_{$data->from}_a_{$data->to}.csv";
     }
 
-    private function write(PeriodData $data): void
+    public function handle(PeriodData $data): string
     {
-        $output = fopen('php://output', 'wb');
+        $output = fopen('php://temp', 'w+b');
         fwrite($output, self::BOM);
         $this->row($output, [
             __('finance.csv.date'), __('finance.csv.time'), __('finance.csv.client'), __('finance.csv.service'), __('finance.csv.value'),
@@ -50,7 +42,11 @@ final class ExportHistory
                 number_format($entry->price_in_cents / 100, 2, ',', ''),
             ]),
         );
+        rewind($output);
+        $csv = (string) stream_get_contents($output);
         fclose($output);
+
+        return $csv;
     }
 
     /**

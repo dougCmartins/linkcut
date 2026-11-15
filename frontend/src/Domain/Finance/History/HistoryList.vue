@@ -15,8 +15,14 @@ function dayLabel(isoDate: string): string {
 
 <template>
   <ol class="grid gap-5">
-    <!-- Days off screen are only laid out when scrolled to: 50 or 100 records render light on a slow phone. -->
-    <li v-for="group in groups" :key="group.date" class="[contain-intrinsic-size:auto_220px] [content-visibility:auto]">
+    <!-- Days off screen are only laid out when scrolled to: long lists render light on a slow phone. That also clips
+         what is painted outside each day, so the padding (taken back by the negative margins) keeps the card's
+         shadow inside it instead of cut straight on the sides and the bottom. -->
+    <li
+      v-for="group in groups"
+      :key="group.date"
+      class="-mx-4 -mb-10 px-4 pb-10 [contain-intrinsic-size:auto_260px] [content-visibility:auto]"
+    >
       <div class="flex items-baseline justify-between gap-3 px-1 pb-2">
         <h3 class="text-sm">
           <time :datetime="group.date">{{ dayLabel(group.date) }}</time>

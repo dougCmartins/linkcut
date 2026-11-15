@@ -7,7 +7,8 @@ const emit = defineEmits<{ select: [time: string] }>()
 
 <template>
   <p v-if="times.length === 0" class="rounded-card bg-raised px-4 py-3 text-sm text-muted">{{ emptyText }}</p>
-  <HorizontalScroller v-else :label="label" :selected-key="selectedTime" class="gap-2 px-0.5 py-2">
+  <!-- The bottom padding (taken back by the negative margin) keeps the cards' shadow inside the scrolling row. -->
+  <HorizontalScroller v-else :label="label" :selected-key="selectedTime" class="-mx-2 -mb-6 gap-2 px-2.5 pt-2 pb-8">
     <button
       v-for="time in times"
       :key="time"

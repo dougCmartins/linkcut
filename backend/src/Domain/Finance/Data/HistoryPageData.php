@@ -8,16 +8,17 @@ use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\DataCollection;
 
-/** One page of the history plus the totals of the period. */
+/**
+ * Some rows of the history, newest first. `summary` (totals of the whole period) comes only with the first rows;
+ * `next_cursor` asks for the next ones and is null at the end.
+ */
 final class HistoryPageData extends Data
 {
     /** @param DataCollection<int, RevenueEntryData> $items */
     public function __construct(
         #[DataCollectionOf(RevenueEntryData::class)]
         public readonly DataCollection $items,
-        public readonly HistorySummaryData $summary,
-        public readonly int $page,
-        public readonly int $per_page,
-        public readonly int $last_page,
+        public readonly ?HistorySummaryData $summary,
+        public readonly ?string $next_cursor,
     ) {}
 }

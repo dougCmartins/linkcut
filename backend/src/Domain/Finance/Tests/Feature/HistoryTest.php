@@ -13,7 +13,7 @@ final class HistoryTest extends TestCase
     use FinanceFixtures;
     use RefreshDatabase;
 
-    public function test_lists_one_page_newest_first_with_the_totals_of_the_whole_period(): void
+    public function test_lists_the_newest_rows_first_and_the_cursor_brings_the_next_ones(): void
     {
         // Arrange
         $owner = $this->actingAsBarber();
@@ -23,18 +23,19 @@ final class HistoryTest extends TestCase
         $this->revenue($owner, ['date' => '2026-07-31', 'price_in_cents' => 9999]);
 
         // Act
-        $response = $this->getJson('/api/finance/history?from=2026-08-01&to=2026-08-31&page=2');
+        $first = $this->getJson('/api/finance/history?from=2026-08-01&to=2026-08-31');
+        $next = $this->getJson('/api/finance/history?from=2026-08-01&to=2026-08-31&cursor='.urlencode((string) $first->json('next_cursor')));
 
         // Assert
-        $response->assertOk();
-        $response->assertJsonCount(10, 'items');
-        $response->assertJsonPath('page', 2);
-        $response->assertJsonPath('per_page', 50);
-        $response->assertJsonPath('last_page', 2);
-        $response->assertJsonPath('summary', ['total_in_cents' => 300_000, 'count' => 60, 'average_ticket_in_cents' => 5000]);
-        $first = $this->getJson('/api/finance/history?from=2026-08-01&to=2026-08-31')->json('items.0');
-        $this->assertSame('2026-08-31', $first['date']);
-        $this->assertSame(['id', 'date', 'time', 'client_name', 'service_name', 'price_in_cents', 'cost_in_cents'], array_keys($first));
+        $first->assertOk()->assertJsonCount(50, 'items');
+        $first->assertJsonPath('summary', ['total_in_cents' => 300_000, 'count' => 60, 'average_ticket_in_cents' => 5000]);
+        $this->assertSame('2026-08-31', $first->json('items.0.date'));
+        $this->assertSame(['id', 'date', 'time', 'client_name', 'service_name', 'price_in_cents', 'cost_in_cents'], array_keys($first->json('items.0')));
+        $next->assertOk()->assertJsonCount(10, 'items');
+        $next->assertJsonPath('summary', null);
+        $next->assertJsonPath('next_cursor', null);
+        $ids = [...$first->json('items.*.id'), ...$next->json('items.*.id')];
+        $this->assertCount(60, array_unique($ids));
     }
 
     public function test_an_empty_period_has_zero_totals(): void
@@ -49,22 +50,24 @@ final class HistoryTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('items', []);
         $response->assertJsonPath('summary', ['total_in_cents' => 0, 'count' => 0, 'average_ticket_in_cents' => 0]);
-        $response->assertJsonPath('last_page', 1);
+        $response->assertJsonPath('next_cursor', null);
     }
 
-    public function test_validates_the_period_and_the_page_size(): void
+    public function test_validates_the_period_up_to_one_year(): void
     {
         // Arrange
         $this->actingAsBarber();
 
         // Act
-        $response = $this->getJson('/api/finance/history?from=2026-08-31&to=2026-08-01&per_page=30');
+        $reversed = $this->getJson('/api/finance/history?from=2026-08-31&to=2026-08-01');
+        $tooLong = $this->getJson('/api/finance/history?from=2025-01-01&to=2026-08-31');
+        $oneYear = $this->getJson('/api/finance/history?from=2025-09-01&to=2026-08-31');
         $missing = $this->getJson('/api/finance/history');
 
         // Assert
-        $response->assertUnprocessable();
-        $response->assertJsonPath('errors.to.0', 'after_or_equal');
-        $response->assertJsonPath('errors.per_page.0', 'in');
+        $reversed->assertUnprocessable()->assertJsonPath('errors.to.0', 'after_or_equal');
+        $tooLong->assertUnprocessable()->assertJsonPath('errors.to.0', 'period_too_long');
+        $oneYear->assertOk();
         $missing->assertJsonPath('errors.from.0', 'required');
     }
 
@@ -81,31 +84,6 @@ final class HistoryTest extends TestCase
         // Assert
         $response->assertJsonPath('summary.count', 0);
         $this->assertStringNotContainsString('outra barbearia', $response->getContent());
-    }
-
-    public function test_exports_the_whole_period_as_a_csv_for_excel_in_portuguese(): void
-    {
-        // Arrange
-        $owner = $this->actingAsBarber();
-        $this->revenue($owner, ['date' => '2026-08-10', 'time' => '09:00', 'client_name' => '=HYPERLINK("x")', 'price_in_cents' => 6550]);
-        $this->revenue($owner, ['date' => '2026-08-11', 'time' => '14:30', 'client_name' => 'João; Silva']);
-        foreach (range(1, 60) as $index) {
-            $this->revenue($owner, ['date' => '2026-08-01']);
-        }
-
-        // Act
-        $response = $this->get('/api/finance/history/export?from=2026-08-01&to=2026-08-31');
-
-        // Assert
-        $response->assertOk();
-        $this->assertStringContainsString('historico-linkcut_2026-08-01_a_2026-08-31.csv', (string) $response->headers->get('Content-Disposition'));
-        $csv = $response->streamedContent();
-        $lines = explode("\r\n", substr($csv, 3));
-        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
-        $this->assertSame('Data;Hora;Cliente;Serviço;"Valor (R$)"', $lines[0]);
-        $this->assertSame('11/08/2026;14:30;"João; Silva";Corte;50,00', $lines[1]);
-        $this->assertSame('10/08/2026;09:00;"\'=HYPERLINK(""x"")";Corte;65,50', $lines[2]);
-        $this->assertCount(1 + 62 + 1, $lines);
     }
 
     public function test_the_history_requires_a_session(): void

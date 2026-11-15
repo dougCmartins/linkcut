@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:api', 'tenant'])->prefix('finance')->group(function (): void {
     Route::get('history', [FinanceController::class, 'history']);
-    Route::get('history/export', [FinanceController::class, 'exportHistory']);
     Route::get('month-to-date', [FinanceController::class, 'monthToDate']);
 
     Route::get('expenses', [ExpenseController::class, 'index']);
