@@ -34,7 +34,8 @@ function optionClass(option: { isoDate: string; isUnavailable: boolean }): strin
 </script>
 
 <template>
-  <HorizontalScroller :label="label" :selected-key="selectedDate" class="gap-2.5 px-0.5 py-2">
+  <!-- The bottom padding (taken back by the negative margin) keeps the cards' shadow inside the scrolling row. -->
+  <HorizontalScroller :label="label" :selected-key="selectedDate" class="-mx-2 -mb-6 gap-2.5 px-2.5 pt-2 pb-8">
     <button
       v-for="option in options"
       :key="option.isoDate"
