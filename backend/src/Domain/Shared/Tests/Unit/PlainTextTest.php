@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Domain\Notification\Tests\Unit;
+namespace Domain\Shared\Tests\Unit;
 
-use Domain\Notification\Support\PlainText;
+use Domain\Shared\Support\PlainText;
 use Tests\TestCase;
 
 /** Names typed by visitors go into e-mails from our domain as plain text only. */

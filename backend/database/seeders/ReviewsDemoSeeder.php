@@ -6,7 +6,6 @@ namespace Database\Seeders;
 
 use Carbon\CarbonImmutable;
 use Domain\Client\Models\Client;
-use Domain\Notification\Support\PlainText;
 use Domain\Review\Models\Review;
 use Domain\Review\Support\AuthorName;
 use Domain\Schedule\Enums\BookingStatus;
@@ -14,6 +13,7 @@ use Domain\Schedule\Models\BookingRequest;
 use Domain\Settings\Models\PortfolioSettings;
 use Domain\Settings\Models\Service;
 use Domain\Settings\Support\PublicSettingsCache;
+use Domain\Shared\Support\PlainText;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Seeder;
