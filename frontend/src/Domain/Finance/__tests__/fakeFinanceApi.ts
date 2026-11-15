@@ -159,25 +159,23 @@ export function createFinanceRoutes(options: FinanceOptions = {}) {
   const routes: Record<string, FakeHandler> = {
     'GET /finance/history': ({ query }: FakeCall) => {
       const rows = inPeriod(query.get('from') ?? '', query.get('to') ?? '')
-      const page = Number(query.get('page') ?? 1)
-      const perPage = Number(query.get('per_page') ?? 50)
+      // Like the API: 50 rows per slice, an opaque cursor for the next ones, the totals only with the first slice.
+      const cursor = query.get('cursor')
+      const start = cursor ? Number(cursor.replace('after-', '')) : 0
       const total = sum(rows, (row) => row.price_in_cents)
+      const end = start + 50
       return {
         status: 200,
         body: {
-          items: rows.slice((page - 1) * perPage, page * perPage),
-          summary: { total_in_cents: total, count: rows.length, average_ticket_in_cents: rows.length ? Math.round(total / rows.length) : 0 },
-          page,
-          per_page: perPage,
-          last_page: Math.max(1, Math.ceil(rows.length / perPage)),
+          items: rows.slice(start, end),
+          summary: cursor
+            ? null
+            : { total_in_cents: total, count: rows.length, average_ticket_in_cents: rows.length ? Math.round(total / rows.length) : 0 },
+          next_cursor: end < rows.length ? `after-${end}` : null,
         },
       }
     },
-    'GET /finance/history/export': ({ query }: FakeCall) => {
-      const rows = inPeriod(query.get('from') ?? '', query.get('to') ?? '')
-      const lines = ['Data;Hora;Cliente;Serviço;"Valor (R$)"', ...rows.map((row) => `${row.date};${row.time};${row.client_name}`)]
-      return { status: 200, text: `﻿${lines.join('\r\n')}\r\n` }
-    },
+    'POST /finance/history/report': () => ({ status: 202, body: { email: 'ra****@linkcut.app' } }),
     'GET /finance/month-to-date': () => ({ status: 200, body: monthToDate() }),
     'GET /finance/expenses': () => ({
       status: 200,

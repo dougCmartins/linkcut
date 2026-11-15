@@ -1,28 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { groupByDay, pageBounds } from '../historySummary'
+import { groupByDay } from '../historySummary'
 import type { CompletedService } from '../history.model'
 
 function record(id: number, date: string, priceInCents: number): CompletedService {
   return { id, date, time: '10:00', clientName: 'Cliente', serviceName: 'Corte', priceInCents, costInCents: 0 }
 }
-
-describe('pageBounds', () => {
-  it('gives the positions of the first and last item shown', () => {
-    // Arrange & Act
-    const bounds = pageBounds(3, 50, 20)
-
-    // Assert
-    expect(bounds).toEqual({ firstItem: 101, lastItem: 120 })
-  })
-
-  it('is zero for an empty page', () => {
-    // Arrange & Act
-    const bounds = pageBounds(1, 50, 0)
-
-    // Assert
-    expect(bounds).toEqual({ firstItem: 0, lastItem: 0 })
-  })
-})
 
 describe('groupByDay', () => {
   it('groups consecutive records of the same day with the day total', () => {

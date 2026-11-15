@@ -4,6 +4,9 @@ import { toIsoDate } from '@/utils/date'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const MONDAY = 1
+/** The API answers up to one year at a time (same limit on the server). */
+export const MAX_PERIOD_DAYS = 366
+const DAY_MS = 86_400_000
 
 /** Monday of the week that contains `date` (weeks start on Monday in Brazil's business calendar). */
 export function startOfWeek(date: Date): Date {
@@ -40,6 +43,10 @@ export const customRangeSchema = z
     to: z.string().regex(ISO_DATE, 'toRequired'),
   })
   .refine((range) => range.from <= range.to, { message: 'rangeOrder', path: ['to'] })
+  .refine((range) => (Date.parse(range.to) - Date.parse(range.from)) / DAY_MS <= MAX_PERIOD_DAYS, {
+    message: 'periodTooLong',
+    path: ['to'],
+  })
 
 /** First error key of a custom range, or null when it can be used. */
 export function customRangeError(range: DateRange): string | null {

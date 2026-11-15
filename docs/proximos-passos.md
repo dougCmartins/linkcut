@@ -235,7 +235,7 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
 - Várias unidades.
 - Assinatura de clientes (clube mensal; depende do gateway de pagamento).
 
-**Quando a Equipe existir:** rever a paginação do histórico (cursor com "Carregar mais") e a exportação em fila. Uma barbearia com equipe pode passar de 50 mil atendimentos por ano. Para barbeiro sozinho (uns 5 mil por ano), a paginação atual basta.
+**Histórico já preparado para a Equipe:** paginação por cursor com rolagem infinita, período de até 1 ano e o CSV montado na fila e enviado por e-mail (15/11). Uma barbearia com equipe pode passar de 50 mil atendimentos por ano sem pesar a API.
 
 ---
 

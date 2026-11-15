@@ -101,6 +101,8 @@ final class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by($request->ip()),
             Limit::perHour(20)->by($request->ip()),
         ]);
+        // History reports by e-mail: each one reads up to a year of rows in the queue.
+        RateLimiter::for('reports', fn (Request $request) => Limit::perHour(10)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
         // One client rating their visits. The limit follows the account, not the IP.
         RateLimiter::for('client-reviews', fn (Request $request) => Limit::perMinute(10)->by(

@@ -28,10 +28,6 @@ export const HistoryPeriod = {
 
 export type HistoryPeriod = (typeof HistoryPeriod)[keyof typeof HistoryPeriod]
 
-export const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
-
-export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
-
 /** Totals of the whole period (not only of the page). */
 export interface HistorySummary {
   totalInCents: number
@@ -39,11 +35,9 @@ export interface HistorySummary {
   averageTicketInCents: number
 }
 
-/** One page of the history, newest first, with the totals of the period. */
+/** Some rows of the history, newest first. The totals come only with the first rows; `nextCursor` asks for more. */
 export interface HistoryPage {
   items: CompletedService[]
-  summary: HistorySummary
-  page: number
-  perPage: number
-  lastPage: number
+  summary: HistorySummary | null
+  nextCursor: string | null
 }

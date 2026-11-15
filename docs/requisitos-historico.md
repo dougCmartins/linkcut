@@ -19,10 +19,10 @@
 |---|---|
 | RF-H1 | Lista dos atendimentos realizados com **data, hora, cliente, serviço e valor**, do mais recente para o mais antigo, agrupada por dia (com o total e a quantidade de cada dia). |
 | RF-H2 | **Filtro de período:** Semana (de segunda até hoje), Mês (do dia 1 até hoje), Ano (de 1º de janeiro até hoje) e **Personalizado** (datas "De" e "Até"). O período aberto por padrão é o Mês. |
-| RF-H3 | **Período personalizado:** as duas datas são obrigatórias e "Até" precisa ser igual ou posterior a "De" (validação com Zod). Com datas inválidas, a lista e a exportação ficam bloqueadas e o erro aparece no campo. |
+| RF-H3 | **Período personalizado:** as duas datas são obrigatórias, "Até" precisa ser igual ou posterior a "De" e o período tem **no máximo 1 ano** (validação com Zod e na API). Com datas inválidas, a lista e a exportação ficam bloqueadas e o erro aparece no campo. |
 | RF-H4 | **Resumo do período:** faturamento, número de atendimentos e ticket médio. |
-| RF-H5 | **Itens por página:** 50 (padrão), 100 ou 200, com "Anterior/Próxima" e o indicador "1–50 de 312 · Página 1 de 7". Trocar o filtro ou a quantidade volta para a página 1. |
-| RF-H6 | **Exportar CSV:** baixa **todos** os atendimentos do período filtrado, não só a página atual. O arquivo se chama `historico-linkcut_<de>_a_<até>.csv`. |
+| RF-H5 | **Rolagem infinita:** 50 atendimentos por vez; ao chegar ao fim da lista, os próximos 50 carregam sozinhos ("Carregar mais" fica como alternativa). O indicador mostra "50 de 312" e, no fim, "Fim do período". Trocar o filtro recomeça do topo. |
+| RF-H6 | **Receber CSV por e-mail (como nos bancos):** o pedido só entra na fila e responde na hora com "Ela chega em instantes em r****@…". A fila monta o CSV de **todos** os atendimentos do período e manda por e-mail, em anexo `historico-linkcut_<de>_a_<até>.csv`. Limite de 10 pedidos por hora. |
 
 ### Formato do CSV
 
@@ -33,7 +33,12 @@
 
 ### Requisitos não funcionais
 
-- **Desempenho:** a lista do período pode ter milhares de linhas. Ela fica em `shallowRef` (sem reatividade profunda), e a tela só desenha a página atual.
+- **Desempenho:**
+  - **Cursor em vez de número de página:** cada lote busca "depois do último atendimento visto" pelo índice `(tenant_id, date, time)`, então o custo é o mesmo no primeiro lote e no centésimo (com `OFFSET`, o banco leria e descartaria todas as linhas anteriores).
+  - **Totais uma vez só:** faturamento, quantidade e ticket médio vêm só com o primeiro lote, lidos do índice de cobertura `(tenant_id, date, price_in_cents, cost_in_cents)`.
+  - **Período curto por padrão:** abre no mês; no máximo 1 ano por consulta.
+  - **Relatório fora da requisição:** o CSV é montado na fila, em lotes (`lazy()`), e nunca prende a API.
+  - Na tela, a lista fica em `shallowRef` (sem reatividade profunda).
 - **Consistência:** respostas atrasadas de um filtro antigo são descartadas, então a tela nunca mostra dados de outro período.
 - **Mobile-first:** 390 px, cards por dia, valores alinhados com números de largura fixa.
 - **Acessibilidade:** filtros como `radiogroup`, datas em `<time datetime>`, paginação com aviso para leitor de tela.
@@ -53,6 +58,6 @@
 
 ## 4. API
 
-- `GET /api/finance/history?from&to&page&per_page` (50, 100 ou 200): página do período, do mais novo ao mais antigo, mais os totais do período inteiro (faturamento, quantidade e ticket médio).
-- `GET /api/finance/history/export?from&to`: CSV do período inteiro, gerado pelo servidor em streaming. Usa `;` como separador, vírgula decimal, BOM UTF-8 e CRLF, e neutraliza células que viram fórmula.
+- `GET /api/finance/history?from&to&cursor`: 50 atendimentos do período, do mais novo ao mais antigo, e `next_cursor` para os próximos (`null` no fim). Sem `cursor`, traz também os totais do período (`summary`). Período de até 1 ano (erro `period_too_long`).
+- `POST /api/finance/history/report` com `{from, to}`: responde `202` com o e-mail mascarado e coloca na fila o job `SendHistoryReport` (`Orchestrator/HistoryReport`). O job monta o CSV com `Finance/WriteHistoryCsv` (`;`, vírgula decimal, BOM UTF-8, CRLF e proteção contra fórmula) e manda por e-mail em anexo.
 - Concluir e desfazer passam pelo `Orchestrator/CompleteAppointment`, que usa `RecordServiceRevenue` (idempotente pelo pedido) e `RemoveServiceRevenue`.

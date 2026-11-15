@@ -1,34 +1,40 @@
 <script setup lang="ts">
-import { computed, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import MetricCard from '@/components/ui/MetricCard.vue'
 import HistoryList from './HistoryList.vue'
-import HistoryPagination from './HistoryPagination.vue'
 import HistoryPeriodFilter from './HistoryPeriodFilter.vue'
-import { downloadHistoryCsv, fetchHistoryPage } from './history.api'
-import { historyFileName } from './historyExport'
-import { HistoryPeriod, type DateRange, type HistoryPage, type PageSize } from './history.model'
+import { fetchHistoryPage, requestHistoryReport } from './history.api'
+import { HistoryPeriod, type CompletedService, type DateRange, type HistorySummary } from './history.model'
 import { customRangeError, monthToDate, periodRange } from './historyPeriod'
-import { groupByDay, pageBounds } from './historySummary'
+import { groupByDay } from './historySummary'
 import { formatBRL } from '@/utils/currency'
-import { downloadBlob } from '@/utils/download'
 import { fromIsoDate, toIsoDate } from '@/utils/date'
 
 const { t } = useI18n()
 const today = new Date()
 const todayIso = toIsoDate(today)
 
+// The current month by default; longer periods (up to a year) through the filter.
 const period = ref<HistoryPeriod>(HistoryPeriod.Month)
 const customRange = ref<DateRange>(monthToDate(today))
-const pageSize = ref<PageSize>(50)
-const page = ref(1)
 
-const EMPTY_SUMMARY = { totalInCents: 0, count: 0, averageTicketInCents: 0 }
+const EMPTY_SUMMARY: HistorySummary = { totalInCents: 0, count: 0, averageTicketInCents: 0 }
 
-/** The API pages and totals the history; only read here, so no deep reactivity. */
-const result = shallowRef<HistoryPage | null>(null)
-const state = reactive({ isLoading: false, hasFailed: false, isExporting: false, exportFailed: false })
+/** Rows already loaded (newest first); the next slices are appended as the barber scrolls. Read only here. */
+const records = shallowRef<CompletedService[]>([])
+const summary = shallowRef<HistorySummary>(EMPTY_SUMMARY)
+const nextCursor = ref<string | null>(null)
+const state = reactive({
+  isLoading: false,
+  hasFailed: false,
+  isLoadingMore: false,
+  loadMoreFailed: false,
+  isExporting: false,
+  exportFailed: false,
+  exportedTo: '',
+})
 
 const rangeErrorKey = computed(() => (period.value === HistoryPeriod.Custom ? customRangeError(customRange.value) : null))
 const rangeError = computed(() => (rangeErrorKey.value ? t(`history.errors.${rangeErrorKey.value}`) : undefined))
@@ -39,54 +45,77 @@ const rangeLabel = computed(() =>
   rangeErrorKey.value ? '' : rangeFormatter.formatRange(fromIsoDate(range.value.from), fromIsoDate(range.value.to)),
 )
 
-const records = computed(() => result.value?.items ?? [])
-const summary = computed(() => result.value?.summary ?? EMPTY_SUMMARY)
-const bounds = computed(() => pageBounds(result.value?.page ?? 1, pageSize.value, records.value.length))
 const groups = computed(() => groupByDay(records.value))
 
-let latestRequest = 0
+/** Each new filter starts again; an answer to an older filter is dropped. */
+let generation = 0
 
-async function load(): Promise<void> {
-  const request = ++latestRequest
+async function loadFirst(): Promise<void> {
+  const current = ++generation
+  nextCursor.value = null
+  state.exportedTo = ''
+  state.loadMoreFailed = false
   if (rangeErrorKey.value) {
-    // Invalid dates: drop any answer still on its way and show nothing.
-    result.value = null
+    records.value = []
+    summary.value = EMPTY_SUMMARY
     state.isLoading = false
     return
   }
   state.isLoading = true
   state.hasFailed = false
   try {
-    const loaded = await fetchHistoryPage(range.value, page.value, pageSize.value)
-    if (request === latestRequest) result.value = loaded
+    const page = await fetchHistoryPage(range.value)
+    if (current !== generation) return
+    records.value = page.items
+    summary.value = page.summary ?? EMPTY_SUMMARY
+    nextCursor.value = page.nextCursor
   } catch {
-    if (request === latestRequest) state.hasFailed = true
+    if (current === generation) state.hasFailed = true
   } finally {
-    if (request === latestRequest) state.isLoading = false
+    if (current === generation) state.isLoading = false
   }
 }
 
-// New filter or page size: back to page 1. Any change reloads from the API.
-watch(
-  () => [range.value.from, range.value.to, rangeErrorKey.value, pageSize.value],
-  () => {
-    page.value = 1
-    void load()
-  },
-  { immediate: true },
-)
-
-function changePage(next: number): void {
-  page.value = next
-  void load()
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+/** The next slice, after the last row on screen (cursor): the same cost however far the barber scrolls. */
+async function loadMore(): Promise<void> {
+  if (!nextCursor.value || state.isLoadingMore || state.isLoading) return
+  const current = generation
+  state.isLoadingMore = true
+  state.loadMoreFailed = false
+  try {
+    const page = await fetchHistoryPage(range.value, nextCursor.value)
+    if (current !== generation) return
+    records.value = [...records.value, ...page.items]
+    nextCursor.value = page.nextCursor
+  } catch {
+    if (current === generation) state.loadMoreFailed = true
+  } finally {
+    if (current === generation) state.isLoadingMore = false
+  }
 }
 
+watch(() => [range.value.from, range.value.to, rangeErrorKey.value], loadFirst, { immediate: true })
+
+// Infinite scroll: reaching the end of the list asks for the next slice. "Carregar mais" stays as a fallback.
+const sentinel = useTemplateRef<HTMLElement>('sentinel')
+let observer: IntersectionObserver | null = null
+watch(sentinel, (element) => {
+  observer?.disconnect()
+  if (!element || typeof IntersectionObserver === 'undefined') return
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting) && !state.loadMoreFailed) void loadMore()
+  }, { rootMargin: '400px 0px' })
+  observer.observe(element)
+})
+onBeforeUnmount(() => observer?.disconnect())
+
+/** Like a bank statement: the report is built in the background and arrives by e-mail. */
 async function exportCsv(): Promise<void> {
   state.isExporting = true
   state.exportFailed = false
+  state.exportedTo = ''
   try {
-    downloadBlob(historyFileName(range.value), await downloadHistoryCsv(range.value))
+    state.exportedTo = (await requestHistoryReport(range.value)).email
   } catch {
     state.exportFailed = true
   } finally {
@@ -133,14 +162,17 @@ async function exportCsv(): Promise<void> {
 
     <div class="mt-5 flex items-center justify-between gap-3">
       <h2 class="text-lg">{{ t('history.listTitle') }}</h2>
-      <BaseButton variant="secondary" :disabled="summary.count === 0 || state.isLoading || state.isExporting" @click="exportCsv">
+      <BaseButton variant="secondary" :disabled="summary.count === 0 || state.isLoading || state.isExporting || Boolean(state.exportedTo)" @click="exportCsv">
         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
           <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
         </svg>
-        {{ t('history.exportCsv') }}
+        {{ state.isExporting ? t('history.exportSending') : t('history.exportCsv') }}
       </BaseButton>
     </div>
-    <p v-if="state.exportFailed" class="mt-1 text-xs text-danger" role="alert">{{ t('history.exportFailed') }}</p>
+    <p v-if="state.exportedTo" class="mt-2 rounded-card bg-success/10 px-3 py-2 text-xs font-semibold text-success ring-1 ring-success/40" role="status">
+      {{ t('history.exportQueued', { email: state.exportedTo }) }}
+    </p>
+    <p v-else-if="state.exportFailed" class="mt-1 text-xs text-danger" role="alert">{{ t('history.exportFailed') }}</p>
     <p v-else-if="summary.count" class="mt-1 text-xs text-muted">{{ t('history.exportHint', { count: summary.count }) }}</p>
 
     <div class="mt-4" :aria-busy="state.isLoading">
@@ -159,16 +191,17 @@ async function exportCsv(): Promise<void> {
       </p>
       <template v-else>
         <HistoryList :groups="groups" :current-year="today.getFullYear()" />
-        <HistoryPagination
-          v-model:page-size="pageSize"
-          class="mt-6"
-          :page="result?.page ?? 1"
-          :total-pages="result?.lastPage ?? 1"
-          :first-item="bounds.firstItem"
-          :last-item="bounds.lastItem"
-          :total="summary.count"
-          @change-page="changePage"
-        />
+        <div class="mt-6 grid justify-items-center gap-2 text-center">
+          <p class="text-xs text-muted">{{ t('history.showing', { shown: records.length, total: summary.count }) }}</p>
+          <template v-if="nextCursor">
+            <span ref="sentinel" aria-hidden="true" />
+            <p v-if="state.loadMoreFailed" class="text-xs text-danger" role="alert">{{ t('history.loadMoreFailed') }}</p>
+            <BaseButton variant="secondary" :disabled="state.isLoadingMore" @click="loadMore">
+              {{ state.isLoadingMore ? t('history.loadingMore') : t('history.loadMore') }}
+            </BaseButton>
+          </template>
+          <p v-else class="text-xs font-semibold text-muted">{{ t('history.end') }}</p>
+        </div>
       </template>
     </div>
   </main>
