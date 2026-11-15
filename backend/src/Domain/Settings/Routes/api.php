@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Domain\Orchestrator\PublicPage\Controllers\PublicVisitController;
 use Domain\Settings\Controllers\PublicPageController;
 use Domain\Settings\Controllers\SettingsController;
 use Domain\Settings\Controllers\ShareCardController;
@@ -20,9 +19,9 @@ Route::middleware(['auth:api', 'tenant'])->prefix('settings')->group(function ()
 
 // Badly formed slugs are a plain 404, like unknown ones. The ETag lets a returning visitor get an empty 304;
 // "no-cache" makes the browser ask every time, so a barber sees the change right after saving.
+// The page itself (profile + reviews) crosses domains: Orchestrator/PublicPage/Routes/api.php.
 Route::middleware(['throttle:public', 'tenant.slug', 'cache.headers:public;no_cache;etag'])
     ->prefix('public/{slug}')->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->group(function (): void {
-        Route::get('/', [PublicVisitController::class, 'show']);
         Route::get('booking-options', [PublicPageController::class, 'bookingOptions']);
     });
 

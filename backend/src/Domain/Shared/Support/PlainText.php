@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Domain\Notification\Support;
+namespace Domain\Shared\Support;
 
 use Illuminate\Support\Str;
 

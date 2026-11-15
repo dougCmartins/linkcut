@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Domain\Orchestrator\Review\Actions;
 
 use Domain\Client\Models\Client;
-use Domain\Notification\Support\PlainText;
 use Domain\Review\Actions\CreateReview;
 use Domain\Review\Data\CreateReviewData;
 use Domain\Review\Data\SubmitReviewInputData;
@@ -16,6 +15,7 @@ use Domain\Schedule\Actions\ShowClientBooking;
 use Domain\Schedule\Data\ClientBookingIdData;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Settings\Support\PublicSettingsCache;
+use Domain\Shared\Support\PlainText;
 use Domain\Tenant\Context\CurrentTenant;
 
 /** The signed-in client rates one completed visit of their own, once. */

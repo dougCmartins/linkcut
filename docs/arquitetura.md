@@ -69,6 +69,9 @@ src/Domain/<Domínio>/
 | `Orchestrator` | fluxos que juntam domínios: agendamento público, concluir atendimento, página pública, exclusão de conta (LGPD) e outros |
 
 **Regra de ouro:** um domínio não chama outro diretamente. Quem cruza domínios é o `Orchestrator`. Exemplo: `CompleteAppointment` muda o status no `Schedule` e lança a receita no `Finance`.
+- **Núcleo compartilhado:** só `Tenant` (contexto do tenant) e `Shared` (utilitários sem regra de negócio, como `PlainText`) podem ser usados por todos. O núcleo não conhece nenhum domínio de negócio.
+- **Sem ciclos:** nada fora do `Orchestrator` importa o `Orchestrator`, nem nas rotas.
+- **Guarda automática:** `backend/tests/Feature/ArchitectureTest.php` falha o CI se alguém quebrar essas regras ([ADR 0001](adr/0001-monolito-modular-e-fronteiras.md)).
 
 ### Multi-tenant (uma barbearia = um tenant)
 - **Tabelas da barbearia:** têm `tenant_id`. O trait `BelongsToTenant` aplica o `TenantScope`, um filtro global por `tenant_id`, e preenche o `tenant_id` ao criar.
@@ -203,4 +206,5 @@ Toda mudança entra por PR com squash merge.
 | LGPD | `docs/privacidade.md`, `docs/incidentes.md` |
 | Requisitos de cada tela | `docs/requisitos-*.md` |
 | Próximas tarefas | `docs/proximos-passos.md` |
+| Decisões de arquitetura (ADR) | `docs/adr/` e as análises em `docs/arquitetura/` (skill `.claude/skills/arquiteto-software`) |
 | Ideias de cobrança | `docs/ideias-cobranca.md` |

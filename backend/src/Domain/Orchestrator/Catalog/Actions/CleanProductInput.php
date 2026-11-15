@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Domain\Orchestrator\Catalog\Actions;
 
 use Domain\Catalog\Data\ProductInputData;
-use Domain\Notification\Support\PlainText;
+use Domain\Shared\Support\PlainText;
 use Illuminate\Validation\ValidationException;
 
 /** Trims the name and strips links and tags from the description. An empty description becomes null. */

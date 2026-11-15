@@ -170,6 +170,12 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
   - funcionar sem IA: sem dossiê, mostra a lista normal.
 
 ### 2.4 Visagismo com IA (portar do `barber-saas`)
+
+**Decisão proposta (15/11):** [ADR 0003](adr/0003-visagismo-ia.md).
+- **Fase 1:** questionário com desenhos.
+- **Fase 2:** análise do rosto no próprio aparelho (a foto não sai do celular).
+- **Contrato `FaceAnalyzer`:** um provedor externo só entra por outro ADR.
+
 - **De onde vem:** o repositório `barber-saas`.
   - backend `backend/src/Domain/Visagism` (`AnalyzeFaceProfile`, `VisagismResultBuilder`, limites e exclusão/restauração);
   - frontend `frontend/src/Domain/Visagism` (`VisagismFlow`, `VisagismCapture`, `VisagismResults` e modais).
@@ -202,6 +208,27 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
 - O que muda é o lado do barbeiro: ele pode virar uma barbearia com funcionários.
 
 **Ordem:** terminar a vitrine (2.3) e lançar a versão para barbeiro sozinho. Só depois começar a Equipe.
+
+### Decisão de arquitetura (15/11): barbeiro individual e barbearia com filiais
+A análise está no [ATAM](arquitetura/contas-e-filiais-atam.md), no [CBAM](arquitetura/contas-e-filiais-cbam.md) e no [ADR 0002](adr/0002-organizacao-com-filiais.md).
+
+**Decisões do dono:**
+- **Um painel só:** o seletor da unidade (matriz ou filial) fica no topo. Agenda, barbeiros, histórico, faturamento e configurações seguem a unidade escolhida.
+- **Link principal com select de filiais:**
+  - o select troca o "Quem somos";
+  - "Agendar" abre com a filial escolhida e mostra as outras e os endereços;
+  - cada filial também tem o próprio link.
+  - Referência visual: Figma "Linktree UI Kit".
+- **Cada barbeiro pertence a uma filial só.**
+
+**Arquitetura escolhida:** cada filial é um tenant, e uma organização (a marca) agrupa os tenants. O barbeiro individual é uma organização com um tenant e não vê nada de filiais.
+
+**Fases (uma PR cada):**
+1. organização e unidades;
+2. link principal com select;
+3. equipe;
+4. comissão;
+5. relatórios da marca.
 
 ### O mínimo da Equipe
 1. **Barbeiros da equipe (subusuários):**

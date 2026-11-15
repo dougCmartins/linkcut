@@ -7,7 +7,7 @@ namespace Domain\Notification\Notifications;
 use Carbon\CarbonImmutable;
 use Domain\Notification\Data\BookingEmailData;
 use Domain\Notification\Enums\BookingEmailKind;
-use Domain\Notification\Support\PlainText;
+use Domain\Shared\Support\PlainText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;

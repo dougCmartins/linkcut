@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Review\Support;
 
-use Domain\Notification\Support\PlainText;
+use Domain\Shared\Support\PlainText;
 
 /** The first name shown on a public review card, taken from the name on the booking. */
 final class AuthorName
