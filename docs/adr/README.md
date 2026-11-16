@@ -1,6 +1,6 @@
 # Decisões de arquitetura (ADR)
 
-Cada decisão estrutural do linkcut fica registrada aqui, com o motivo técnico e econômico. As análises vêm da skill
+Cada decisão estrutural do linkcut fica registrada aqui (a execução de cada decisão fica em [`docs/decisoes/`](../decisoes/README.md)), com o motivo técnico e econômico. As análises vêm da skill
 `arquiteto-software` (`.claude/skills/arquiteto-software/SKILL.md`): primeiro o ATAM (trade-offs entre atributos de
 qualidade), depois o CBAM (custo, benefício e ROI) e, por fim, o ADR.
 

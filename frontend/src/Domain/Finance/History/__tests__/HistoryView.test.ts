@@ -24,6 +24,22 @@ describe('HistoryView', () => {
     vi.unstubAllEnvs()
   })
 
+  it('while loading, shows the skeleton as a status (same height as the records, no layout jump)', async () => {
+    // Arrange & Act
+    renderWithPlugins(HistoryView)
+
+    // Assert
+    const status = screen.getByRole('status')
+    expect(status.querySelectorAll('li')).toHaveLength(3)
+    expect(status.closest('[aria-busy="true"]')).toBeTruthy()
+
+    // Act: the records arrive
+    await screen.findAllByText(/atend\. ·/)
+
+    // Assert
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
   it('opens on the current month with its total and the day groups', async () => {
     // Arrange & Act
     await renderHistory()

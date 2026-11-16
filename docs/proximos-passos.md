@@ -196,8 +196,13 @@ Cada módulo é uma PR. A ordem sugerida vai do mais simples ao mais complexo.
 ## 3. Pendências pequenas
 1. **Imagem Docker de produção com Redis:** rodar `make prod-up` numa VPS ou numa máquina com acesso à internet. Conferir que o `redis` fica saudável e que o `docker compose logs app` não mostra erro de cache. No sandbox não deu para testar.
 2. **PRs do Dependabot (#30 a #37):** revisar uma por uma e fazer o merge das que passarem no CI. Atualizações grandes (major) só com o changelog lido.
-3. **Teste do esqueleto do histórico:** um teste vitest que verifica que `HistoryView` mostra `role="status"` com o esqueleto enquanto carrega (`frontend/src/Domain/Finance/History/__tests__`).
-4. **Depois, quando crescer:** FrankenPHP em modo worker. Ver os cuidados em `docs/escala.md`, passo 2; não é para agora.
+3. ~~**Teste do esqueleto do histórico**~~ (feito em 16/11): o `HistoryView.test.ts` confere o `role="status"` com 3 esqueletos e o `aria-busy` enquanto carrega.
+4. **"Avisar neste aparelho" no Firefox** (16/11): a ativação ficou mais robusta.
+   - Uma inscrição antiga, feita com outra chave VAPID, é trocada pela nova (antes era reaproveitada e os avisos não chegavam).
+   - Se o serviço de push recusa com `InvalidStateError` (já existe uma inscrição), ela é apagada e a ativação tenta mais uma vez.
+   - O erro no console agora diz a etapa: `client_push_failed PushDeviceError: subscribe: AbortError: ...` (ou `permission`/`register`). O painel do barbeiro passou a registrar `push_failed` da mesma forma.
+   - **Falta o dono:** testar de novo no Firefox. Se ainda falhar, mandar a linha `client_push_failed` do console (F12 → Console). Numa janela privada do Firefox o push não funciona, e isso é do navegador.
+5. **Depois, quando crescer:** FrankenPHP em modo worker. Ver os cuidados em `docs/escala.md`, passo 2; não é para agora.
 
 ---
 
