@@ -40,7 +40,9 @@ export const usePushStore = defineStore('push', () => {
       if (!subscription) return
       await savePushSubscription(subscription)
       isSubscribed.value = true
-    } catch {
+    } catch (caught) {
+      // Shown in the browser console so a failure on a given browser can be traced (no personal data in it).
+      console.warn('push_failed', caught instanceof Error ? `${caught.name}: ${caught.message}` : caught)
       hasFailed.value = true
     } finally {
       isBusy.value = false
