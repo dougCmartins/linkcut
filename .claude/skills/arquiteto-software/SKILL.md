@@ -90,7 +90,23 @@ Toda decisão diz como será provada: teste de arquitetura, teste de isolamento 
 `docs/performance.md`), orçamento de queries (`QueryBudgetTest`) ou uma medida em produção. Sem isso, o ADR fica
 `Proposto`.
 
+## 6. Passagem para o executor (`docs/decisoes/`)
+
+Outro chat implementa o que você decide, com a skill `executar-decisoes`. Ele **não vê esta conversa** nem o
+repositório `barber-saas`: só o que estiver escrito no `linkcut`. Por isso, toda decisão do dono que vira trabalho
+(grande ou pequena, com ou sem ADR) é gravada em `docs/decisoes/`:
+1. Copie `docs/decisoes/_modelo.md` para `docs/decisoes/NNNN-titulo.md` e preencha as seções 1 a 6.
+2. **Decisões do dono:** as palavras dele, sem ambiguidade.
+3. **Como aplicar:** passos em ordem, cada um com um critério de aceite verificável.
+4. **Referências:** cole os trechos do `barber-saas` e descreva as telas (Figma) que o executor precisa ver.
+5. **Fora do escopo e perguntas abertas:** o que ainda não está decidido fica escrito como pergunta, nunca subentendido.
+6. Atualize a tabela do `docs/decisoes/README.md` e faça commit na `main` (ou numa PR).
+
+Antes de decidir algo novo, leia a seção 7 ("Execução") das decisões abertas: ali estão o feedback e as perguntas do
+executor.
+
 ## Entrega
 
-Ao terminar: os documentos em `docs/arquitetura/` e `docs/adr/`, o índice atualizado e, para o dono, um resumo curto
-em português simples: a recomendação, o custo e o retorno, e o que ele precisa decidir.
+Ao terminar:
+- os documentos em `docs/arquitetura/`, `docs/adr/` e `docs/decisoes/`, com os índices atualizados;
+- para o dono, um resumo curto em português simples: a recomendação, o custo e o retorno, e o que ele precisa decidir.
