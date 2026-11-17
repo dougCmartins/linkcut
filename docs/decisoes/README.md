@@ -28,4 +28,4 @@ Decisões de arquitetura grandes continuam virando ADR em `docs/adr/`. O arquivo
 ## Decisões
 | # | Decisão | Status | Branch / PR |
 |---|---|---|---|
-| — | (nenhuma ainda) | — | — |
+| [0001](0001-filiais-e-equipe.md) | Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão) | Decidido | — |
