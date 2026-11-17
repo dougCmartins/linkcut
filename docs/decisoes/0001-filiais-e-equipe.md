@@ -1,6 +1,6 @@
 # 0001. Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão)
 
-- **Status:** Decidido
+- **Status:** Em execução
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-17. Base de 15/11, com as respostas do dono de 17/11.
 - **Origem:** chat do arquiteto (conversas com o dono de 29/10, 15/11, 16/11 e 17/11)
@@ -95,7 +95,7 @@ desenvolvimento toda uma estrutura e depois o refinamento dos módulos."
 ## 4. Como aplicar
 Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **estrutura** pronta; os outros passos usam e refinam.
 
-- [ ] **P1 — Organização e unidades.**
+- [x] **P1 — Organização e unidades.**
   - **Dados:** tabela `organizations` (`id`, `owner_user_id`, `type` = `individual`|`multi_unit`, `name`, `slug` único e reservado como os slugs de tenant). Em `tenants`, `organization_id` e `is_main`. Em `users`, `organization_id`.
   - **Migração dos dados atuais:** uma organização `individual` por tenant, com o tenant como `is_main = true`, sem mudar nenhum slug.
   - **Backend:**
@@ -230,3 +230,47 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-17 — execução 1
+- **Feito: P1, organização e unidades.**
+  - **Dados:**
+    - tabela `organizations` (dona, tipo, nome e slug);
+    - `tenants.organization_id` e `is_main`;
+    - `users.organization_id`.
+    - Cada barbearia existente virou uma organização `individual`, com ela mesma como matriz e o slug igual.
+  - **Unidade ativa:** o painel manda a unidade escolhida no cabeçalho `X-Unit`.
+    - Só a dona da organização abre outra unidade, e só uma das unidades dela. O resto dá 403 `UNIT_FORBIDDEN`.
+    - Sem o cabeçalho, vale a unidade do próprio usuário, que para a dona é a matriz.
+  - **Rotas:**
+    - `GET /api/organization/units` lista as unidades: todas para a dona, só a própria para os outros.
+    - `POST /api/organization/units` cria a filial, só para a dona (`ORGANIZATION_OWNER_ONLY` para os outros). Recebe nome, slug e endereço, e pode copiar uma vez as configurações da matriz.
+    - A 2ª unidade muda a organização para `multi_unit`.
+    - O slug da filial não pode repetir o de nenhuma unidade nem o de nenhuma marca.
+  - **Frontend:** o seletor "Unidade" fica no topo do painel, do histórico, das despesas e das configurações, e só aparece para `multi_unit`.
+    - A troca guarda a unidade no aparelho e recarrega o painel.
+    - Chamadas públicas e da área do cliente nunca mandam `X-Unit`.
+    - Sair da conta esquece a unidade.
+  - **Ajustes para não quebrar com filiais:**
+    - excluir a conta na matriz apaga a marca inteira; numa filial, apaga só a filial;
+    - o CSV do histórico por e-mail funciona para uma filial da dona;
+    - o link de entrada lembrado no aparelho continua sendo o da unidade da própria dona.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/Units/Tests/Feature/UnitsTest.php`: 8 testes, incluindo isolamento (as configurações da matriz e da filial não se misturam), 403 de outra organização, só a dona cria e abre unidades, slug ocupado ou reservado e exclusão;
+    - `backend/src/Domain/Tenant/Tests/Feature/OrganizationsMigrationTest.php`: migração com dados antigos;
+    - `SignUpTest`: o cadastro cria a organização com a dona;
+    - `frontend/src/Domain/Tenant/__tests__/UnitPicker.test.ts`: 4 testes;
+    - os 267 testes de backend e os 381 de frontend que já existiam passaram sem mudança, o `ArchitectureTest` incluído;
+    - commits `bafdc2d` (backend) e `e385368` (frontend).
+- **Já estava aplicado:** nada desta decisão.
+- **Pendente:** P2 a P6, na ordem. O próximo é o P2 (link da marca com select).
+- **Perguntas para o dono/arquiteto:**
+  1. **Onde a dona cria a filial na tela?** O P1 pede a rota de criar filial e o seletor, mas não diz onde fica o botão "Nova filial". O barbeiro individual "não vê nada de filiais", e o seletor só aparece a partir da 2ª unidade, então hoje a 1ª filial só pode ser criada pela API. Sugestões: um item em Configurações, ou um "Adicionar unidade" no fim do seletor junto de um link discreto para o individual.
+  2. **A filial nova passa pelo assistente de boas-vindas?** Fiz assim, como num cadastro novo, para conferir WhatsApp e serviços. Confirmar.
+  3. **Excluir a conta na matriz apaga todas as filiais.** Escolhi assim para não deixar filiais sem dona. A outra opção seria recusar enquanto houver filial. Confirmar.
+- **Riscos ou desvios:**
+  - **A cópia das configurações da matriz não leva as imagens** (foto, capa e fotos do portfólio), porque os arquivos são de cada unidade. A dona sobe as imagens de novo na filial.
+  - **Ponto no mapa:** sem as coordenadas enviadas, o endereço da filial é localizado pelo mesmo serviço das configurações. Se o serviço não achar, fica sem ponto no mapa, como hoje.
+  - **Avisos no celular da dona:** continuam valendo só na unidade em que ela os ativou. O "push por usuário" é o P4.
+  - **Banco:** no teste da migração (SQLite), as chaves estrangeiras ficam desligadas durante a recriação da tabela. Em produção (MySQL), a coluna entra sem recriar a tabela.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
