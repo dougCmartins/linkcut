@@ -7,8 +7,11 @@ import { installClientGuard } from './Domain/Client/client.guard'
 import { i18n } from './i18n'
 import { initSentry, setPerformanceMonitoring } from './observability/sentry'
 import { useConsentStore } from './Legal/consent.store'
+import { restoreActiveUnit } from './Domain/Tenant/unit.store'
 import './styles/core.css'
 
+// Before anything calls the API: the dashboard works on the unit picked last time on this device.
+restoreActiveUnit()
 const app = createApp(App)
 initSentry(app, router)
 app.use(createPinia())

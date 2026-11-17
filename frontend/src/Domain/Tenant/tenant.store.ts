@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { currentActiveUnit } from '@/http/client'
 import { ref } from 'vue'
 import { completeOnboarding, fetchCurrentTenant, type CurrentTenant } from './tenant.api'
 
@@ -32,7 +33,8 @@ export const useTenantStore = defineStore('tenant', () => {
     if (tenant.value) return Promise.resolve(tenant.value)
     loading ??= fetchCurrentTenant()
       .then((loaded) => {
-        rememberSlug(loaded.slug)
+        // The sign-in page is the barber's own unit, not a branch picked at the top.
+        if (currentActiveUnit() === null) rememberSlug(loaded.slug)
         return (tenant.value = loaded)
       })
       .catch(() => null)

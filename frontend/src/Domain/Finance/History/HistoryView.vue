@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UnitPicker from '@/Domain/Tenant/UnitPicker.vue'
 import { computed, onBeforeUnmount, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -126,6 +127,7 @@ async function exportCsv(): Promise<void> {
 
 <template>
   <main class="mx-auto w-full max-w-2xl px-4 pt-6 pb-16">
+    <UnitPicker />
     <header class="flex items-center gap-3">
       <RouterLink
         to="/painel"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UnitPicker from '@/Domain/Tenant/UnitPicker.vue'
 import { computed, onMounted, ref } from 'vue'
 import { capitalize, formatLongDate, formatMonthName, toIsoDate } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
@@ -137,6 +138,7 @@ async function undo(): Promise<void> {
 
 <template>
   <main class="mx-auto w-full max-w-md px-4 pt-6 pb-12">
+    <UnitPicker />
     <header class="flex items-center gap-3">
       <AvatarImage :src="avatarUrl" :alt="t('bioLink.avatarAlt', { name: profile.name })" size="md" />
       <div class="min-w-0 flex-1">

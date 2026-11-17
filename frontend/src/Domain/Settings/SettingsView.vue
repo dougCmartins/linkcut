@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UnitPicker from '@/Domain/Tenant/UnitPicker.vue'
 import { computed, onBeforeUnmount, onMounted, ref, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
@@ -110,6 +111,7 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="mx-auto w-full max-w-5xl px-4 pt-6 pb-32">
+    <UnitPicker />
     <header class="flex items-center gap-3">
       <RouterLink
         to="/painel"

@@ -28,6 +28,8 @@ export const ApiErrorCode = {
   BookingRequestNotFound: 'BOOKING_REQUEST_NOT_FOUND',
   BarbershopAddressMissing: 'BARBERSHOP_ADDRESS_MISSING',
   SlugUnavailable: 'SLUG_UNAVAILABLE',
+  UnitForbidden: 'UNIT_FORBIDDEN',
+  OrganizationOwnerOnly: 'ORGANIZATION_OWNER_ONLY',
   EmailAlreadyRegistered: 'EMAIL_ALREADY_REGISTERED',
   CancellationTooLate: 'CANCELLATION_TOO_LATE',
   ReviewNotAllowed: 'REVIEW_NOT_ALLOWED',

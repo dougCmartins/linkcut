@@ -48,6 +48,20 @@ function handlersFor(options: HttpOptions): HttpAuthHandlers | null {
   return authHandlers[options.auth === 'client' ? 'client' : 'barber']
 }
 
+/**
+ * The unit (main one or a branch) the barber's dashboard works on: sent as X-Unit on the barber's calls.
+ * Null = the barber's own unit. Only the owner of a brand with branches ever sets it (docs/adr/0002).
+ */
+let activeUnit: number | null = null
+
+export function setActiveUnit(unitId: number | null): void {
+  activeUnit = unitId
+}
+
+export function currentActiveUnit(): number | null {
+  return activeUnit
+}
+
 const baseUrl = () => (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
 function newRequestId(): string {
@@ -62,6 +76,7 @@ async function send<T>(path: string, options: HttpOptions): Promise<HttpResponse
   if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   const token = handlersFor(options)?.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
+  if (activeUnit !== null && options.auth !== false && options.auth !== 'client') headers['X-Unit'] = String(activeUnit)
 
   let response: Response
   try {

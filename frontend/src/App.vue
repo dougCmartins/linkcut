@@ -10,6 +10,7 @@ import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
+import { useUnitStore } from '@/Domain/Tenant/unit.store'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
 import { leaveTo } from '@/composables/useQueryOverlay'
@@ -29,6 +30,7 @@ const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const publicPageStore = usePublicPageStore()
 const tenantStore = useTenantStore()
+const unitStore = useUnitStore()
 const { visitorMode } = useVisitorMode()
 
 // Public pages use the theme of the barbershop being visited (visitors may switch light/dark);
@@ -51,6 +53,7 @@ watch(
     if (!user) {
       settingsStore.clear()
       tenantStore.clear()
+      unitStore.forget()
     }
   },
 )
