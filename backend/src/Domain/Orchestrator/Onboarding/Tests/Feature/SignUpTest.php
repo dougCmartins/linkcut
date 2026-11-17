@@ -10,6 +10,8 @@ use Domain\Identity\Notifications\SignUpCodeNotification;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\Service;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Enums\OrganizationType;
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -77,6 +79,13 @@ final class SignUpTest extends TestCase
         $tenant = Tenant::query()->sole();
         $this->assertSame('barbearia-do-marcos', $tenant->slug);
         $this->assertNull($tenant->onboarded_at);
+        $organization = Organization::query()->sole();
+        $this->assertSame(OrganizationType::Individual, $organization->type);
+        $this->assertSame('barbearia-do-marcos', $organization->slug);
+        $this->assertSame($user->id, $organization->owner_user_id);
+        $this->assertTrue($tenant->is_main);
+        $this->assertSame($organization->id, $tenant->organization_id);
+        $this->assertSame($organization->id, $user->organization_id);
         app(CurrentTenant::class)->run($tenant->id, function (): void {
             $this->assertSame('Barbearia do Marcos', ProfileSettings::query()->sole()->name);
             $this->assertSame(2, Service::query()->count());

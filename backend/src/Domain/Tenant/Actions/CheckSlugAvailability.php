@@ -6,10 +6,11 @@ namespace Domain\Tenant\Actions;
 
 use Domain\Tenant\Data\SlugAvailabilityData;
 use Domain\Tenant\Data\TenantSlugData;
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Domain\Tenant\Support\ReservedSlugs;
 
-/** "linkcut.app/{slug}" is free? When not, suggests slug-2, slug-3… */
+/** "linkcut.app/{slug}" is free (no unit and no brand uses it)? When not, suggests slug-2, slug-3… */
 final class CheckSlugAvailability
 {
     private const MAX_SUFFIX = 99;
@@ -18,9 +19,13 @@ final class CheckSlugAvailability
     public function handle(TenantSlugData $data): SlugAvailabilityData
     {
         $slug = $data->slug;
+        $like = addcslashes($slug, '%_\\').'-%';
         $taken = array_flip(Tenant::query()
+            ->select('slug')
             ->where('slug', $slug)
-            ->orWhere('slug', 'like', addcslashes($slug, '%_\\').'-%')
+            ->orWhere('slug', 'like', $like)
+            ->toBase()
+            ->union(Organization::query()->select('slug')->where('slug', $slug)->orWhere('slug', 'like', $like)->toBase())
             ->pluck('slug')
             ->all());
         $isFree = fn (string $candidate): bool => ! isset($taken[$candidate]) && ! ReservedSlugs::contains($candidate);
@@ -39,6 +44,8 @@ final class CheckSlugAvailability
 
     public static function isFree(string $slug): bool
     {
-        return ! ReservedSlugs::contains($slug) && ! Tenant::query()->where('slug', $slug)->exists();
+        return ! ReservedSlugs::contains($slug)
+            && ! Tenant::query()->where('slug', $slug)->exists()
+            && ! Organization::query()->where('slug', $slug)->exists();
     }
 }

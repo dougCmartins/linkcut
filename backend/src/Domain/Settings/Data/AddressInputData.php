@@ -49,4 +49,28 @@ final class AddressInputData extends Data
         #[Nullable, Numeric, Between(-180, 180), RequiredWith('latitude')]
         public readonly ?float $longitude,
     ) {}
+
+    /** The same address with its point on the map. */
+    public function at(?float $latitude, ?float $longitude): self
+    {
+        return new self($this->zip_code, $this->street, $this->number, $this->district, $this->city, $this->state, $this->complement, $latitude, $longitude);
+    }
+
+    /**
+     * The address columns of profile_settings (without the point).
+     *
+     * @return array<string, string|null>
+     */
+    public function columns(): array
+    {
+        return [
+            'address_zip_code' => $this->zip_code,
+            'address_street' => trim($this->street),
+            'address_number' => trim($this->number),
+            'address_complement' => $this->complement ? trim($this->complement) : null,
+            'address_district' => trim($this->district),
+            'address_city' => trim($this->city),
+            'address_state' => $this->state,
+        ];
+    }
 }
