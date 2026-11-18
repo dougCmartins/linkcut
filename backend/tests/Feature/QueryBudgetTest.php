@@ -8,6 +8,7 @@ use Closure;
 use Domain\Client\Models\Client;
 use Domain\Identity\Models\User;
 use Domain\Notification\Jobs\SendPushToClient;
+use Domain\Orchestrator\PublicPage\Tests\Concerns\BrandFixtures;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
 use Illuminate\Database\Events\QueryExecuted;
@@ -24,6 +25,7 @@ use Tests\TestCase;
  */
 final class QueryBudgetTest extends TestCase
 {
+    use BrandFixtures;
     use RefreshDatabase;
     use ScheduleFixtures;
 
@@ -76,6 +78,27 @@ final class QueryBudgetTest extends TestCase
 
         // Assert
         $this->assertSame($forOne, $forTwenty, "1 invitation: {$forOne} queries; 20 invitations: {$forTwenty}");
+    }
+
+    public function test_the_brand_link_takes_the_same_queries_for_two_or_six_units_and_none_when_cached(): void
+    {
+        // Arrange
+        $small = $this->barbershop('pequena');
+        $this->branch($small, 'pequena-centro');
+        $big = $this->barbershop('grande');
+        foreach (['norte', 'sul', 'leste', 'oeste', 'centro'] as $branch) {
+            $this->branch($big, "grande-{$branch}");
+        }
+
+        // Act
+        $forTwo = $this->countQueries(fn () => $this->getJson('/api/public/brand/pequena')->assertOk()->assertJsonCount(2, 'units'));
+        $forSix = $this->countQueries(fn () => $this->getJson('/api/public/brand/grande')->assertOk()->assertJsonCount(6, 'units'));
+        $cached = $this->countQueries(fn () => $this->getJson('/api/public/brand/grande')->assertOk());
+
+        // Assert
+        $this->assertSame($forTwo, $forSix);
+        $this->assertLessThanOrEqual(5, $forSix, "the brand link took {$forSix} queries");
+        $this->assertSame(0, $cached);
     }
 
     public function test_a_public_booking_stays_within_its_query_budget(): void

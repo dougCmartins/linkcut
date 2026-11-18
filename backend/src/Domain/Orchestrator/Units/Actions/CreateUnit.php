@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\Units\Actions;
 
+use Domain\Orchestrator\PublicPage\Support\BrandCache;
 use Domain\Orchestrator\Units\Data\NewUnitData;
 use Domain\Settings\Actions\LocateAddress;
 use Domain\Settings\Actions\SetUpUnitSettings;
@@ -35,6 +36,7 @@ final class CreateUnit
         private readonly CreateTenant $createTenant,
         private readonly SetUpUnitSettings $setUpSettings,
         private readonly CurrentTenant $currentTenant,
+        private readonly BrandCache $brandCache,
     ) {}
 
     public function handle(UnitAccessData $access, NewUnitData $data): UnitData
@@ -54,6 +56,10 @@ final class CreateUnit
 
             return $unit;
         });
+        // The brand link (the main unit's slug) lists the new branch, and its page shows the picker, right away.
+        if ($main !== null) {
+            $this->brandCache->forget($main->slug, $main->id);
+        }
         Log::info('organization_unit_created', ['organization_id' => $organizationId, 'tenant_id' => $unit->id, 'copied' => $data->copy_settings]);
 
         return new UnitData(id: $unit->id, name: $unit->name, slug: $unit->slug, is_main: false, active: $unit->active, onboarded: $unit->onboarded);

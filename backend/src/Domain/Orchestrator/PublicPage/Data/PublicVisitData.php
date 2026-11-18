@@ -26,5 +26,7 @@ final class PublicVisitData extends Data
         public readonly PublicRatingData $rating,
         #[DataCollectionOf(FeaturedReviewData::class)]
         public readonly DataCollection $featured_reviews,
+        /** Set on the main unit of a brand with branches: the page shows the branch picker (docs/decisoes/0001 P2). */
+        public readonly ?string $brand_slug = null,
     ) {}
 }
