@@ -143,7 +143,7 @@ As rotas da API ficam em `backend/routes/api.php`, que carrega o `Routes/api.php
 - **backend:** Pint, testes e `composer audit`;
 - **frontend:** typecheck, Vitest, build e `npm audit`.
 
-**Testes:** cerca de 260 no backend (`make test`) e 376 no frontend (`make test-web`).
+**Testes:** 267 no backend (`make test`) e 381 no frontend (`make test-web`), na PR #71.
 
 **Nunca vão para o git:** `.env.production` e certificados locais.
 
