@@ -1,5 +1,7 @@
 # linkcut
-Interface do meu SaaS para barbeiros 
+Interface do meu SaaS para barbeiros.
+
+**Comece pelo [brief](docs/brief.md):** o que é o projeto, a arquitetura, o que já está pronto e os próximos passos.
 
 ## Telas
 
@@ -32,7 +34,7 @@ Telas no celular (390 px), com dados de exemplo.
 
 | Pasta | O quê |
 |---|---|
-| `backend/` | API Laravel 11 (PHP 8.3), DDD pragmático, multi-tenant por `tenant_id`, Passport e 2FA por e-mail ou SMS ([arquitetura](docs/arquitetura-backend.md), [observabilidade](docs/observabilidade.md)) |
+| `backend/` | API Laravel 12 (PHP 8.3), DDD pragmático, multi-tenant por `tenant_id`, Passport e 2FA por e-mail ([arquitetura](docs/arquitetura-backend.md), [observabilidade](docs/observabilidade.md)) |
 | `frontend/` | SPA Vue 3 + Tailwind |
 | `docker-compose.yml` + `Makefile` | MySQL, API, fila, Pulse, Mailpit e SPA |
 

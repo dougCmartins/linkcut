@@ -1,6 +1,6 @@
 # Arquitetura do linkcut
 
-Mapa do sistema para não perder o fio. Vale para a `main` de 29/10/2026.
+Mapa do sistema para não perder o fio. Resumo do projeto inteiro: [brief](brief.md). Vale para a `main` de 29/10/2026.
 
 ## Visão geral
 O linkcut tem duas partes, no mesmo repositório:
@@ -63,7 +63,8 @@ src/Domain/<Domínio>/
 | `Schedule` | pedidos de agendamento (`BookingRequest`), disponibilidade, status |
 | `Finance` | receitas dos atendimentos concluídos, despesas fixas e avulsas, histórico |
 | `Client` | conta do cliente (global, sem tenant), login, Google, push |
-| `Notification` | push do barbeiro, `PlainText` (limpeza de texto) |
+| `Notification` | push do barbeiro |
+| `Shared` | utilitários sem regra de negócio, como o `PlainText` (limpeza de texto) |
 | `Review` | avaliações dos atendimentos |
 | `Catalog` | produtos da vitrine (até 50 por barbearia), vistos só pelo cliente logado |
 | `Orchestrator` | fluxos que juntam domínios: agendamento público, concluir atendimento, página pública, exclusão de conta (LGPD) e outros |
