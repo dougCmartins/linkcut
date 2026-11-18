@@ -231,6 +231,38 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
+### 2026-11-18 — execução 2
+- **Feito: P2, link da marca com select** (faltou só o visual do Figma; ver "Pendente").
+  - **Backend:**
+    - `GET /api/public/brand/{slug}` lista as unidades ativas da marca, com a matriz primeiro e o nome, a foto e o endereço de cada uma;
+    - a rota tem `throttle:public`, ETag e cache por marca de 5 min, esquecido quando uma unidade é criada;
+    - `GET /api/public/{slug}` ganhou `brand_slug`, preenchido só na matriz de uma marca com filiais;
+    - `brand` virou um slug reservado.
+  - **Frontend:**
+    - na página da matriz de uma marca com filiais aparece o select "Unidade", com o endereço da unidade escolhida;
+    - trocar no select mostra a página da unidade no lugar (`?unidade=<slug>`), sem sair da página nem recarregar;
+    - um slug que não é unidade da marca é ignorado;
+    - "Agendar" e "Sobre" levam a unidade escolhida, e fechar o agendamento também a mantém;
+    - o agendamento mostra a unidade de destino com o endereço, e as outras unidades com os endereços e um "Agendar nesta";
+    - o link próprio de cada filial (`/{slug-da-filial}`) e o barbeiro individual ficam como antes: sem select e sem chamada a mais.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/PublicPage/Tests/Feature/BrandLinkTest.php`: 4 testes (a lista da marca, o 404 do individual, só a matriz é link da marca e o agendamento vai para a filial escolhida);
+    - `QueryBudgetTest`: as mesmas consultas para 2 ou 6 unidades, e zero com cache;
+    - `frontend/src/BioLink/__tests__/BrandLink.test.ts`: 4 testes;
+    - todos os testes passaram (281 no backend, 389 no frontend);
+    - commits `af0abe6` (backend) e `165eb02` (frontend).
+- **Já estava aplicado:** P1 (execução 1).
+- **Pendente:**
+  - **P2, o visual pelo Figma "Linktree UI Kit":** não tenho acesso ao Figma neste ambiente. O select usa por enquanto os componentes atuais (`SelectField`). Preciso das telas descritas no arquivo da decisão (layout, cores, tamanhos) ou de prints no repositório.
+  - **P3 a P6.**
+- **Perguntas para o dono/arquiteto:**
+  1. As 3 perguntas da execução 1 continuam abertas: onde fica o botão "Nova filial", se a filial nova passa pelo assistente e se excluir a conta na matriz apaga todas as filiais. Este branch ainda não foi para a `main`, então o chat do arquiteto não as viu. Basta fazer o merge para que ele leia esta seção.
+  2. **O que é o "Quem somos" que o select troca?** Fiz o select na página de links (`/{marca}`), e a página "Sobre" (`/{marca}/portfolio`) segue a unidade escolhida. Se "Quem somos" for só a página "Sobre", o select também deveria aparecer lá?
+- **Riscos ou desvios:**
+  - A mudança de nome, foto ou endereço de uma unidade aparece na lista da marca em até 5 minutos. O cache da marca só é apagado na hora quando uma unidade é criada.
+  - Trocar de unidade no select também troca o tema da página, porque cada unidade tem o seu.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
 ### 2026-11-17 — execução 1
 - **Feito: P1, organização e unidades.**
   - **Dados:**
