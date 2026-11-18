@@ -11,13 +11,15 @@ import SmartImage from '@/components/ui/SmartImage.vue'
 import SocialLinks from '@/components/ui/SocialLinks.vue'
 import { useQueryOverlay } from '@/composables/useQueryOverlay'
 import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
-import { usePublicPage } from '@/Domain/Settings/usePublicPage'
+import { usePublicLinks, usePublicPage } from '@/Domain/Settings/usePublicPage'
+import BrandUnitPicker from '@/Domain/Tenant/BrandUnitPicker.vue'
 import { formatAverage } from '@/Domain/Review/review.api'
 import StarRating from '@/Domain/Review/StarRating.vue'
 import { buildWhatsappUrl } from '@/utils/phone'
 
 const { t } = useI18n()
 const publicPage = usePublicPage()
+const linkTo = usePublicLinks()
 
 const profile = computed(() => publicPage.page?.profile)
 // The barbershop's name and bio in search results and in the preview when the link is shared.
@@ -70,15 +72,17 @@ const ratingCount = computed(() => publicPage.page?.rating.count ?? 0)
         <p v-if="profile.bio" class="mt-3 max-w-xs text-[15px] leading-relaxed text-muted break-words">{{ profile.bio }}</p>
       </header>
 
+      <BrandUnitPicker class="mt-6" />
+
       <nav class="mt-10 flex w-full flex-col gap-5">
-        <BaseButton variant="primary" size="lg" elevated block :to="`/${publicPage.slug}/agendar`">
+        <BaseButton variant="primary" size="lg" elevated block :to="linkTo('/agendar')">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <rect x="3" y="5" width="18" height="16" rx="3" />
             <path d="M16 3v4M8 3v4M3 10h18" />
           </svg>
           {{ t('bioLink.book') }}
         </BaseButton>
-        <BaseButton variant="secondary" size="lg" elevated block :to="`/${publicPage.slug}/portfolio`">
+        <BaseButton variant="secondary" size="lg" elevated block :to="linkTo('/portfolio')">
           {{ t('bioLink.portfolio') }}
         </BaseButton>
         <BaseButton variant="secondary" size="lg" elevated block :href="whatsappUrl">

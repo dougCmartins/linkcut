@@ -38,7 +38,7 @@ interface HighlightBody {
   value: string | null
 }
 
-interface AddressBody {
+export interface AddressBody {
   zip_code: string
   street: string
   number: string
@@ -118,6 +118,8 @@ interface PublicPageBody {
   theme: ThemeBody
   rating?: { average: number | null; count: number }
   featured_reviews?: { first_name: string; rating: number; comment: string }[]
+  /** Set on the main unit of a brand with branches: its page shows the branch picker. */
+  brand_slug?: string | null
 }
 
 const toSocials = (socials: SocialLinkBody[]): SocialLink[] =>
@@ -126,7 +128,7 @@ const toSocials = (socials: SocialLinkBody[]): SocialLink[] =>
 const toLinks = (links: ProfileLinkBody[]): ProfileLink[] =>
   links.map((link) => ({ title: link.title, url: link.url, icon: link.icon }))
 
-const toAddress = (body: AddressBody): BarbershopAddress => ({
+export const toAddress = (body: AddressBody): BarbershopAddress => ({
   zipCode: body.zip_code,
   street: body.street,
   number: body.number,
@@ -337,6 +339,7 @@ export async function fetchPublicPage(slug: string): Promise<PublicPage> {
       photos: data.portfolio.photos,
     },
     theme: toTheme(data.theme),
+    brandSlug: data.brand_slug ?? null,
     rating: {
       average: typeof data.rating?.average === 'number' ? data.rating.average : null,
       count: data.rating?.count ?? 0,

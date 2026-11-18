@@ -87,8 +87,8 @@ watch(
 function closeBooking(): void {
   bookingStore.closeModal()
   // Back to the page it was opened from, or (a shared /agendar link) to the page under it, without leaving the app.
-  // From the client area (/<slug>/account/book), back to /<slug>/account.
-  if (route.meta.openBooking) leaveTo(router, route.path.replace(/\/(agendar|book)\/?$/, ''))
+  // From the client area (/<slug>/account/book), back to /<slug>/account. The query stays (?unidade= on a brand link).
+  if (route.meta.openBooking) leaveTo(router, route.fullPath.replace(/\/(agendar|book)\/?(?=\?|#|$)/, ''))
 }
 </script>
 

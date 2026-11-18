@@ -245,6 +245,11 @@ export default {
     vacationTitle: 'Agenda fechada',
     dayUnavailable: 'indisponível',
   },
+  brand: {
+    unit: 'Unidade',
+    otherUnits: 'Outras unidades',
+    bookHere: 'Agendar nesta',
+  },
   units: {
     label: 'Unidade',
     mainUnit: '{name} (matriz)',

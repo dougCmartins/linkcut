@@ -29,6 +29,7 @@ function renderModal(
       theme: settings.theme,
       rating: { average: null, count: 0 },
       featuredReviews: [],
+      brandSlug: null,
     }
   })
   return { ...rendered, ...fake }

@@ -77,7 +77,7 @@ export function createTestSettings(): AppSettings {
   }
 }
 
-function scheduleBody(schedule: ScheduleSettings, withCost: boolean) {
+export function scheduleBody(schedule: ScheduleSettings, withCost: boolean) {
   return {
     services: schedule.services.map((service) => ({
       id: Number(service.id),
