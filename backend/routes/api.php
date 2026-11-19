@@ -24,3 +24,5 @@ require base_path('src/Domain/Orchestrator/Review/Routes/api.php');
 require base_path('src/Domain/Orchestrator/HistoryReport/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Catalog/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Units/Routes/api.php');
+require base_path('src/Domain/Team/Routes/api.php');
+require base_path('src/Domain/Orchestrator/Team/Routes/api.php');

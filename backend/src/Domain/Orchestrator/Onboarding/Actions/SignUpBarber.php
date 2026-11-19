@@ -15,6 +15,8 @@ use Domain\Identity\Data\VerifiedUserData;
 use Domain\Orchestrator\Onboarding\Data\SignUpData;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
+use Domain\Team\Actions\CreateOwnerStaff;
+use Domain\Team\Data\OwnerStaffData;
 use Domain\Tenant\Actions\AssignOrganizationOwner;
 use Domain\Tenant\Actions\CreateTenant;
 use Domain\Tenant\Context\CurrentTenant;
@@ -36,6 +38,7 @@ final class SignUpBarber
         private readonly CreateOwner $createOwner,
         private readonly AssignOrganizationOwner $assignOrganizationOwner,
         private readonly CreateDefaultSettings $createDefaultSettings,
+        private readonly CreateOwnerStaff $createOwnerStaff,
         private readonly CurrentTenant $currentTenant,
         private readonly IssueSession $issueSession,
     ) {}
@@ -55,10 +58,11 @@ final class SignUpBarber
                 organization_id: $tenant->organization_id,
             ));
             $this->assignOrganizationOwner->handle(new OrganizationOwnerData(organization_id: (int) $tenant->organization_id, user_id: $owner->user_id));
-            $this->currentTenant->run(
-                $tenant->id,
-                fn () => $this->createDefaultSettings->handle(new DefaultSettingsData(name: trim($data->barbershop_name))),
-            );
+            $this->currentTenant->run($tenant->id, function () use ($data, $owner): void {
+                $this->createDefaultSettings->handle(new DefaultSettingsData(name: trim($data->barbershop_name)));
+                // Every unit has at least one barber: its owner (docs/decisoes/0001 P3).
+                $this->createOwnerStaff->handle(new OwnerStaffData(user_id: $owner->user_id, name: $data->name, email: $data->email));
+            });
 
             return $owner;
         });

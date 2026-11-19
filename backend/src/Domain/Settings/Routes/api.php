@@ -7,7 +7,7 @@ use Domain\Settings\Controllers\SettingsController;
 use Domain\Settings\Controllers\ShareCardController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:api', 'tenant'])->prefix('settings')->group(function (): void {
+Route::middleware(['auth:api', 'tenant', 'role.owner'])->prefix('settings')->group(function (): void {
     Route::get('/', [SettingsController::class, 'show']);
     // Looks the address up on OpenStreetMap: limited, so nobody gets the server banned there.
     Route::put('profile', [SettingsController::class, 'updateProfile'])->middleware('throttle:uploads');

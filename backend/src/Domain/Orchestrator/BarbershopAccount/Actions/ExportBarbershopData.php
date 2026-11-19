@@ -10,12 +10,15 @@ use Domain\Identity\Actions\ShowAuthenticatedUser;
 use Domain\Review\Actions\ListBarberReviews;
 use Domain\Schedule\Actions\ListAllBookings;
 use Domain\Settings\Actions\ShowSettings;
+use Domain\Team\Actions\ListStaff;
+use Domain\Team\Data\StaffActorData;
+use Domain\Team\Data\StaffData;
 use Domain\Tenant\Actions\ShowCurrentTenant;
 use Illuminate\Support\Facades\Log;
 
 /**
  * "Baixar meus dados" (LGPD portability): everything of the barbershop in one JSON file: account, settings,
- * every booking and every finance record. Images are listed by their address (the files stay on the page).
+ * every booking and every finance record, and the team (barbers and what each one may see). Images are listed by their address (the files stay on the page).
  */
 final class ExportBarbershopData
 {
@@ -27,6 +30,7 @@ final class ExportBarbershopData
         private readonly ListFinanceRecords $listFinance,
         private readonly ListBarberReviews $listReviews,
         private readonly ListProducts $listProducts,
+        private readonly ListStaff $listStaff,
     ) {}
 
     /** @return array<string, mixed> */
@@ -44,6 +48,10 @@ final class ExportBarbershopData
             'finance' => $this->listFinance->handle()->toArray(),
             'reviews' => $this->listReviews->handle()->toArray(),
             'products' => $this->listProducts->handle()->toArray(),
+            'team' => array_map(
+                fn (StaffData $staff): array => $staff->toArray(),
+                $this->listStaff->handle(new StaffActorData(user_id: (int) auth('api')->id())),
+            ),
         ];
     }
 }

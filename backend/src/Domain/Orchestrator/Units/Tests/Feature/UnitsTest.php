@@ -187,7 +187,7 @@ final class UnitsTest extends TestCase
         // Assert
         $opens->assertForbidden()->assertJsonPath('code', 'UNIT_FORBIDDEN');
         $lists->assertOk()->assertJsonPath('can_manage', false)->assertJsonCount(1, 'units')->assertJsonPath('units.0.id', $owner->tenant_id);
-        $creates->assertForbidden()->assertJsonPath('code', 'ORGANIZATION_OWNER_ONLY');
+        $creates->assertForbidden()->assertJsonPath('code', 'OWNER_ONLY');
         $this->assertFalse(Tenant::query()->where('slug', 'rafael-outra')->exists());
     }
 

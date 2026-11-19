@@ -9,6 +9,7 @@ use Domain\Identity\Notifications\AccountExistsNotification;
 use Domain\Identity\Notifications\SignUpCodeNotification;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\Service;
+use Domain\Team\Models\Staff;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Enums\OrganizationType;
 use Domain\Tenant\Models\Organization;
@@ -86,6 +87,8 @@ final class SignUpTest extends TestCase
         $this->assertTrue($tenant->is_main);
         $this->assertSame($organization->id, $tenant->organization_id);
         $this->assertSame($organization->id, $user->organization_id);
+        $ownStaff = app(CurrentTenant::class)->run($tenant->id, fn () => Staff::query()->sole());
+        $this->assertSame($user->id, $ownStaff->user_id);
         app(CurrentTenant::class)->run($tenant->id, function (): void {
             $this->assertSame('Barbearia do Marcos', ProfileSettings::query()->sole()->name);
             $this->assertSame(2, Service::query()->count());

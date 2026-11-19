@@ -6,7 +6,7 @@ use Domain\Finance\Controllers\ExpenseController;
 use Domain\Finance\Controllers\FinanceController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:api', 'tenant'])->prefix('finance')->group(function (): void {
+Route::middleware(['auth:api', 'tenant', 'role.owner'])->prefix('finance')->group(function (): void {
     Route::get('history', [FinanceController::class, 'history']);
     Route::get('month-to-date', [FinanceController::class, 'monthToDate']);
 
