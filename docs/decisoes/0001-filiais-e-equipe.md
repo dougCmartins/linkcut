@@ -231,6 +231,49 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
+### 2026-11-19 — execução 3
+- **Feito: P3, equipe — só o backend** (o passo é grande; o frontend fica para a próxima execução).
+  - **Dados:**
+    - domínio novo `Team`, com `staff` (um barbeiro por unidade, `user_id` nulo até aceitar o convite);
+    - `staff_permissions`, com `see_prices`, `see_own_commission` e `see_unit_agenda`, todas desligadas;
+    - `staff_invitations`, onde só o hash do token é guardado, com uso único e validade de 7 dias.
+  - **Migração:** o dono de cada barbearia existente virou o primeiro barbeiro dela. O cadastro novo faz o mesmo.
+  - **Rotas (só a dona):**
+    - `GET` e `POST /api/team/staff` (lista e convida);
+    - `PUT /api/team/staff/{id}` (liga ou desliga e ajusta as 3 chaves);
+    - `POST /api/team/staff/{id}/invitation` (reenvia o convite e invalida os anteriores).
+    - Sem limite de barbeiros.
+  - **Convite:** `POST /api/team/invitations/accept` (público, `throttle:login`) recebe o token, a senha e o aceite dos termos.
+    - Cria o login do barbeiro (papel `barber`) na unidade que convidou e já abre a sessão.
+    - O link do e-mail é `/equipe/convite?token=…`.
+  - **Papéis verificados:** o middleware `role.owner` protege finanças, configurações, produtos, avaliações, conta, unidades e equipe. O barbeiro recebe 403 `OWNER_ONLY`.
+  - **Valores:** sem `see_prices`, nenhuma chave `*_in_cents` sai da API para o barbeiro, em qualquer rota. O corte é feito na resposta.
+  - **Desligar um barbeiro** encerra todas as sessões dele na hora, e o login de quem está desligado é recusado (`STAFF_INACTIVE`).
+  - **LGPD:** a exportação da barbearia inclui a equipe. A exclusão já levava a equipe junto, porque tudo é apagado em cascata com a unidade.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/Team/Tests/Feature/TeamTest.php`: 7 testes (convite e aceite; uso único e validade; sem valores na resposta sem `see_prices` e com valores com ela; 403 nas áreas da dona; desligar encerra a sessão e bloqueia o login; uma unidade não vê a equipe de outra; a dona não se desliga e não convida o mesmo e-mail duas vezes);
+    - `backend/src/Domain/Team/Tests/Feature/TeamMigrationTest.php` (migração com dados antigos);
+    - `SignUpTest` (o dono vira barbeiro);
+    - 289 testes no total, o `ArchitectureTest` incluído;
+    - commit `cba9d67`.
+- **Já estava aplicado:** P1 e P2 (execuções 1 e 2).
+- **Pendente:**
+  - **P3 no frontend:**
+    - "Minha equipe" (a partir do 2º barbeiro, ou pelo botão "Adicionar barbeiro"), com a lista, o convite, o ligar e desligar e as 3 chaves;
+    - a tela `/equipe/convite` para aceitar;
+    - o painel do barbeiro mostrando só o que as chaves permitem.
+    - **Até essa tela existir, não mande convites de verdade:** o link do e-mail ainda não abre nada.
+  - **"O barbeiro não lê dados de outro barbeiro"** (aceite do P3): depende do `booking_requests.staff_id`, que é do P4. Hoje o barbeiro vê a agenda da unidade inteira, sem valores. Fica provado no P4, junto com `see_unit_agenda`.
+  - **P4 a P6.**
+- **Perguntas para o dono/arquiteto:**
+  1. Continuam abertas as perguntas das execuções 1 e 2 (o botão "Nova filial", o assistente na filial nova, a exclusão da matriz e o que é o "Quem somos").
+  2. **Filial nova sem barbeiro:** "Toda unidade tem pelo menos um barbeiro", mas a dona é barbeira só da matriz, e "cada barbeiro pertence a uma filial só". Uma filial nova nasce sem ninguém até a dona convidar alguém. Está certo?
+  3. **Barbeiro desligado:** tirei as sessões e o login dele. Os atendimentos e o histórico dele ficam (nada é apagado). Confirmar.
+- **Riscos ou desvios:**
+  - O barbeiro agora recebe 403 nas configurações, inclusive na leitura (`GET /api/settings` traz preços e custos).
+  - A tela do barbeiro do P3 vai precisar de uma leitura própria, sem valores.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
 ### 2026-11-18 — execução 2
 - **Feito: P2, link da marca com select** (faltou só o visual do Figma; ver "Pendente").
   - **Backend:**
