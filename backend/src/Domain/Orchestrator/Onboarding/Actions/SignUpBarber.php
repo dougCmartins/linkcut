@@ -15,6 +15,8 @@ use Domain\Identity\Data\VerifiedUserData;
 use Domain\Orchestrator\Onboarding\Data\SignUpData;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
+use Domain\Team\Actions\CreateOwnerStaff;
+use Domain\Team\Data\NewOwnerStaffData;
 use Domain\Tenant\Actions\CreateOrganization;
 use Domain\Tenant\Actions\CreateTenant;
 use Domain\Tenant\Context\CurrentTenant;
@@ -36,6 +38,7 @@ final class SignUpBarber
         private readonly CreateOrganization $createOrganization,
         private readonly CreateTenant $createTenant,
         private readonly CreateOwner $createOwner,
+        private readonly CreateOwnerStaff $createOwnerStaff,
         private readonly CreateDefaultSettings $createDefaultSettings,
         private readonly CurrentTenant $currentTenant,
         private readonly IssueSession $issueSession,
@@ -67,6 +70,11 @@ final class SignUpBarber
                 $tenant->id,
                 fn () => $this->createDefaultSettings->handle(new DefaultSettingsData(name: $name)),
             );
+            $this->createOwnerStaff->handle(new NewOwnerStaffData(
+                tenant_id: $tenant->id,
+                user_id: $owner->user_id,
+                name: trim($data->name),
+            ));
 
             return $owner;
         });
