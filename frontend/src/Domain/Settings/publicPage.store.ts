@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { fetchBookingOptions, fetchPublicPage } from './settings.api'
+import { fetchBrand, type Brand } from '@/Domain/Tenant/brand.api'
 import { DEFAULT_THEME } from './settings.defaults'
 import type { PublicPage, ScheduleSettings } from './settings.model'
 import { ApiError } from '@/http/apiError'
@@ -31,6 +32,8 @@ export const usePublicPageStore = defineStore('publicPage', () => {
   const page = ref<PublicPage | null>(null)
   const bookingOptions = ref<ScheduleSettings | null>(null)
   const status = ref<LoadStatus>(LoadStatus.Idle)
+  /** The brand whose link is open (/{brand}), with its units: the picker and "the other units" in the booking. */
+  const brand = ref<Brand | null>(null)
 
   const theme = computed(() => page.value?.theme ?? DEFAULT_THEME)
 
@@ -61,5 +64,24 @@ export const usePublicPageStore = defineStore('publicPage', () => {
     return load(current)
   }
 
-  return { slug, page, bookingOptions, status, theme, load, reload }
+  /** The units of the brand link; on failure the page simply shows without the picker. */
+  async function loadBrand(brandSlug: string): Promise<void> {
+    if (brand.value?.slug === brandSlug) return
+    try {
+      brand.value = await fetchBrand(brandSlug)
+    } catch {
+      brand.value = null
+    }
+  }
+
+  /** Whether a slug is one of the units of the brand that is open (a picked unit must be one of them). */
+  function isBrandUnit(unitSlug: string): boolean {
+    return brand.value?.units.some((unit) => unit.slug === unitSlug) ?? false
+  }
+
+  function forgetBrand(): void {
+    brand.value = null
+  }
+
+  return { slug, page, bookingOptions, status, theme, brand, load, reload, loadBrand, isBrandUnit, forgetBrand }
 })

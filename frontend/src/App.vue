@@ -7,9 +7,11 @@ import { useI18n } from 'vue-i18n'
 import { useConsentStore } from '@/Legal/consent.store'
 import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
+import { isTeamBarber } from '@/Domain/Identity/roles'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
+import { useUnitStore } from '@/Domain/Tenant/unit.store'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
 import { leaveTo } from '@/composables/useQueryOverlay'
@@ -29,6 +31,7 @@ const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const publicPageStore = usePublicPageStore()
 const tenantStore = useTenantStore()
+const unitStore = useUnitStore()
 const { visitorMode } = useVisitorMode()
 
 // Public pages use the theme of the barbershop being visited (visitors may switch light/dark);
@@ -38,10 +41,11 @@ watchEffect(() => applyThemeToDocument(pageTheme.value, route.meta.isPublic ? vi
 provideButtonStyle(computed(() => pageTheme.value.buttonStyle))
 
 // The dashboard pages need the barber's settings (name, photo, theme, services).
+// (A barber of the team never reads the settings: they hold prices and costs, and are the owner's.)
 watch(
-  () => route.meta.requiresAuth,
-  (requiresAuth) => {
-    if (requiresAuth) void settingsStore.ensureLoaded()
+  () => [route.meta.requiresAuth, authStore.user?.role] as const,
+  ([requiresAuth]) => {
+    if (requiresAuth && !isTeamBarber(authStore.user)) void settingsStore.ensureLoaded()
   },
   { immediate: true },
 )
@@ -51,6 +55,7 @@ watch(
     if (!user) {
       settingsStore.clear()
       tenantStore.clear()
+      unitStore.forget()
     }
   },
 )
@@ -84,8 +89,8 @@ watch(
 function closeBooking(): void {
   bookingStore.closeModal()
   // Back to the page it was opened from, or (a shared /agendar link) to the page under it, without leaving the app.
-  // From the client area (/<slug>/account/book), back to /<slug>/account.
-  if (route.meta.openBooking) leaveTo(router, route.path.replace(/\/(agendar|book)\/?$/, ''))
+  // From the client area (/<slug>/account/book), back to /<slug>/account. The query stays (?unidade= on a brand link).
+  if (route.meta.openBooking) leaveTo(router, route.fullPath.replace(/\/(agendar|book)\/?(?=\?|#|$)/, ''))
 }
 </script>
 

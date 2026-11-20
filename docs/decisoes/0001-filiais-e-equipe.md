@@ -1,6 +1,6 @@
 # 0001. Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão)
 
-- **Status:** Decidido
+- **Status:** Em execução
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-17. Base de 15/11, com as respostas do dono de 17/11.
 - **Origem:** chat do arquiteto (conversas com o dono de 29/10, 15/11, 16/11 e 17/11)
@@ -95,7 +95,7 @@ desenvolvimento toda uma estrutura e depois o refinamento dos módulos."
 ## 4. Como aplicar
 Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **estrutura** pronta; os outros passos usam e refinam.
 
-- [ ] **P1 — Organização e unidades.**
+- [x] **P1 — Organização e unidades.**
   - **Dados:** tabela `organizations` (`id`, `owner_user_id`, `type` = `individual`|`multi_unit`, `name`, `slug` único e reservado como os slugs de tenant). Em `tenants`, `organization_id` e `is_main`. Em `users`, `organization_id`.
   - **Migração dos dados atuais:** uma organização `individual` por tenant, com o tenant como `is_main = true`, sem mudar nenhum slug.
   - **Backend:**
@@ -230,3 +230,152 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-20 — execução 4
+- **Feito: P3 no frontend.**
+  - **Dona:**
+    - "Minha equipe" em `/painel/equipe`, com o seletor de unidade no topo;
+    - convida pelo nome e e-mail, reenvia o convite e liga ou desliga o acesso;
+    - liga as 3 chaves ("Ver preços e valores", "Ver a própria comissão", "Ver a agenda de toda a unidade");
+    - a linha dela mesma não tem chaves, porque ela não pode se desligar.
+  - **Entrada no painel da dona:** "+ Adicionar barbeiro" enquanto a unidade tem 1 barbeiro, e "Minha equipe (n)" a partir do 2º.
+  - **Convite:** `/equipe/convite?token=…` cria a senha, pede o aceite dos termos e entra no painel. Convite usado ou vencido mostra a mensagem certa.
+  - **Barbeiro da equipe:**
+    - o `/painel` dele tem só a agenda do dia e os pedidos para responder;
+    - nenhuma chamada a finanças ou configurações;
+    - histórico, despesas, configurações e equipe levam de volta ao `/painel`;
+    - sem valores, o cartão mostra vazio em vez de "R$ 0,00".
+  - **Slugs reservados:** `equipe` e `brand` (no frontend e no backend).
+  - **Evidência:**
+    - `frontend/src/Domain/Team/__tests__/Team.test.ts`: 6 testes (convidar e ligar uma chave, e-mail repetido, aceitar o convite e entrar, convite vencido, painel do barbeiro sem finanças nem configurações, rota da dona redireciona o barbeiro);
+    - 395 testes no frontend e 289 no backend passaram, mais o build;
+    - commit desta execução: `feat(team): "Minha equipe"...`.
+- **Já estava aplicado:** P1, P2 (sem o visual do Figma) e o backend do P3.
+- **Pendente:**
+  - **Aceite do P3 "o barbeiro não lê dados de outro barbeiro":** depende do `booking_requests.staff_id` (P4). Por isso o P3 continua `[ ]`.
+  - **P2, o visual do Figma.**
+  - **P4 a P6.** O próximo é o P4 (agenda por barbeiro).
+- **Perguntas para o dono/arquiteto:** as das execuções 1 a 3 continuam abertas. O branch ainda não foi para a `main`.
+- **Riscos ou desvios:**
+  - O barbeiro conclui e responde pedidos pelo painel dele, porque as rotas da agenda já aceitavam. A regra "só os próprios" chega com o P4.
+  - Ele ainda não tem o "Desfazer", porque a reabertura no fechamento do período é do P5.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
+### 2026-11-19 — execução 3
+- **Feito: P3, equipe — só o backend** (o passo é grande; o frontend fica para a próxima execução).
+  - **Dados:**
+    - domínio novo `Team`, com `staff` (um barbeiro por unidade, `user_id` nulo até aceitar o convite);
+    - `staff_permissions`, com `see_prices`, `see_own_commission` e `see_unit_agenda`, todas desligadas;
+    - `staff_invitations`, onde só o hash do token é guardado, com uso único e validade de 7 dias.
+  - **Migração:** o dono de cada barbearia existente virou o primeiro barbeiro dela. O cadastro novo faz o mesmo.
+  - **Rotas (só a dona):**
+    - `GET` e `POST /api/team/staff` (lista e convida);
+    - `PUT /api/team/staff/{id}` (liga ou desliga e ajusta as 3 chaves);
+    - `POST /api/team/staff/{id}/invitation` (reenvia o convite e invalida os anteriores).
+    - Sem limite de barbeiros.
+  - **Convite:** `POST /api/team/invitations/accept` (público, `throttle:login`) recebe o token, a senha e o aceite dos termos.
+    - Cria o login do barbeiro (papel `barber`) na unidade que convidou e já abre a sessão.
+    - O link do e-mail é `/equipe/convite?token=…`.
+  - **Papéis verificados:** o middleware `role.owner` protege finanças, configurações, produtos, avaliações, conta, unidades e equipe. O barbeiro recebe 403 `OWNER_ONLY`.
+  - **Valores:** sem `see_prices`, nenhuma chave `*_in_cents` sai da API para o barbeiro, em qualquer rota. O corte é feito na resposta.
+  - **Desligar um barbeiro** encerra todas as sessões dele na hora, e o login de quem está desligado é recusado (`STAFF_INACTIVE`).
+  - **LGPD:** a exportação da barbearia inclui a equipe. A exclusão já levava a equipe junto, porque tudo é apagado em cascata com a unidade.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/Team/Tests/Feature/TeamTest.php`: 7 testes (convite e aceite; uso único e validade; sem valores na resposta sem `see_prices` e com valores com ela; 403 nas áreas da dona; desligar encerra a sessão e bloqueia o login; uma unidade não vê a equipe de outra; a dona não se desliga e não convida o mesmo e-mail duas vezes);
+    - `backend/src/Domain/Team/Tests/Feature/TeamMigrationTest.php` (migração com dados antigos);
+    - `SignUpTest` (o dono vira barbeiro);
+    - 289 testes no total, o `ArchitectureTest` incluído;
+    - commit `cba9d67`.
+- **Já estava aplicado:** P1 e P2 (execuções 1 e 2).
+- **Pendente:**
+  - **P3 no frontend:**
+    - "Minha equipe" (a partir do 2º barbeiro, ou pelo botão "Adicionar barbeiro"), com a lista, o convite, o ligar e desligar e as 3 chaves;
+    - a tela `/equipe/convite` para aceitar;
+    - o painel do barbeiro mostrando só o que as chaves permitem.
+    - **Até essa tela existir, não mande convites de verdade:** o link do e-mail ainda não abre nada.
+  - **"O barbeiro não lê dados de outro barbeiro"** (aceite do P3): depende do `booking_requests.staff_id`, que é do P4. Hoje o barbeiro vê a agenda da unidade inteira, sem valores. Fica provado no P4, junto com `see_unit_agenda`.
+  - **P4 a P6.**
+- **Perguntas para o dono/arquiteto:**
+  1. Continuam abertas as perguntas das execuções 1 e 2 (o botão "Nova filial", o assistente na filial nova, a exclusão da matriz e o que é o "Quem somos").
+  2. **Filial nova sem barbeiro:** "Toda unidade tem pelo menos um barbeiro", mas a dona é barbeira só da matriz, e "cada barbeiro pertence a uma filial só". Uma filial nova nasce sem ninguém até a dona convidar alguém. Está certo?
+  3. **Barbeiro desligado:** tirei as sessões e o login dele. Os atendimentos e o histórico dele ficam (nada é apagado). Confirmar.
+- **Riscos ou desvios:**
+  - O barbeiro agora recebe 403 nas configurações, inclusive na leitura (`GET /api/settings` traz preços e custos).
+  - A tela do barbeiro do P3 vai precisar de uma leitura própria, sem valores.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
+### 2026-11-18 — execução 2
+- **Feito: P2, link da marca com select** (faltou só o visual do Figma; ver "Pendente").
+  - **Backend:**
+    - `GET /api/public/brand/{slug}` lista as unidades ativas da marca, com a matriz primeiro e o nome, a foto e o endereço de cada uma;
+    - a rota tem `throttle:public`, ETag e cache por marca de 5 min, esquecido quando uma unidade é criada;
+    - `GET /api/public/{slug}` ganhou `brand_slug`, preenchido só na matriz de uma marca com filiais;
+    - `brand` virou um slug reservado.
+  - **Frontend:**
+    - na página da matriz de uma marca com filiais aparece o select "Unidade", com o endereço da unidade escolhida;
+    - trocar no select mostra a página da unidade no lugar (`?unidade=<slug>`), sem sair da página nem recarregar;
+    - um slug que não é unidade da marca é ignorado;
+    - "Agendar" e "Sobre" levam a unidade escolhida, e fechar o agendamento também a mantém;
+    - o agendamento mostra a unidade de destino com o endereço, e as outras unidades com os endereços e um "Agendar nesta";
+    - o link próprio de cada filial (`/{slug-da-filial}`) e o barbeiro individual ficam como antes: sem select e sem chamada a mais.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/PublicPage/Tests/Feature/BrandLinkTest.php`: 4 testes (a lista da marca, o 404 do individual, só a matriz é link da marca e o agendamento vai para a filial escolhida);
+    - `QueryBudgetTest`: as mesmas consultas para 2 ou 6 unidades, e zero com cache;
+    - `frontend/src/BioLink/__tests__/BrandLink.test.ts`: 4 testes;
+    - todos os testes passaram (281 no backend, 389 no frontend);
+    - commits `af0abe6` (backend) e `165eb02` (frontend).
+- **Já estava aplicado:** P1 (execução 1).
+- **Pendente:**
+  - **P2, o visual pelo Figma "Linktree UI Kit":** não tenho acesso ao Figma neste ambiente. O select usa por enquanto os componentes atuais (`SelectField`). Preciso das telas descritas no arquivo da decisão (layout, cores, tamanhos) ou de prints no repositório.
+  - **P3 a P6.**
+- **Perguntas para o dono/arquiteto:**
+  1. As 3 perguntas da execução 1 continuam abertas: onde fica o botão "Nova filial", se a filial nova passa pelo assistente e se excluir a conta na matriz apaga todas as filiais. Este branch ainda não foi para a `main`, então o chat do arquiteto não as viu. Basta fazer o merge para que ele leia esta seção.
+  2. **O que é o "Quem somos" que o select troca?** Fiz o select na página de links (`/{marca}`), e a página "Sobre" (`/{marca}/portfolio`) segue a unidade escolhida. Se "Quem somos" for só a página "Sobre", o select também deveria aparecer lá?
+- **Riscos ou desvios:**
+  - A mudança de nome, foto ou endereço de uma unidade aparece na lista da marca em até 5 minutos. O cache da marca só é apagado na hora quando uma unidade é criada.
+  - Trocar de unidade no select também troca o tema da página, porque cada unidade tem o seu.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
+### 2026-11-17 — execução 1
+- **Feito: P1, organização e unidades.**
+  - **Dados:**
+    - tabela `organizations` (dona, tipo, nome e slug);
+    - `tenants.organization_id` e `is_main`;
+    - `users.organization_id`.
+    - Cada barbearia existente virou uma organização `individual`, com ela mesma como matriz e o slug igual.
+  - **Unidade ativa:** o painel manda a unidade escolhida no cabeçalho `X-Unit`.
+    - Só a dona da organização abre outra unidade, e só uma das unidades dela. O resto dá 403 `UNIT_FORBIDDEN`.
+    - Sem o cabeçalho, vale a unidade do próprio usuário, que para a dona é a matriz.
+  - **Rotas:**
+    - `GET /api/organization/units` lista as unidades: todas para a dona, só a própria para os outros.
+    - `POST /api/organization/units` cria a filial, só para a dona (`ORGANIZATION_OWNER_ONLY` para os outros). Recebe nome, slug e endereço, e pode copiar uma vez as configurações da matriz.
+    - A 2ª unidade muda a organização para `multi_unit`.
+    - O slug da filial não pode repetir o de nenhuma unidade nem o de nenhuma marca.
+  - **Frontend:** o seletor "Unidade" fica no topo do painel, do histórico, das despesas e das configurações, e só aparece para `multi_unit`.
+    - A troca guarda a unidade no aparelho e recarrega o painel.
+    - Chamadas públicas e da área do cliente nunca mandam `X-Unit`.
+    - Sair da conta esquece a unidade.
+  - **Ajustes para não quebrar com filiais:**
+    - excluir a conta na matriz apaga a marca inteira; numa filial, apaga só a filial;
+    - o CSV do histórico por e-mail funciona para uma filial da dona;
+    - o link de entrada lembrado no aparelho continua sendo o da unidade da própria dona.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/Units/Tests/Feature/UnitsTest.php`: 8 testes, incluindo isolamento (as configurações da matriz e da filial não se misturam), 403 de outra organização, só a dona cria e abre unidades, slug ocupado ou reservado e exclusão;
+    - `backend/src/Domain/Tenant/Tests/Feature/OrganizationsMigrationTest.php`: migração com dados antigos;
+    - `SignUpTest`: o cadastro cria a organização com a dona;
+    - `frontend/src/Domain/Tenant/__tests__/UnitPicker.test.ts`: 4 testes;
+    - os 267 testes de backend e os 381 de frontend que já existiam passaram sem mudança, o `ArchitectureTest` incluído;
+    - commits `bafdc2d` (backend) e `e385368` (frontend).
+- **Já estava aplicado:** nada desta decisão.
+- **Pendente:** P2 a P6, na ordem. O próximo é o P2 (link da marca com select).
+- **Perguntas para o dono/arquiteto:**
+  1. **Onde a dona cria a filial na tela?** O P1 pede a rota de criar filial e o seletor, mas não diz onde fica o botão "Nova filial". O barbeiro individual "não vê nada de filiais", e o seletor só aparece a partir da 2ª unidade, então hoje a 1ª filial só pode ser criada pela API. Sugestões: um item em Configurações, ou um "Adicionar unidade" no fim do seletor junto de um link discreto para o individual.
+  2. **A filial nova passa pelo assistente de boas-vindas?** Fiz assim, como num cadastro novo, para conferir WhatsApp e serviços. Confirmar.
+  3. **Excluir a conta na matriz apaga todas as filiais.** Escolhi assim para não deixar filiais sem dona. A outra opção seria recusar enquanto houver filial. Confirmar.
+- **Riscos ou desvios:**
+  - **A cópia das configurações da matriz não leva as imagens** (foto, capa e fotos do portfólio), porque os arquivos são de cada unidade. A dona sobe as imagens de novo na filial.
+  - **Ponto no mapa:** sem as coordenadas enviadas, o endereço da filial é localizado pelo mesmo serviço das configurações. Se o serviço não achar, fica sem ponto no mapa, como hoje.
+  - **Avisos no celular da dona:** continuam valendo só na unidade em que ela os ativou. O "push por usuário" é o P4.
+  - **Banco:** no teste da migração (SQLite), as chaves estrangeiras ficam desligadas durante a recriação da tabela. Em produção (MySQL), a coluna entra sem recriar a tabela.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+

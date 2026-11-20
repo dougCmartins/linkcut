@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandOtherUnits from '@/Domain/Tenant/BrandOtherUnits.vue'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -287,6 +288,8 @@ onBeforeUnmount(() => {
           </svg>
         </button>
       </header>
+
+      <BrandOtherUnits v-if="!submittedSummary" />
 
       <BookingSuccess
         v-if="submittedSummary"

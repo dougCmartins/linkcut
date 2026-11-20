@@ -229,6 +229,8 @@ export interface PublicPage {
   theme: ThemeSettings
   rating: PublicRating
   featuredReviews: FeaturedReview[]
+  /** Set on the main unit of a brand with branches (docs/decisoes/0001 P2): the page shows the branch picker. */
+  brandSlug: string | null
 }
 
 export function imageUrl(source: ImageSource): string {

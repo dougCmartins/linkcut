@@ -19,6 +19,8 @@ final class TenantDataMapper
             active: $tenant->active,
             timezone: $tenant->timezone,
             onboarded: $tenant->onboarded_at !== null,
+            organization_id: $tenant->organization_id,
+            is_main: $tenant->is_main ?? true,
         );
     }
 }

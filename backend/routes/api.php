@@ -7,8 +7,9 @@ require base_path('src/Domain/Identity/Routes/api.php');
 require base_path('src/Domain/Orchestrator/SignIn/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Onboarding/Routes/api.php');
 require base_path('src/Domain/Tenant/Routes/api.php');
-require base_path('src/Domain/Settings/Routes/api.php');
+// Before Settings: /public/brand/{slug} must win over /public/{slug}/<page>.
 require base_path('src/Domain/Orchestrator/PublicPage/Routes/api.php');
+require base_path('src/Domain/Settings/Routes/api.php');
 require base_path('src/Domain/Finance/Routes/api.php');
 require base_path('src/Domain/Schedule/Routes/api.php');
 require base_path('src/Domain/Orchestrator/PublicBooking/Routes/api.php');
@@ -22,3 +23,6 @@ require base_path('src/Domain/Orchestrator/BarbershopAccount/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Review/Routes/api.php');
 require base_path('src/Domain/Orchestrator/HistoryReport/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Catalog/Routes/api.php');
+require base_path('src/Domain/Orchestrator/Units/Routes/api.php');
+require base_path('src/Domain/Team/Routes/api.php');
+require base_path('src/Domain/Orchestrator/Team/Routes/api.php');

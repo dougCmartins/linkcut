@@ -11,12 +11,13 @@ import WorkGallery from './WorkGallery.vue'
 import StickyBookingBar from './StickyBookingBar.vue'
 import { useQueryOverlay } from '@/composables/useQueryOverlay'
 import PublicPageStatus from '@/Domain/Settings/PublicPageStatus.vue'
-import { usePublicPage } from '@/Domain/Settings/usePublicPage'
+import { usePublicLinks, usePublicPage } from '@/Domain/Settings/usePublicPage'
 import ReviewCarousel from '@/Domain/Review/ReviewCarousel.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const publicPage = usePublicPage()
+const linkTo = usePublicLinks()
 
 const name = computed(() => publicPage.page?.profile.name ?? '')
 const portfolio = computed(() => publicPage.page?.portfolio)
@@ -38,7 +39,7 @@ const featuredReviews = computed(() => publicPage.page?.featuredReviews ?? [])
       <SmartImage :src="portfolio.coverUrl" :alt="t('portfolio.coverAlt', { name })" class="size-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-page" aria-hidden="true" />
       <RouterLink
-        :to="`/${publicPage.slug}`"
+        :to="linkTo()"
         :aria-label="t('portfolio.back')"
         class="absolute top-4 left-4 flex size-10 items-center justify-center rounded-full bg-surface/80 text-ink ring-1 ring-line shadow-soft backdrop-blur"
       >
@@ -64,6 +65,6 @@ const featuredReviews = computed(() => publicPage.page?.featuredReviews ?? [])
       <PrivacyLinks />
     </div>
 
-    <StickyBookingBar @book="router.push(`/${publicPage.slug}/portfolio/agendar`)" />
+    <StickyBookingBar @book="router.push(linkTo('/portfolio/agendar'))" />
   </main>
 </template>

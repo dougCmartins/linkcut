@@ -39,7 +39,7 @@ final class UpdateProfileSettings
 
         DB::transaction(function () use ($data, $point): void {
             ProfileSettings::query()->firstOrFail()->update([
-                ...$this->addressColumns($data->address),
+                ...$data->address->columns(),
                 'latitude' => $point['latitude'] ?? null,
                 'longitude' => $point['longitude'] ?? null,
                 'name' => $data->name,
@@ -89,26 +89,12 @@ final class UpdateProfileSettings
         if ($address->latitude !== null && $address->longitude !== null) {
             return ['latitude' => $address->latitude, 'longitude' => $address->longitude];
         }
-        $unchanged = array_diff_assoc($this->addressColumns($address), $current->only(array_keys($this->addressColumns($address)))) === [];
+        $unchanged = array_diff_assoc($address->columns(), $current->only(array_keys($address->columns()))) === [];
         if ($unchanged && $current->latitude !== null && $current->longitude !== null) {
             return ['latitude' => $current->latitude, 'longitude' => $current->longitude];
         }
 
         return $this->geocoder->locate($address);
-    }
-
-    /** @return array<string, string|null> */
-    private function addressColumns(AddressInputData $address): array
-    {
-        return [
-            'address_zip_code' => $address->zip_code,
-            'address_street' => trim($address->street),
-            'address_number' => trim($address->number),
-            'address_complement' => $address->complement ? trim($address->complement) : null,
-            'address_district' => trim($address->district),
-            'address_city' => trim($address->city),
-            'address_state' => $address->state,
-        ];
     }
 
     private function ensureValid(UpdateProfileSettingsData $data): void

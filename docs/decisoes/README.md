@@ -28,4 +28,4 @@ Decisões de arquitetura grandes continuam virando ADR em `docs/adr/`. O arquivo
 ## Decisões
 | # | Decisão | Status | Branch / PR |
 |---|---|---|---|
-| [0001](0001-filiais-e-equipe.md) | Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão) | Decidido | — |
+| [0001](0001-filiais-e-equipe.md) | Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão) | Em execução (P1 feito; P2 sem o visual do Figma; P3 feito, exceto o aceite que depende do P4) | `claude/charming-euler-dh3nfa` |

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UnitPicker from '@/Domain/Tenant/UnitPicker.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -103,6 +104,7 @@ onMounted(() => store.load())
 
 <template>
   <main class="mx-auto w-full max-w-2xl px-4 pt-6 pb-28">
+    <UnitPicker />
     <header class="flex items-center gap-3">
       <RouterLink
         to="/painel"

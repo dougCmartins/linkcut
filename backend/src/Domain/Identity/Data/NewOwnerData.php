@@ -16,5 +16,7 @@ final class NewOwnerData extends Data
         public readonly string $password,
         /** Version of the Terms of Use and Privacy Policy the owner accepted (config legal.terms_version). */
         public readonly string $terms_version,
+        /** The brand of the barbershop (docs/adr/0002). */
+        public readonly ?int $organization_id = null,
     ) {}
 }

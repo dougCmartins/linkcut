@@ -27,6 +27,22 @@ final class UserFactory extends Factory
         ];
     }
 
+    /** The user belongs to the organization of their unit; an owner without organization owner becomes it. */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $tenant = Tenant::query()->with('organization')->find($user->tenant_id);
+            $organization = $tenant?->organization;
+            if (! $organization) {
+                return;
+            }
+            $user->forceFill(['organization_id' => $organization->id])->save();
+            if ($user->role === UserRole::Owner && $organization->owner_user_id === null) {
+                $organization->forceFill(['owner_user_id' => $user->id])->save();
+            }
+        });
+    }
+
     public function withoutPhone(): static
     {
         return $this->state(['phone' => null]);

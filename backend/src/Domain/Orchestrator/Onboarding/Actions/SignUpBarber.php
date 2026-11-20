@@ -15,15 +15,19 @@ use Domain\Identity\Data\VerifiedUserData;
 use Domain\Orchestrator\Onboarding\Data\SignUpData;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
+use Domain\Team\Actions\CreateOwnerStaff;
+use Domain\Team\Data\OwnerStaffData;
+use Domain\Tenant\Actions\AssignOrganizationOwner;
 use Domain\Tenant\Actions\CreateTenant;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Data\NewTenantData;
+use Domain\Tenant\Data\OrganizationOwnerData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Open sign-up, across domains: the code proves the e-mail (Identity) → in one transaction the barbershop (Tenant),
- * its owner (Identity) and its default settings with the barbershop name (Settings) → a session (Identity).
+ * Open sign-up, across domains: the code proves the e-mail (Identity) → in one transaction the barbershop and its
+ * individual organization (Tenant), its owner (Identity, also the owner of the organization) and its default settings with the barbershop name (Settings) → a session (Identity).
  * The e-mail was just confirmed, so this first session needs no 2FA.
  */
 final class SignUpBarber
@@ -32,7 +36,9 @@ final class SignUpBarber
         private readonly ConsumeSignUpCode $consumeCode,
         private readonly CreateTenant $createTenant,
         private readonly CreateOwner $createOwner,
+        private readonly AssignOrganizationOwner $assignOrganizationOwner,
         private readonly CreateDefaultSettings $createDefaultSettings,
+        private readonly CreateOwnerStaff $createOwnerStaff,
         private readonly CurrentTenant $currentTenant,
         private readonly IssueSession $issueSession,
     ) {}
@@ -49,11 +55,14 @@ final class SignUpBarber
                 email: $data->email,
                 password: $data->password,
                 terms_version: (string) config('legal.terms_version'),
+                organization_id: $tenant->organization_id,
             ));
-            $this->currentTenant->run(
-                $tenant->id,
-                fn () => $this->createDefaultSettings->handle(new DefaultSettingsData(name: trim($data->barbershop_name))),
-            );
+            $this->assignOrganizationOwner->handle(new OrganizationOwnerData(organization_id: (int) $tenant->organization_id, user_id: $owner->user_id));
+            $this->currentTenant->run($tenant->id, function () use ($data, $owner): void {
+                $this->createDefaultSettings->handle(new DefaultSettingsData(name: trim($data->barbershop_name)));
+                // Every unit has at least one barber: its owner (docs/decisoes/0001 P3).
+                $this->createOwnerStaff->handle(new OwnerStaffData(user_id: $owner->user_id, name: $data->name, email: $data->email));
+            });
 
             return $owner;
         });

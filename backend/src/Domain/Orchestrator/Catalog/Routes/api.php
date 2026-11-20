@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Domain\Orchestrator\Catalog\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:api', 'tenant'])->group(function (): void {
+Route::middleware(['auth:api', 'tenant', 'role.owner'])->group(function (): void {
     Route::get('products', [ProductController::class, 'index']);
     Route::post('products', [ProductController::class, 'store']);
     // Registered before {id}. Otherwise "order" is read as a product id.

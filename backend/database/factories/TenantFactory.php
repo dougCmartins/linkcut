@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -23,6 +24,24 @@ final class TenantFactory extends Factory
             'active' => true,
             'onboarded_at' => now(),
         ];
+    }
+
+    /** Like a sign-up: a tenant without an organization gets its own (individual, same name and slug). */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Tenant $tenant): void {
+            if ($tenant->organization_id !== null) {
+                return;
+            }
+            $organization = Organization::factory()->create(['name' => $tenant->name, 'slug' => $tenant->slug]);
+            $tenant->forceFill(['organization_id' => $organization->id, 'is_main' => true])->save();
+        });
+    }
+
+    /** A branch of an organization (not its main unit). */
+    public function branchOf(Organization $organization): static
+    {
+        return $this->state(['organization_id' => $organization->id, 'is_main' => false]);
     }
 
     /** Just signed up: the wizard is not done yet. */
