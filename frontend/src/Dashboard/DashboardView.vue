@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UnitPicker from '@/Domain/Tenant/UnitPicker.vue'
+import TeamEntry from '@/Domain/Team/TeamEntry.vue'
 import { computed, onMounted, ref } from 'vue'
 import { capitalize, formatLongDate, formatMonthName, toIsoDate } from '@/utils/date'
 import { useI18n } from 'vue-i18n'
@@ -189,6 +190,8 @@ async function undo(): Promise<void> {
         </svg>
       </button>
     </header>
+
+    <TeamEntry />
 
     <p
       v-if="isMissingAddress"

@@ -1,3 +1,4 @@
+import { isTeamBarber } from './roles'
 import type { RouteLocationRaw, Router } from 'vue-router'
 import { useAuthStore } from './auth.store'
 import { lastBarberSlug, useTenantStore } from '@/Domain/Tenant/tenant.store'
@@ -43,6 +44,9 @@ export function installAuthGuard(router: Router): void {
       if (tenant && !tenant.onboarded && to.name !== ONBOARDING_ROUTE) return { name: ONBOARDING_ROUTE }
       if (tenant?.onboarded && to.name === ONBOARDING_ROUTE) return HOME_AFTER_LOGIN
     }
+
+    // Finance, settings and the team are the owner's: a barber of the team goes back to their agenda.
+    if (to.meta.ownerOnly && isTeamBarber(auth.user)) return HOME_AFTER_LOGIN
 
     // Signed in already: the entrance (/, /cadastrar, /entrar) goes on to the dashboard.
     if (to.meta.authMode && auth.hasValidAccess()) {

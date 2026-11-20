@@ -18,6 +18,8 @@ declare module 'vue-router' {
     openBooking?: boolean
     /** Barber-only page: needs a session (see Domain/Identity/auth.guard.ts). */
     requiresAuth?: boolean
+    /** The owner's page (finance, settings, team): a barber of the team goes back to /painel. */
+    ownerOnly?: boolean
     /** Client-area page: needs the client's session (see Domain/Client/client.guard.ts). */
     requiresClient?: boolean
     /** Client area inside a barbershop (/<slug>/account…): its own header and menu, no light/dark toggle. */
@@ -46,26 +48,39 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/painel',
     name: 'dashboard',
-    component: () => import('@/Dashboard/DashboardView.vue'),
+    component: () => import('@/Dashboard/PanelHomeView.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/painel/historico',
     name: 'history',
     component: () => import('@/Domain/Finance/History/HistoryView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, ownerOnly: true },
   },
   {
     path: '/painel/despesas',
     name: 'expenses',
     component: () => import('@/Domain/Finance/Expenses/ExpensesView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, ownerOnly: true },
   },
   {
     path: '/painel/configuracoes',
     name: 'settings',
     component: () => import('@/Domain/Settings/SettingsView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, ownerOnly: true },
+  },
+  // "Minha equipe" of the unit picked at the top (docs/decisoes/0001 P3).
+  {
+    path: '/painel/equipe',
+    name: 'team',
+    component: () => import('@/Domain/Team/TeamView.vue'),
+    meta: { requiresAuth: true, ownerOnly: true },
+  },
+  // The link of the team invitation e-mail: the barber creates a password and enters the dashboard.
+  {
+    path: '/equipe/convite',
+    name: 'team-invitation',
+    component: () => import('@/Domain/Team/AcceptInvitationView.vue'),
   },
   {
     path: '/painel/reviews',

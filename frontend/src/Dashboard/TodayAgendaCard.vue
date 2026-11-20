@@ -41,7 +41,11 @@ const remindUrl = computed(() => {
   const address = props.barbershopAddress ? ` ${t('dashboard.agenda.remindAddress', { address: props.barbershopAddress })}` : ''
   return buildWhatsappUrl(props.request.clientWhatsapp, `${greeting}${address}`)
 })
-const price = computed(() => formatBRL(props.request.completedPriceInCents ?? props.priceInCents ?? 0))
+// No value at all (a barber of the team without "ver preços"): nothing is shown, not R$ 0.
+const price = computed(() => {
+  const cents = props.request.completedPriceInCents ?? props.priceInCents
+  return cents == null ? '' : formatBRL(cents)
+})
 </script>
 
 <template>

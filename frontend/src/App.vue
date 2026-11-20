@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import { useConsentStore } from '@/Legal/consent.store'
 import { useBookingStore } from '@/Domain/Schedule/booking.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
+import { isTeamBarber } from '@/Domain/Identity/roles'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
@@ -40,10 +41,11 @@ watchEffect(() => applyThemeToDocument(pageTheme.value, route.meta.isPublic ? vi
 provideButtonStyle(computed(() => pageTheme.value.buttonStyle))
 
 // The dashboard pages need the barber's settings (name, photo, theme, services).
+// (A barber of the team never reads the settings: they hold prices and costs, and are the owner's.)
 watch(
-  () => route.meta.requiresAuth,
-  (requiresAuth) => {
-    if (requiresAuth) void settingsStore.ensureLoaded()
+  () => [route.meta.requiresAuth, authStore.user?.role] as const,
+  ([requiresAuth]) => {
+    if (requiresAuth && !isTeamBarber(authStore.user)) void settingsStore.ensureLoaded()
   },
   { immediate: true },
 )

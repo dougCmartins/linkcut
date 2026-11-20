@@ -35,6 +35,12 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.ProductOrderInvalid]: 'productOrderInvalid',
   [ApiErrorCode.ProductsLimitReached]: 'productsLimitReached',
   [ApiErrorCode.TenantNotFound]: 'tenantNotFound',
+  [ApiErrorCode.InvitationInvalid]: 'invitationInvalid',
+  [ApiErrorCode.StaffEmailTaken]: 'staffEmailTaken',
+  [ApiErrorCode.StaffNotFound]: 'staffNotFound',
+  [ApiErrorCode.StaffInactive]: 'staffInactive',
+  [ApiErrorCode.CannotDeactivateSelf]: 'cannotDeactivateSelf',
+  [ApiErrorCode.OwnerOnly]: 'ownerOnly',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'
