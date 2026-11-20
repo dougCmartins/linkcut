@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Middleware\AssignRequestContext;
 use Domain\Tenant\Exceptions\TenantMismatchException;
 use Domain\Tenant\Exceptions\TenantNotResolvedException;
+use Domain\Tenant\Exceptions\UnitForbiddenException;
 use Domain\Tenant\Middleware\ResolveTenant;
 use Domain\Tenant\Middleware\ResolveTenantFromSlug;
 use Illuminate\Auth\AuthenticationException;
@@ -55,7 +56,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // of Sentry and the error log. Tenant isolation errors are always reported (bug or attack).
         // Registered before Sentry, so returning false stops the report there too.
         $exceptions->report(function (DomainException $exception) {
-            $isTenantIsolationError = $exception instanceof TenantNotResolvedException || $exception instanceof TenantMismatchException;
+            $isTenantIsolationError = $exception instanceof TenantNotResolvedException
+                || $exception instanceof TenantMismatchException
+                || $exception instanceof UnitForbiddenException;
             if ($isTenantIsolationError) {
                 Log::channel('security')->error('tenant_isolation_error', ['code' => $exception->getErrorCode()]);
 

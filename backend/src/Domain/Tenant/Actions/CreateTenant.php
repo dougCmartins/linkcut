@@ -17,7 +17,7 @@ final class CreateTenant
 {
     public function handle(NewTenantData $data): TenantData
     {
-        if (! CheckSlugAvailability::isFree($data->slug)) {
+        if (! CheckSlugAvailability::isFree($data->slug, $data->organization_id)) {
             throw new SlugUnavailableException;
         }
         try {
