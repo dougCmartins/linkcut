@@ -231,6 +231,36 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
+### 2026-11-20 — execução 4
+- **Feito: P3 no frontend.**
+  - **Dona:**
+    - "Minha equipe" em `/painel/equipe`, com o seletor de unidade no topo;
+    - convida pelo nome e e-mail, reenvia o convite e liga ou desliga o acesso;
+    - liga as 3 chaves ("Ver preços e valores", "Ver a própria comissão", "Ver a agenda de toda a unidade");
+    - a linha dela mesma não tem chaves, porque ela não pode se desligar.
+  - **Entrada no painel da dona:** "+ Adicionar barbeiro" enquanto a unidade tem 1 barbeiro, e "Minha equipe (n)" a partir do 2º.
+  - **Convite:** `/equipe/convite?token=…` cria a senha, pede o aceite dos termos e entra no painel. Convite usado ou vencido mostra a mensagem certa.
+  - **Barbeiro da equipe:**
+    - o `/painel` dele tem só a agenda do dia e os pedidos para responder;
+    - nenhuma chamada a finanças ou configurações;
+    - histórico, despesas, configurações e equipe levam de volta ao `/painel`;
+    - sem valores, o cartão mostra vazio em vez de "R$ 0,00".
+  - **Slugs reservados:** `equipe` e `brand` (no frontend e no backend).
+  - **Evidência:**
+    - `frontend/src/Domain/Team/__tests__/Team.test.ts`: 6 testes (convidar e ligar uma chave, e-mail repetido, aceitar o convite e entrar, convite vencido, painel do barbeiro sem finanças nem configurações, rota da dona redireciona o barbeiro);
+    - 395 testes no frontend e 289 no backend passaram, mais o build;
+    - commit desta execução: `feat(team): "Minha equipe"...`.
+- **Já estava aplicado:** P1, P2 (sem o visual do Figma) e o backend do P3.
+- **Pendente:**
+  - **Aceite do P3 "o barbeiro não lê dados de outro barbeiro":** depende do `booking_requests.staff_id` (P4). Por isso o P3 continua `[ ]`.
+  - **P2, o visual do Figma.**
+  - **P4 a P6.** O próximo é o P4 (agenda por barbeiro).
+- **Perguntas para o dono/arquiteto:** as das execuções 1 a 3 continuam abertas. O branch ainda não foi para a `main`.
+- **Riscos ou desvios:**
+  - O barbeiro conclui e responde pedidos pelo painel dele, porque as rotas da agenda já aceitavam. A regra "só os próprios" chega com o P4.
+  - Ele ainda não tem o "Desfazer", porque a reabertura no fechamento do período é do P5.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
 ### 2026-11-19 — execução 3
 - **Feito: P3, equipe — só o backend** (o passo é grande; o frontend fica para a próxima execução).
   - **Dados:**
