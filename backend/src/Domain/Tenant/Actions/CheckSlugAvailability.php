@@ -9,17 +9,26 @@ use Domain\Tenant\Data\TenantSlugData;
 use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Domain\Tenant\Support\ReservedSlugs;
+use Illuminate\Support\Facades\DB;
 
 /** "linkcut.app/{slug}" is free? When not, suggests slug-2, slug-3… Checks tenants and organizations. */
 final class CheckSlugAvailability
 {
     private const MAX_SUFFIX = 99;
 
-    /** One query pair: the slug and every "<slug>-<n>" already taken; the suggestion is picked in memory. */
+    /** One query: the slug and every "<slug>-<n>" already taken in tenants or organizations. */
     public function handle(TenantSlugData $data): SlugAvailabilityData
     {
         $slug = $data->slug;
-        $taken = array_flip([...$this->takenSlugs($slug)]);
+        $like = addcslashes($slug, '%_\\').'-%';
+        $taken = array_flip(DB::query()
+            ->fromSub(
+                Tenant::query()->select('slug')->where('slug', $slug)->orWhere('slug', 'like', $like)
+                    ->unionAll(Organization::query()->select('slug')->where('slug', $slug)->orWhere('slug', 'like', $like)),
+                'taken_slugs',
+            )
+            ->pluck('slug')
+            ->all());
         $isFree = fn (string $candidate): bool => ! isset($taken[$candidate]) && ! ReservedSlugs::contains($candidate);
 
         $available = $isFree($slug);
@@ -51,23 +60,5 @@ final class CheckSlugAvailability
         }
 
         return ! $organizations->exists();
-    }
-
-    /** @return list<string> */
-    private function takenSlugs(string $slug): array
-    {
-        $like = addcslashes($slug, '%_\\').'-%';
-        $tenants = Tenant::query()
-            ->where('slug', $slug)
-            ->orWhere('slug', 'like', $like)
-            ->pluck('slug')
-            ->all();
-        $organizations = Organization::query()
-            ->where('slug', $slug)
-            ->orWhere('slug', 'like', $like)
-            ->pluck('slug')
-            ->all();
-
-        return array_values(array_unique([...$tenants, ...$organizations]));
     }
 }

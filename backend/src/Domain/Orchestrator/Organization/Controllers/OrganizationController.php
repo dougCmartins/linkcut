@@ -8,7 +8,6 @@ use Domain\Orchestrator\Organization\Actions\CreateUnit;
 use Domain\Orchestrator\Organization\Actions\ShowOrganization;
 use Domain\Orchestrator\Organization\Data\CreateUnitData;
 use Domain\Orchestrator\Organization\Data\OrganizationSummaryData;
-use Domain\Orchestrator\Organization\Data\UnitData;
 use Illuminate\Http\JsonResponse;
 
 final class OrganizationController
