@@ -1,3 +1,6 @@
 # Production secrets and backups stay on the server only.
 .env.production
 backups/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
