@@ -17,11 +17,18 @@ final class CreateTenant
 {
     public function handle(NewTenantData $data): TenantData
     {
-        if (! CheckSlugAvailability::isFree($data->slug)) {
+        if (! CheckSlugAvailability::isFree($data->slug, $data->organization_id)) {
             throw new SlugUnavailableException;
         }
         try {
-            $tenant = Tenant::query()->create(['name' => $data->name, 'slug' => $data->slug, 'active' => true, 'onboarded_at' => null]);
+            $tenant = Tenant::query()->create([
+                'organization_id' => $data->organization_id,
+                'is_main' => $data->is_main,
+                'name' => $data->name,
+                'slug' => $data->slug,
+                'active' => true,
+                'onboarded_at' => null,
+            ]);
         } catch (UniqueConstraintViolationException) {
             throw new SlugUnavailableException;
         }

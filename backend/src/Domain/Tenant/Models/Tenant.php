@@ -17,13 +17,17 @@ final class Tenant extends Model
     use HasFactory;
 
     /** The columns TenantData needs (lists select only these). */
-    public const DATA_COLUMNS = ['id', 'name', 'slug', 'active', 'timezone', 'onboarded_at'];
+    public const DATA_COLUMNS = ['id', 'organization_id', 'is_main', 'name', 'slug', 'active', 'timezone', 'onboarded_at'];
 
-    protected $fillable = ['name', 'slug', 'active', 'timezone', 'onboarded_at'];
+    protected $fillable = ['organization_id', 'is_main', 'name', 'slug', 'active', 'timezone', 'onboarded_at'];
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'onboarded_at' => 'immutable_datetime'];
+        return [
+            'active' => 'boolean',
+            'is_main' => 'boolean',
+            'onboarded_at' => 'immutable_datetime',
+        ];
     }
 
     protected static function newFactory(): TenantFactory

@@ -11,6 +11,7 @@ final class NewOwnerData extends Data
 {
     public function __construct(
         public readonly int $tenant_id,
+        public readonly int $organization_id,
         public readonly string $name,
         public readonly string $email,
         public readonly string $password,

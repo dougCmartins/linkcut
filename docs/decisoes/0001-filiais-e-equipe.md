@@ -1,6 +1,6 @@
 # 0001. Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão)
 
-- **Status:** Decidido
+- **Status:** Em execução
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-17. Base de 15/11, com as respostas do dono de 17/11.
 - **Origem:** chat do arquiteto (conversas com o dono de 29/10, 15/11, 16/11 e 17/11)
@@ -95,7 +95,7 @@ desenvolvimento toda uma estrutura e depois o refinamento dos módulos."
 ## 4. Como aplicar
 Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **estrutura** pronta; os outros passos usam e refinam.
 
-- [ ] **P1 — Organização e unidades.**
+- [x] **P1 — Organização e unidades.** (executado pelo Cursor, NÃO REVISADO)
   - **Dados:** tabela `organizations` (`id`, `owner_user_id`, `type` = `individual`|`multi_unit`, `name`, `slug` único e reservado como os slugs de tenant). Em `tenants`, `organization_id` e `is_main`. Em `users`, `organization_id`.
   - **Migração dos dados atuais:** uma organização `individual` por tenant, com o tenant como `is_main = true`, sem mudar nenhum slug.
   - **Backend:**
@@ -230,3 +230,10 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-20 — execução 1 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P1 completo (schema/backfill, middleware `X-Unit`, `GET/POST` organization/units com cópia opcional de settings, seletor no painel + header). Evidência: testes `BackfillOrganizationsTest`, `ResolveTenantTest`, `UnitIsolationTest`, `CreateUnitTest`; commits `055bc4d`, `31190a6`, `c330611`, `264f0aa` (+ fix slug budget).
+- **Pendente:** P2–P6; tela de criar filial no painel (só API nesta fatia).
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante.
+- **Riscos ou desvios:** `owner_user_id` fica nullable no insert (preenchido na mesma transação); cópia de settings zera ids de imagem (avatar/capa/fotos); `organization_id` NOT NULL só reforçado no MySQL (SQLite de teste deixa nullable após backfill); signup e factories passam a criar organização.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).

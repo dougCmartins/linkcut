@@ -15,9 +15,12 @@ use Domain\Identity\Data\VerifiedUserData;
 use Domain\Orchestrator\Onboarding\Data\SignUpData;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
+use Domain\Tenant\Actions\CreateOrganization;
 use Domain\Tenant\Actions\CreateTenant;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Data\NewOrganizationData;
 use Domain\Tenant\Data\NewTenantData;
+use Domain\Tenant\Models\Organization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -30,6 +33,7 @@ final class SignUpBarber
 {
     public function __construct(
         private readonly ConsumeSignUpCode $consumeCode,
+        private readonly CreateOrganization $createOrganization,
         private readonly CreateTenant $createTenant,
         private readonly CreateOwner $createOwner,
         private readonly CreateDefaultSettings $createDefaultSettings,
@@ -42,17 +46,26 @@ final class SignUpBarber
         $this->consumeCode->handle(new SignUpCodeCheckData(email: $data->email, code: $data->code));
 
         $owner = DB::transaction(function () use ($data): VerifiedUserData {
-            $tenant = $this->createTenant->handle(new NewTenantData(name: trim($data->barbershop_name), slug: $data->slug));
+            $name = trim($data->barbershop_name);
+            $organization = $this->createOrganization->handle(new NewOrganizationData(name: $name, slug: $data->slug));
+            $tenant = $this->createTenant->handle(new NewTenantData(
+                name: $name,
+                slug: $data->slug,
+                organization_id: $organization->id,
+                is_main: true,
+            ));
             $owner = $this->createOwner->handle(new NewOwnerData(
                 tenant_id: $tenant->id,
+                organization_id: $organization->id,
                 name: $data->name,
                 email: $data->email,
                 password: $data->password,
                 terms_version: (string) config('legal.terms_version'),
             ));
+            Organization::query()->whereKey($organization->id)->update(['owner_user_id' => $owner->user_id]);
             $this->currentTenant->run(
                 $tenant->id,
-                fn () => $this->createDefaultSettings->handle(new DefaultSettingsData(name: trim($data->barbershop_name))),
+                fn () => $this->createDefaultSettings->handle(new DefaultSettingsData(name: $name)),
             );
 
             return $owner;

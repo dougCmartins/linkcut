@@ -18,6 +18,7 @@ final class UserFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
+            'organization_id' => fn (array $attributes) => Tenant::query()->find($attributes['tenant_id'])?->organization_id,
             'role' => UserRole::Owner,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),

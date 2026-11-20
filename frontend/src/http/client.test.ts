@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { http, setHttpAuthHandlers } from './client'
+import { http, setHttpAuthHandlers, setHttpUnitIdProvider } from './client'
 import { ApiError } from './apiError'
 import { envelope, installFakeApi } from '@/utils/testFetch'
 
@@ -7,6 +7,7 @@ describe('http client', () => {
   afterEach(() => {
     setHttpAuthHandlers(null)
     setHttpAuthHandlers(null, 'client')
+    setHttpUnitIdProvider(null)
     vi.unstubAllGlobals()
     vi.unstubAllEnvs()
   })
@@ -23,6 +24,25 @@ describe('http client', () => {
     expect(response.data).toEqual({ id: 1 })
     expect(calls[0]?.headers).toMatchObject({ Accept: 'application/json', Authorization: 'Bearer token-1' })
     expect(calls[0]?.headers['X-Request-Id']).toBeTruthy()
+  })
+
+  it('sends X-Unit on barber requests when a unit is selected', async () => {
+    // Arrange
+    const { calls } = installFakeApi({
+      'GET /me': () => ({ status: 200, body: { id: 1 } }),
+      'GET /client/appointments': () => ({ status: 200, body: [] }),
+    })
+    setHttpAuthHandlers({ accessToken: () => 'token-1', refresh: vi.fn(), onSessionExpired: vi.fn() })
+    setHttpAuthHandlers({ accessToken: () => 'client-token', refresh: vi.fn(), onSessionExpired: vi.fn() }, 'client')
+    setHttpUnitIdProvider(() => 42)
+
+    // Act
+    await http('/me')
+    await http('/client/appointments', { auth: 'client' })
+
+    // Assert
+    expect(calls[0]?.headers['X-Unit']).toBe('42')
+    expect(calls[1]?.headers['X-Unit']).toBeUndefined()
   })
 
   it('keeps the client session apart: auth "client" sends the client token and refreshes it', async () => {
