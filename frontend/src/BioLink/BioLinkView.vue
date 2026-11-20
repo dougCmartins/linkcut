@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { usePageMeta } from '@/composables/usePageMeta'
+import { useBrandUnitSelect } from '@/composables/useBrandUnitSelect'
 import { computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import AvatarImage from '@/components/ui/AvatarImage.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import ProfileLinkIcon from '@/components/ui/ProfileLinkIcon.vue'
+import SelectField from '@/components/ui/SelectField.vue'
 import ShareButton from '@/components/ui/ShareButton.vue'
 import PrivacyLinks from '@/Legal/PrivacyLinks.vue'
 import SmartImage from '@/components/ui/SmartImage.vue'
@@ -17,9 +20,21 @@ import StarRating from '@/Domain/Review/StarRating.vue'
 import { buildWhatsappUrl } from '@/utils/phone'
 
 const { t } = useI18n()
+const route = useRoute()
 const publicPage = usePublicPage()
+const brandSlug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : null))
+const {
+  selectedUnitSlug,
+  showSelect,
+  unitOptions,
+  otherUnits,
+  selectUnit,
+} = useBrandUnitSelect(brandSlug, (unitSlug) => {
+  void publicPage.loadUnit(unitSlug)
+})
 
 const profile = computed(() => publicPage.page?.profile)
+const bookingSlug = computed(() => selectedUnitSlug.value || publicPage.slug || brandSlug.value || '')
 // The barbershop's name and bio in search results and in the preview when the link is shared.
 usePageMeta(
   () => profile.value?.name ?? '',
@@ -29,13 +44,25 @@ usePageMeta(
 const ShareSheet = defineAsyncComponent(() => import('@/components/ui/ShareSheet.vue'))
 // "?compartilhar=1": its own history entry, so the phone's back button closes the sheet, not the page.
 const share = useQueryOverlay('compartilhar')
-const pageUrl = computed(() => `${window.location.origin}/${publicPage.slug}`)
+const pageUrl = computed(() => `${window.location.origin}/${brandSlug.value ?? publicPage.slug ?? ''}`)
 const whatsappUrl = computed(() => (profile.value ? buildWhatsappUrl(profile.value.whatsappNumber, profile.value.whatsappMessage) : ''))
 const ratingAverage = computed(() => {
   const average = publicPage.page?.rating.average
   return average == null ? '' : formatAverage(average)
 })
 const ratingCount = computed(() => publicPage.page?.rating.count ?? 0)
+
+function formatUnitAddress(unit: { address: { street: string; number: string; district: string; city: string; state: string } | null }): string {
+  const address = unit.address
+  if (!address) return ''
+  return t('bioLink.unitAddress', {
+    street: address.street,
+    number: address.number,
+    district: address.district,
+    city: address.city,
+    state: address.state,
+  })
+}
 </script>
 
 <template>
@@ -70,15 +97,33 @@ const ratingCount = computed(() => publicPage.page?.rating.count ?? 0)
         <p v-if="profile.bio" class="mt-3 max-w-xs text-[15px] leading-relaxed text-muted break-words">{{ profile.bio }}</p>
       </header>
 
+      <div v-if="showSelect" class="mt-8 w-full space-y-4">
+        <SelectField
+          :model-value="selectedUnitSlug"
+          :label="t('bioLink.unitSelect')"
+          :options="unitOptions"
+          @update:model-value="selectUnit"
+        />
+        <section v-if="otherUnits.length" class="rounded-2xl bg-surface/70 px-4 py-3 text-left ring-1 ring-line" :aria-label="t('bioLink.otherUnits')">
+          <p class="text-xs font-semibold tracking-wide text-muted uppercase">{{ t('bioLink.otherUnits') }}</p>
+          <ul class="mt-2 space-y-2">
+            <li v-for="unit in otherUnits" :key="unit.slug" class="text-sm text-ink">
+              <span class="font-semibold">{{ unit.name }}</span>
+              <span v-if="formatUnitAddress(unit)" class="mt-0.5 block text-muted">{{ formatUnitAddress(unit) }}</span>
+            </li>
+          </ul>
+        </section>
+      </div>
+
       <nav class="mt-10 flex w-full flex-col gap-5">
-        <BaseButton variant="primary" size="lg" elevated block :to="`/${publicPage.slug}/agendar`">
+        <BaseButton variant="primary" size="lg" elevated block :to="`/${bookingSlug}/agendar`">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
             <rect x="3" y="5" width="18" height="16" rx="3" />
             <path d="M16 3v4M8 3v4M3 10h18" />
           </svg>
           {{ t('bioLink.book') }}
         </BaseButton>
-        <BaseButton variant="secondary" size="lg" elevated block :to="`/${publicPage.slug}/portfolio`">
+        <BaseButton variant="secondary" size="lg" elevated block :to="`/${bookingSlug}/portfolio`">
           {{ t('bioLink.portfolio') }}
         </BaseButton>
         <BaseButton variant="secondary" size="lg" elevated block :href="whatsappUrl">

@@ -119,6 +119,9 @@ export default {
     avatarAlt: 'Foto de {name}',
     socials: 'Redes sociais',
     poweredBy: 'Feito com LinkCut',
+    unitSelect: 'Unidade',
+    otherUnits: 'Outras unidades',
+    unitAddress: '{street}, {number} — {district}, {city}/{state}',
   },
   catalog: {
     title: 'Produtos',
