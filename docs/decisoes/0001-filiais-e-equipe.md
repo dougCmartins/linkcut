@@ -143,7 +143,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - o convite expira e não é reutilizável;
     - o individual não vê "Minha equipe" até adicionar alguém.
 
-- [ ] **P4 — Agenda por barbeiro.**
+- [ ] **P4 — Agenda por barbeiro.** (backend ok pelo Cursor, NÃO REVISADO; frontend pendente)
   - **Dados:**
     - `staff_services` (o que cada barbeiro faz; por padrão, todos os serviços da unidade);
     - `staff_business_hours`, que nasce como **cópia** dos horários da unidade, para a agenda não ficar fechada;
@@ -230,6 +230,14 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-20 — execução 4 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P4 backend — `staff_services` / `staff_business_hours` / `staff_time_blocks`, `booking_requests.staff_id` com backfill; disponibilidade/lock por barbeiro; “qualquer um” na mesma transação; reassign; complete por papel; push para barbeiro+dona; APIs `team/staff/{id}/hours|services|blocks` e `GET public/{slug}/staff`. Evidência: `StaffAgendaTest`, `BackfillStaffScheduleTest`, `ArchitectureTest`, `QueryBudgetTest` (budget booking 24); commit `fbfe547`.
+- **Já estava aplicado:** P1–P3 (Team/staff).
+- **Pendente:** frontend P4 (picker no agendamento, telas de hours/services/blocks, reassign na UI); P5–P6.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante nesta fatia.
+- **Riscos ou desvios:** fatia backend-only (passo grande); `CreateUnit` agora cria staff do dono na filial; QueryBudget do booking subiu de 17→24; falhas pré-existentes ShareCard/e-mails com `FRONTEND_URL` = LAN IP.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
 
 ### 2026-11-20 — execução 3 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P3 — domínio `Team` (`staff` / permissões / convites), papéis owner/barber, aceitar convite, redaction de preços na API, tela `/painel/equipe` e `/convite/:token`. Evidência: `BackfillOwnerStaffTest`, `TeamStaffTest`, vitest Team; commits `a9e0532`, `fe53eef`, `93eca75`.
