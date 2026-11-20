@@ -21,7 +21,14 @@ final class CreateTenant
             throw new SlugUnavailableException;
         }
         try {
-            $tenant = Tenant::query()->create(['name' => $data->name, 'slug' => $data->slug, 'active' => true, 'onboarded_at' => null]);
+            $tenant = Tenant::query()->create([
+                'organization_id' => $data->organization_id,
+                'is_main' => $data->is_main,
+                'name' => $data->name,
+                'slug' => $data->slug,
+                'active' => true,
+                'onboarded_at' => null,
+            ]);
         } catch (UniqueConstraintViolationException) {
             throw new SlugUnavailableException;
         }
