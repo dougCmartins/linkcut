@@ -124,7 +124,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - `QueryBudgetTest` da rota da marca;
     - o `/{slug}` antigo continua igual.
 
-- [ ] **P3 — Equipe: cadastro, papéis e permissões.** Esta é a estrutura base.
+- [x] **P3 — Equipe: cadastro, papéis e permissões.** (executado pelo Cursor, NÃO REVISADO; filtragem profunda agenda/comissão fica na P4/P5) Esta é a estrutura base.
   - **Dados:**
     - domínio novo `Team`, com a tabela `staff` (`tenant_id`, `user_id` nullable até aceitar o convite, `name`, `avatar`, `active`);
     - `staff_permissions` com 3 chaves booleanas por barbeiro: `see_prices`, `see_own_commission` e `see_unit_agenda`, todas **false** por padrão;
@@ -230,6 +230,14 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-20 — execução 3 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P3 — domínio `Team` (`staff` / permissões / convites), papéis owner/barber, aceitar convite, redaction de preços na API, tela `/painel/equipe` e `/convite/:token`. Evidência: `BackfillOwnerStaffTest`, `TeamStaffTest`, vitest Team; commits desta entrega.
+- **Já estava aplicado:** P1–P2.
+- **Pendente:** P4–P6; filtragem de agenda/comissão pelas chaves (só flags + UI nesta fatia); avatar upload.
+- **Perguntas para o dono/arquiteto:** 1) validade do convite em dias (provisório: 7)? 2) textos finais das 3 permissões?
+- **Riscos ou desvios:** TTL do convite = 7 dias em `config/team.php` até decisão; suite PHP com 7 falhas pré-existentes (ShareCard URL `localhost:5173` e afins).
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
 
 ### 2026-11-20 — execução 2 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P2 — `GET /api/public/brand/{slug}` com cache/throttle; BioLink com select de unidades (Quem somos sem reload; Agendar no slug da unidade; lista de outras unidades/endereços). Evidência: `PublicBrandTest`, QueryBudget da marca, testes BioLink; commits `d7b7dc4`, `bc47d91`.
