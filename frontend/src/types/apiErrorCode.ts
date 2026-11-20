@@ -37,6 +37,11 @@ export const ApiErrorCode = {
   ProductNotFound: 'PRODUCT_NOT_FOUND',
   ProductOrderInvalid: 'PRODUCT_ORDER_INVALID',
   ProductsLimitReached: 'PRODUCTS_LIMIT_REACHED',
+  OwnerRequired: 'OWNER_REQUIRED',
+  StaffInviteInvalid: 'STAFF_INVITE_INVALID',
+  StaffNotFound: 'STAFF_NOT_FOUND',
+  StaffForbidden: 'STAFF_FORBIDDEN',
+  CannotDeactivateSelf: 'CANNOT_DEACTIVATE_SELF',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

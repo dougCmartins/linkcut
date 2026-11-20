@@ -68,6 +68,18 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/painel/equipe',
+    name: 'team',
+    component: () => import('@/Domain/Team/TeamView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/convite/:token',
+    name: 'staff-invite',
+    component: () => import('@/Domain/Team/AcceptInviteView.vue'),
+    meta: { isPublic: true },
+  },
+  {
     path: '/painel/reviews',
     redirect: { name: 'settings', query: { aba: 'avaliacoes' } },
   },

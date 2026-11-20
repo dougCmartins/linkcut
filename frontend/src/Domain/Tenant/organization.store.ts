@@ -6,6 +6,7 @@ import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { useAgendaStore } from '@/Domain/Schedule/agenda.store'
 import { useMonthToDateStore } from '@/Domain/Finance/monthToDate.store'
+import { useTeamStore } from '@/Domain/Team/team.store'
 
 const UNIT_KEY = 'linkcut.active-unit'
 
@@ -70,9 +71,17 @@ export const useOrganizationStore = defineStore('organization', () => {
 
     const settings = useSettingsStore()
     const tenant = useTenantStore()
+    const team = useTeamStore()
     settings.clear()
     tenant.clear()
-    await Promise.all([settings.ensureLoaded(), tenant.ensureLoaded(), useAgendaStore().load(), useMonthToDateStore().load()])
+    team.clear()
+    await Promise.all([
+      settings.ensureLoaded(),
+      tenant.ensureLoaded(),
+      useAgendaStore().load(),
+      useMonthToDateStore().load(),
+      team.ensureLoaded().catch(() => undefined),
+    ])
   }
 
   function clear(): void {

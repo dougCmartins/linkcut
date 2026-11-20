@@ -11,6 +11,7 @@ import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { useOrganizationStore } from '@/Domain/Tenant/organization.store'
+import { useTeamStore } from '@/Domain/Team/team.store'
 import UnitSelector from '@/Domain/Tenant/UnitSelector.vue'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
@@ -32,6 +33,7 @@ const settingsStore = useSettingsStore()
 const publicPageStore = usePublicPageStore()
 const tenantStore = useTenantStore()
 const organizationStore = useOrganizationStore()
+const teamStore = useTeamStore()
 const { visitorMode } = useVisitorMode()
 
 // Public pages use the theme of the barbershop being visited (visitors may switch light/dark);
@@ -58,6 +60,7 @@ watch(
       settingsStore.clear()
       tenantStore.clear()
       organizationStore.clear()
+      teamStore.clear()
     }
   },
 )
