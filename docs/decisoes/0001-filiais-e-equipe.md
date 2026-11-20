@@ -232,7 +232,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
 ### 2026-11-20 — execução 3 (executado pelo Cursor, NÃO REVISADO)
-- **Feito:** P3 — domínio `Team` (`staff` / permissões / convites), papéis owner/barber, aceitar convite, redaction de preços na API, tela `/painel/equipe` e `/convite/:token`. Evidência: `BackfillOwnerStaffTest`, `TeamStaffTest`, vitest Team; commits desta entrega.
+- **Feito:** P3 — domínio `Team` (`staff` / permissões / convites), papéis owner/barber, aceitar convite, redaction de preços na API, tela `/painel/equipe` e `/convite/:token`. Evidência: `BackfillOwnerStaffTest`, `TeamStaffTest`, vitest Team; commits `d89db48`, `3bc2841`, `5437b4c`.
 - **Já estava aplicado:** P1–P2.
 - **Pendente:** P4–P6; filtragem de agenda/comissão pelas chaves (só flags + UI nesta fatia); avatar upload.
 - **Perguntas para o dono/arquiteto:** 1) validade do convite em dias (provisório: 7)? 2) textos finais das 3 permissões?
