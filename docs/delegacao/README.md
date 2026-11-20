@@ -4,6 +4,6 @@ Tarefas preparadas pela skill `linkcut-delegar-tarefas` para o Cursor executar e
 
 | Tarefa | Decisão / passo | Status |
 |---|---|---|
-| — | — | — |
+| [2026-11-20-0001-P1](2026-11-20-0001-P1.md) | 0001 / P1 Organização e unidades | Delegada |
 
 Status: `Delegada` → `Feita pelo Cursor (não revisada)` → `Revisada`.
