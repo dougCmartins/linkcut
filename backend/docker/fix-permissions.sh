@@ -17,6 +17,12 @@ if [ -d vendor ]; then
 fi
 
 chown -R "$uid:$gid" $targets
+
+# The app reads .env (and writes APP_KEY and the VAPID keys on the first start): it must belong to the host user.
+if [ -f .env ]; then
+  chown "$uid:$gid" .env
+  chmod 600 .env
+fi
 find $targets -type d -exec chmod 775 {} +
 find $targets -type f ! -name 'oauth-*.key' -exec chmod 664 {} +
 
