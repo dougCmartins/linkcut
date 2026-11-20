@@ -5,7 +5,7 @@ import { fetchPublicBrandOrNull, type BrandUnit, type PublicBrand } from '@/Doma
  * On a public /:slug page, loads the brand units when the slug is an organization with 2+ units.
  * Selecting a unit keeps the URL; the caller reloads the public page for the unit slug.
  */
-export function useBrandUnitSelect(routeSlug: Ref<string | null> | { value: string | null }, onSelectUnit: (unitSlug: string) => void) {
+export function useBrandUnitSelect(routeSlug: Ref<string | null>, onSelectUnit: (unitSlug: string) => void) {
   const brand = ref<PublicBrand | null>(null)
   const selectedUnitSlug = ref('')
 
@@ -19,7 +19,7 @@ export function useBrandUnitSelect(routeSlug: Ref<string | null> | { value: stri
 
   watch(
     routeSlug,
-    async (slug) => {
+    async (slug: string | null) => {
       brand.value = null
       selectedUnitSlug.value = ''
       if (!slug) return

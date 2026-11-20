@@ -28,4 +28,4 @@ Decisões de arquitetura grandes continuam virando ADR em `docs/adr/`. O arquivo
 ## Decisões
 | # | Decisão | Status | Branch / PR |
 |---|---|---|---|
-| [0001](0001-filiais-e-equipe.md) | Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão) | Em execução | `claude/practical-wozniak-auyi2x` (P1 pelo Cursor, não revisado) |
+| [0001](0001-filiais-e-equipe.md) | Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão) | Em execução | `claude/practical-wozniak-auyi2x` (P1–P2 pelo Cursor, não revisado) |

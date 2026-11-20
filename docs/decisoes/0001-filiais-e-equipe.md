@@ -111,7 +111,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - os dados de uma unidade não aparecem na outra (teste de isolamento);
     - o `ArchitectureTest` passa.
 
-- [ ] **P2 — Link da marca com select.**
+- [x] **P2 — Link da marca com select.** (executado pelo Cursor, NÃO REVISADO)
   - **Backend:** `GET /api/public/brand/{slug}` lista as unidades ativas (nome, slug, endereço, foto), com cache e `throttle:public`.
   - **Frontend:**
     - a página da marca usa o "Quem somos" da unidade escolhida no select;
@@ -230,6 +230,14 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-20 — execução 2 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P2 — `GET /api/public/brand/{slug}` com cache/throttle; BioLink com select de unidades (Quem somos sem reload; Agendar no slug da unidade; lista de outras unidades/endereços). Evidência: `PublicBrandTest`, QueryBudget da marca, testes BioLink; commits `d7b7dc4`, `bc47d91`.
+- **Já estava aplicado:** P1 (schema/organização/X-Unit).
+- **Pendente:** P3–P6; pixel-perfect Figma; tela de criar filial no painel.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante.
+- **Riscos ou desvios:** visual sem Figma (BioLink + SelectField); suite PHP com 7 falhas pré-existentes/flaky (ShareCard URL `localhost:5173`); vitest com timeouts fora do BioLink.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
 
 ### 2026-11-20 — execução 1 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P1 completo (schema/backfill, middleware `X-Unit`, `GET/POST` organization/units com cópia opcional de settings, seletor no painel + header). Evidência: testes `BackfillOrganizationsTest`, `ResolveTenantTest`, `UnitIsolationTest`, `CreateUnitTest`; commits `055bc4d`, `31190a6`, `c330611`, `264f0aa` (+ fix slug budget).
