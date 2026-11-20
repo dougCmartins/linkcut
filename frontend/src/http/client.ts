@@ -39,8 +39,15 @@ export type AuthRealm = 'barber' | 'client'
 
 const authHandlers: Record<AuthRealm, HttpAuthHandlers | null> = { barber: null, client: null }
 
+/** Active panel unit (X-Unit). Null skips the header so the API uses the main unit. */
+let unitIdProvider: (() => number | null) | null = null
+
 export function setHttpAuthHandlers(handlers: HttpAuthHandlers | null, realm: AuthRealm = 'barber'): void {
   authHandlers[realm] = handlers
+}
+
+export function setHttpUnitIdProvider(provider: (() => number | null) | null): void {
+  unitIdProvider = provider
 }
 
 function handlersFor(options: HttpOptions): HttpAuthHandlers | null {
@@ -62,6 +69,9 @@ async function send<T>(path: string, options: HttpOptions): Promise<HttpResponse
   if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
   const token = handlersFor(options)?.accessToken()
   if (token) headers.Authorization = `Bearer ${token}`
+  const realm = options.auth === 'client' ? 'client' : options.auth === false ? null : 'barber'
+  const unitId = realm === 'barber' ? unitIdProvider?.() : null
+  if (unitId) headers['X-Unit'] = String(unitId)
 
   let response: Response
   try {

@@ -245,6 +245,10 @@ export default {
     vacationTitle: 'Agenda fechada',
     dayUnavailable: 'indisponível',
   },
+  organization: {
+    unitLabel: 'Unidade',
+    mainUnit: '{name} (matriz)',
+  },
   dashboard: {
     greeting: 'Olá, {name}',
     period: 'Resumo deste mês',
