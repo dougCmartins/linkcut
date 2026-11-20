@@ -17,6 +17,7 @@ use Domain\Tenant\Enums\OrganizationType;
 use Domain\Tenant\Exceptions\TenantNotResolvedException;
 use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
+use Domain\Tenant\Support\PublicBrandCache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +28,7 @@ final class CreateUnit
         private readonly CreateDefaultSettings $createDefaultSettings,
         private readonly CloneUnitSettings $cloneUnitSettings,
         private readonly CurrentTenant $currentTenant,
+        private readonly PublicBrandCache $brandCache,
     ) {}
 
     public function handle(CreateUnitData $data): UnitData
@@ -78,6 +80,8 @@ final class CreateUnit
             if ($unitCount >= 2 && $organization->type !== OrganizationType::MultiUnit) {
                 $organization->update(['type' => OrganizationType::MultiUnit]);
             }
+
+            $this->brandCache->forget($organization->id);
 
             return new UnitData(
                 id: $tenant->id,

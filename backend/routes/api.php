@@ -8,6 +8,7 @@ require base_path('src/Domain/Orchestrator/SignIn/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Onboarding/Routes/api.php');
 require base_path('src/Domain/Tenant/Routes/api.php');
 require base_path('src/Domain/Settings/Routes/api.php');
+require base_path('src/Domain/Orchestrator/PublicBrand/Routes/api.php');
 require base_path('src/Domain/Orchestrator/PublicPage/Routes/api.php');
 require base_path('src/Domain/Finance/Routes/api.php');
 require base_path('src/Domain/Schedule/Routes/api.php');
