@@ -6,12 +6,16 @@ namespace Domain\Orchestrator\CompleteAppointment\Actions;
 
 use Domain\Finance\Actions\RemoveServiceRevenue;
 use Domain\Finance\Data\BookingRequestIdData as RevenueRequestIdData;
+use Domain\Identity\Enums\UserRole;
+use Domain\Identity\Models\User;
 use Domain\Schedule\Actions\ReopenBookingRequest;
 use Domain\Schedule\Data\BookingRequestData;
 use Domain\Schedule\Data\BookingRequestIdData;
+use Domain\Team\Exceptions\OwnerRequiredException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/** Undo of "Concluir": back to confirmed (Schedule) and out of the history (Finance), together. */
+/** Undo of "Concluir": owner only (until period closing in P5). */
 final class ReopenAppointment
 {
     public function __construct(
@@ -21,6 +25,12 @@ final class ReopenAppointment
 
     public function handle(BookingRequestIdData $id): BookingRequestData
     {
+        /** @var User|null $user */
+        $user = Auth::user();
+        if ($user === null || $user->role !== UserRole::Owner) {
+            throw new OwnerRequiredException;
+        }
+
         return DB::transaction(function () use ($id): BookingRequestData {
             $request = $this->reopen->handle($id);
             $this->removeRevenue->handle(new RevenueRequestIdData(booking_request_id: $request->id));

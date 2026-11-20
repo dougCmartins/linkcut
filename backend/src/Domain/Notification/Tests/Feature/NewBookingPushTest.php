@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Domain\Notification\Tests\Feature;
 
 use Domain\Notification\Data\PushMessageData;
-use Domain\Notification\Data\TenantPushData;
-use Domain\Notification\Jobs\SendPushToTenant;
+use Domain\Notification\Data\UsersPushData;
+use Domain\Notification\Jobs\SendPushToUsers;
 use Domain\Notification\Models\PushSubscription;
 use Domain\Notification\Support\PushSender;
 use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
@@ -67,8 +67,9 @@ final class NewBookingPushTest extends TestCase
         ])->assertCreated();
 
         // Assert
-        Queue::assertPushed(SendPushToTenant::class, function (SendPushToTenant $job) use ($owner): bool {
+        Queue::assertPushed(SendPushToUsers::class, function (SendPushToUsers $job) use ($owner): bool {
             return $job->data->tenant_id === $owner->tenant_id
+                && in_array($owner->id, $job->data->user_ids, true)
                 && $job->data->message->title === 'Novo pedido de agendamento'
                 && $job->data->message->body === 'Ana Souza · Corte · 20/10 às 10:00'
                 && $job->data->message->url === '/painel';
@@ -91,7 +92,7 @@ final class NewBookingPushTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public function test_the_push_goes_only_to_devices_of_that_barbershop_and_forgets_gone_ones(): void
+    public function test_the_push_goes_only_to_devices_of_the_targeted_users_and_forgets_gone_ones(): void
     {
         // Arrange
         $sender = $this->fakeSender();
@@ -103,7 +104,8 @@ final class NewBookingPushTest extends TestCase
         $message = new PushMessageData(title: 'Novo pedido', body: 'Ana', url: '/painel', tag: 'booking-request-1');
 
         // Act
-        (new SendPushToTenant(new TenantPushData(tenant_id: $owner->tenant_id, message: $message)))->handle(app(CurrentTenant::class), $sender);
+        (new SendPushToUsers(new UsersPushData(tenant_id: $owner->tenant_id, user_ids: [$owner->id], message: $message)))
+            ->handle(app(CurrentTenant::class), $sender);
 
         // Assert
         $this->assertSame([['https://push.test/phone', 'https://push.test/gone']], array_column($sender->sent, 'endpoints'));
@@ -118,7 +120,8 @@ final class NewBookingPushTest extends TestCase
         $message = new PushMessageData(title: 'Novo pedido', body: 'Ana', url: '/painel', tag: 'booking-request-1');
 
         // Act
-        (new SendPushToTenant(new TenantPushData(tenant_id: $owner->tenant_id, message: $message)))->handle(app(CurrentTenant::class), $sender);
+        (new SendPushToUsers(new UsersPushData(tenant_id: $owner->tenant_id, user_ids: [$owner->id], message: $message)))
+            ->handle(app(CurrentTenant::class), $sender);
 
         // Assert
         $this->assertSame([], $sender->sent);

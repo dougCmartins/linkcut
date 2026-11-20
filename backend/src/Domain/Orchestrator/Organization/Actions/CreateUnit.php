@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\Organization\Actions;
 
+use Domain\Identity\Models\User;
 use Domain\Orchestrator\Organization\Data\CreateUnitData;
 use Domain\Orchestrator\Organization\Data\UnitData;
 use Domain\Settings\Actions\CloneUnitSettings;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
+use Domain\Team\Actions\CreateOwnerStaff;
+use Domain\Team\Data\NewOwnerStaffData;
 use Domain\Tenant\Actions\CreateTenant;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Data\NewTenantData;
@@ -27,6 +30,7 @@ final class CreateUnit
         private readonly CreateTenant $createTenant,
         private readonly CreateDefaultSettings $createDefaultSettings,
         private readonly CloneUnitSettings $cloneUnitSettings,
+        private readonly CreateOwnerStaff $createOwnerStaff,
         private readonly CurrentTenant $currentTenant,
         private readonly PublicBrandCache $brandCache,
     ) {}
@@ -55,7 +59,7 @@ final class CreateUnit
             ));
             Tenant::query()->whereKey($tenant->id)->update(['onboarded_at' => now()]);
 
-            $this->currentTenant->run($tenant->id, function () use ($data, $name, $main): void {
+            $this->currentTenant->run($tenant->id, function () use ($data, $name, $main, $organization): void {
                 if ($data->copy_settings) {
                     $this->cloneUnitSettings->handle($main->id);
                 } else {
@@ -74,6 +78,17 @@ final class CreateUnit
                     'latitude' => $data->address->latitude,
                     'longitude' => $data->address->longitude,
                 ]);
+
+                $owner = $organization->owner_user_id
+                    ? User::query()->find($organization->owner_user_id)
+                    : null;
+                if ($owner) {
+                    $this->createOwnerStaff->handle(new NewOwnerStaffData(
+                        tenant_id: $this->currentTenant->id(),
+                        user_id: $owner->id,
+                        name: $owner->name,
+                    ));
+                }
             });
 
             $unitCount = Tenant::query()->where('organization_id', $organization->id)->count();

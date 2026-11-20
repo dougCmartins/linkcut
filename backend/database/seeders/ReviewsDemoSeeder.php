@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use Carbon\CarbonImmutable;
 use Domain\Client\Models\Client;
+use Domain\Identity\Models\User;
 use Domain\Review\Models\Review;
 use Domain\Review\Support\AuthorName;
 use Domain\Schedule\Enums\BookingStatus;
@@ -14,6 +15,9 @@ use Domain\Settings\Models\PortfolioSettings;
 use Domain\Settings\Models\Service;
 use Domain\Settings\Support\PublicSettingsCache;
 use Domain\Shared\Support\PlainText;
+use Domain\Team\Actions\CreateOwnerStaff;
+use Domain\Team\Data\NewOwnerStaffData;
+use Domain\Team\Models\Staff;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Seeder;
@@ -42,11 +46,12 @@ final class ReviewsDemoSeeder extends Seeder
 
     public function forTenant(Tenant $tenant): void
     {
-        app(CurrentTenant::class)->run($tenant->id, function (): void {
+        app(CurrentTenant::class)->run($tenant->id, function () use ($tenant): void {
             if (Review::query()->exists()) {
                 return;
             }
 
+            $staffId = $this->ensureStaffId($tenant);
             $service = Service::query()->ordered()->firstOrFail();
             $faker = fake('pt_BR');
             $featured = 0;
@@ -61,6 +66,7 @@ final class ReviewsDemoSeeder extends Seeder
                 $comment = $withComment ? PlainText::text($faker->sentence(12)) : null;
                 $when = CarbonImmutable::now()->subDays(self::COUNT - $index)->setTime(10 + $index, 0);
                 $booking = BookingRequest::query()->create([
+                    'staff_id' => $staffId,
                     'client_id' => $client->id,
                     'client_name' => $name,
                     'client_whatsapp' => $client->phone,
@@ -100,5 +106,22 @@ final class ReviewsDemoSeeder extends Seeder
             ]);
             app(PublicSettingsCache::class)->forget();
         });
+    }
+
+    private function ensureStaffId(Tenant $tenant): int
+    {
+        $existing = Staff::query()->where('active', true)->orderBy('id')->value('id');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $owner = User::query()->where('tenant_id', $tenant->id)->orderBy('id')->first()
+            ?? User::factory()->create(['tenant_id' => $tenant->id]);
+
+        return app(CreateOwnerStaff::class)->handle(new NewOwnerStaffData(
+            tenant_id: $tenant->id,
+            user_id: $owner->id,
+            name: $owner->name,
+        ))->id;
     }
 }

@@ -9,12 +9,16 @@ use Domain\Team\Data\StaffInviteCreatedData;
 use Domain\Team\Models\Staff;
 use Domain\Team\Models\StaffInvite;
 use Domain\Team\Models\StaffPermission;
+use Domain\Team\Support\SeedStaffSchedule;
 use Domain\Team\Support\StaffDataMapper;
 use Domain\Team\Support\StaffInviteToken;
+use Domain\Tenant\Context\CurrentTenant;
 
 /** Creates a pending staff member and a one-time invite (plain token returned once). */
 final class CreateStaffInvite
 {
+    public function __construct(private readonly CurrentTenant $currentTenant) {}
+
     public function handle(CreateStaffInviteData $data): StaffInviteCreatedData
     {
         $email = mb_strtolower(trim($data->email));
@@ -33,6 +37,7 @@ final class CreateStaffInvite
             'see_own_commission' => false,
             'see_unit_agenda' => false,
         ]);
+        SeedStaffSchedule::forStaff($this->currentTenant->id(), $staff->id);
         StaffInvite::query()->create([
             'staff_id' => $staff->id,
             'email' => $email,

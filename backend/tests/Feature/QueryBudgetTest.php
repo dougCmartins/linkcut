@@ -102,8 +102,8 @@ final class QueryBudgetTest extends TestCase
         $queries = $this->countQueries(fn () => $this->postJson('/api/public/rafael/booking-requests', $payload)->assertCreated());
 
         // Assert
-        // 17: settings, slot check under lock, client account, booking, and the barbershop's contact (with its color).
-        $this->assertLessThanOrEqual(17, $queries, "a booking took {$queries} queries");
+        // Staff-scoped booking (P4): settings, eligible staff, hours/blocks, lock, client, booking, targeted push users.
+        $this->assertLessThanOrEqual(24, $queries, "a booking took {$queries} queries");
     }
 
     public function test_the_slug_check_takes_one_query_even_when_many_links_are_taken(): void

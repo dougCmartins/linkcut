@@ -8,6 +8,7 @@ use Domain\Team\Data\NewOwnerStaffData;
 use Domain\Team\Data\StaffData;
 use Domain\Team\Models\Staff;
 use Domain\Team\Models\StaffPermission;
+use Domain\Team\Support\SeedStaffSchedule;
 use Domain\Team\Support\StaffDataMapper;
 use Domain\Tenant\Context\CurrentTenant;
 
@@ -36,6 +37,7 @@ final class CreateOwnerStaff
                 'see_own_commission' => false,
                 'see_unit_agenda' => false,
             ]);
+            SeedStaffSchedule::forStaff($data->tenant_id, $staff->id);
 
             return StaffDataMapper::toData($staff->load('permissions'));
         });
