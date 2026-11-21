@@ -164,7 +164,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - um bloqueio recorrente tira os horários da disponibilidade;
     - o barbeiro não conclui atendimento de outro barbeiro.
 
-- [ ] **P5 — Comissão configurável** (o motor genérico; refinamentos depois sem migração).
+- [ ] **P5 — Comissão configurável** (o motor genérico; refinamentos depois sem migração). (backend ok pelo Cursor, NÃO REVISADO; frontend pendente)
   - **Dados:**
     - **`commission_rules`:** `tenant_id`, `service_id`, `staff_id` nullable (regra geral do serviço ou exceção do barbeiro), `percent` (em décimos de por cento, inteiro) e `starts_on`.
     - **`commission_adjustments`:** os ajustes que a dona configura. Campos:
@@ -230,6 +230,14 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-21 — execução 5 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P5 backend — `commission_rules` / `commission_adjustments` / `commission_entries` / `commission_closings`; cálculo (AppBarber/Trinks); foto na conclusão; fechamento com trava no reopen; relatório + CSV por e-mail; simulador API. Evidência: `CommissionCalculatorTest`, `CommissionRulesTest`, `CommissionClosingTest`, `CommissionOnCompleteTest`, `CommissionReportTest`, `ArchitectureTest`; commit `62dde1b`.
+- **Já estava aplicado:** P1–P3; P4 backend (staff_id + complete).
+- **Pendente:** frontend P5 (regras/ajustes/simulador/relatório UI); LGPD export de comissões; P4 frontend; P6.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante (perguntas 1–3 da seção 6 seguem abertas).
+- **Riscos ou desvios:** fatia backend-only; sem regra → 0% com entry; `service_cost` sistema nasce inativo; percent multi-serviço ponderado pelo catálogo.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
 
 ### 2026-11-20 — execução 4 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P4 backend — `staff_services` / `staff_business_hours` / `staff_time_blocks`, `booking_requests.staff_id` com backfill; disponibilidade/lock por barbeiro; “qualquer um” na mesma transação; reassign; complete por papel; push para barbeiro+dona; APIs `team/staff/{id}/hours|services|blocks` e `GET public/{slug}/staff`. Evidência: `StaffAgendaTest`, `BackfillStaffScheduleTest`, `ArchitectureTest`, `QueryBudgetTest` (budget booking 24); commit `fbfe547`.
