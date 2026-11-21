@@ -232,7 +232,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
 ### 2026-11-21 — execução 5 (executado pelo Cursor, NÃO REVISADO)
-- **Feito:** P5 backend — `commission_rules` / `commission_adjustments` / `commission_entries` / `commission_closings`; cálculo (AppBarber/Trinks); foto na conclusão; fechamento com trava no reopen; relatório + CSV por e-mail; simulador API. Evidência: `CommissionCalculatorTest`, `CommissionRulesTest`, `CommissionClosingTest`, `CommissionOnCompleteTest`, `CommissionReportTest`, `ArchitectureTest`; commit `62dde1b`.
+- **Feito:** P5 backend — `commission_rules` / `commission_adjustments` / `commission_entries` / `commission_closings`; cálculo (AppBarber/Trinks); foto na conclusão; fechamento com trava no reopen; relatório + CSV por e-mail; simulador API. Evidência: `CommissionCalculatorTest`, `CommissionRulesTest`, `CommissionClosingTest`, `CommissionOnCompleteTest`, `CommissionReportTest`, `ArchitectureTest`; commit `1bf9621`.
 - **Já estava aplicado:** P1–P3; P4 backend (staff_id + complete).
 - **Pendente:** frontend P5 (regras/ajustes/simulador/relatório UI); LGPD export de comissões; P4 frontend; P6.
 - **Perguntas para o dono/arquiteto:** nenhuma bloqueante (perguntas 1–3 da seção 6 seguem abertas).
