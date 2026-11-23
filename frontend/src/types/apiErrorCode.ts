@@ -42,6 +42,7 @@ export const ApiErrorCode = {
   StaffNotFound: 'STAFF_NOT_FOUND',
   StaffForbidden: 'STAFF_FORBIDDEN',
   CannotDeactivateSelf: 'CANNOT_DEACTIVATE_SELF',
+  BrandReportForbidden: 'BRAND_REPORT_FORBIDDEN',
   CommissionForbidden: 'COMMISSION_FORBIDDEN',
   CommissionNotFound: 'COMMISSION_NOT_FOUND',
   CommissionPeriodClosed: 'COMMISSION_PERIOD_CLOSED',
