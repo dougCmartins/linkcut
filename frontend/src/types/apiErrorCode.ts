@@ -42,6 +42,9 @@ export const ApiErrorCode = {
   StaffNotFound: 'STAFF_NOT_FOUND',
   StaffForbidden: 'STAFF_FORBIDDEN',
   CannotDeactivateSelf: 'CANNOT_DEACTIVATE_SELF',
+  CommissionForbidden: 'COMMISSION_FORBIDDEN',
+  CommissionNotFound: 'COMMISSION_NOT_FOUND',
+  CommissionPeriodClosed: 'COMMISSION_PERIOD_CLOSED',
 } as const
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode]

@@ -40,6 +40,9 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.StaffNotFound]: 'staffNotFound',
   [ApiErrorCode.StaffForbidden]: 'staffForbidden',
   [ApiErrorCode.CannotDeactivateSelf]: 'cannotDeactivateSelf',
+  [ApiErrorCode.CommissionForbidden]: 'commissionForbidden',
+  [ApiErrorCode.CommissionNotFound]: 'commissionNotFound',
+  [ApiErrorCode.CommissionPeriodClosed]: 'commissionPeriodClosed',
 }
 
 export const UNEXPECTED_ERROR_KEY = 'unexpected'
