@@ -41,6 +41,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 const isOwner = computed(() => authStore.user?.role === 'owner')
 const myStaff = computed(() => teamStore.members.find((m) => m.userId === authStore.user?.id) ?? null)
+const canSeeCommission = computed(() => isOwner.value || Boolean(myStaff.value?.permissions.seeOwnCommission))
 const canSeePrices = computed(() => isOwner.value || Boolean(myStaff.value?.permissions.seePrices))
 
 const pushStore = usePushStore()
@@ -257,6 +258,12 @@ async function undo(): Promise<void> {
           </template>
         </MetricCard>
       </div>
+    </section>
+
+    <section v-if="canSeeCommission" class="mt-2" :aria-label="t('commission.title')">
+      <RouterLink to="/painel/comissao" class="inline-flex min-h-11 items-center text-sm font-semibold text-accent">
+        {{ t('commission.openFromDashboard') }} →
+      </RouterLink>
     </section>
 
     <section v-if="isOwner" class="mt-6" :aria-label="t('team.title')">

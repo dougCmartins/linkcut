@@ -74,6 +74,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/painel/comissao',
+    name: 'commission',
+    component: () => import('@/Domain/Finance/Commission/CommissionView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/convite/:token',
     name: 'staff-invite',
     component: () => import('@/Domain/Team/AcceptInviteView.vue'),
