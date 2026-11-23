@@ -8,6 +8,7 @@
 - O mapa do sistema está em `docs/arquitetura.md`.
 - **2026-11-20:** P1–P3 + P4 backend (agenda por barbeiro) na branch `claude/practical-wozniak-auyi2x` — **não revisados**; P4 frontend ainda pendente; depois P5 (comissão).
 - **2026-11-21:** P5 backend (comissão configurável: regras, ajustes, foto, fechamento, relatório/CSV) na mesma branch — **não revisado**; frontend P5 pendente; depois P6.
+- **2026-11-23:** P5 frontend (tela `/painel/comissao`: regras, ajustes, simulador, relatório, fechar/reabrir) na mesma branch — **não revisado**; pendentes: LGPD de comissões, P4 frontend e P6.
 
 **Para quem é:** este documento é o roteiro para continuar o trabalho, inclusive no Cursor. Cada item vira uma PR. Depois, cada PR passa pela revisão do Claude.
 

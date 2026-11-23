@@ -164,7 +164,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - um bloqueio recorrente tira os horários da disponibilidade;
     - o barbeiro não conclui atendimento de outro barbeiro.
 
-- [ ] **P5 — Comissão configurável** (o motor genérico; refinamentos depois sem migração). (backend ok pelo Cursor, NÃO REVISADO; frontend pendente)
+- [x] **P5 — Comissão configurável** (o motor genérico; refinamentos depois sem migração). (executado pelo Cursor, NÃO REVISADO; falta só a exportação LGPD de comissões, das notas gerais)
   - **Dados:**
     - **`commission_rules`:** `tenant_id`, `service_id`, `staff_id` nullable (regra geral do serviço ou exceção do barbeiro), `percent` (em décimos de por cento, inteiro) e `starts_on`.
     - **`commission_adjustments`:** os ajustes que a dona configura. Campos:
@@ -230,6 +230,14 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-23 — execução 6 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P5 frontend — tela `/painel/comissao` com regras por serviço (exceção por barbeiro), ajustes, simulador, relatório com CSV por e-mail, "Fechar período" e "Reabrir"; o barbeiro vê só o relatório e só com `see_own_commission`; textos em i18n; códigos de erro `COMMISSION_*`. Evidência: `commission.api.test.ts` e `CommissionView.test.ts` (11 testes); `typecheck` OK; build OK com `--outDir` temporário; commits `5c1eb30` e `c764bb2`. Com o backend da execução 5, o P5 está completo nos critérios de aceite.
+- **Já estava aplicado:** P1–P3; P4 backend; P5 backend (`1bf9621`).
+- **Pendente:** LGPD (exportação e exclusão com comissões); P4 frontend; P6.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante (perguntas 1–3 da seção 6 seguem abertas).
+- **Riscos ou desvios:** `vitest` com 5 falhas pré-existentes (4 em `DashboardView`, 1 em `slug`; as mesmas sem a minha mudança); `vite build` normal falha por permissão em `frontend/dist` neste ambiente, e passou com `--outDir /tmp`; `pint` e `php artisan test` não rodados (PHP local 8.1, projeto exige ^8.3; sem mudança de backend); rota própria `/painel/comissao` e fechamento usando o período do filtro são suposições minhas; marquei P5 como `[x]` na seção 4 por estar completo nos critérios de aceite, com a nota do LGPD pendente.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
 
 ### 2026-11-21 — execução 5 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P5 backend — `commission_rules` / `commission_adjustments` / `commission_entries` / `commission_closings`; cálculo (AppBarber/Trinks); foto na conclusão; fechamento com trava no reopen; relatório + CSV por e-mail; simulador API. Evidência: `CommissionCalculatorTest`, `CommissionRulesTest`, `CommissionClosingTest`, `CommissionOnCompleteTest`, `CommissionReportTest`, `ArchitectureTest`; commit `1bf9621`.
