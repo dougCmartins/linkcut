@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Domain\Finance\Controllers\CommissionController;
 use Domain\Finance\Controllers\ExpenseController;
 use Domain\Finance\Controllers\FinanceController;
 use Illuminate\Support\Facades\Route;
@@ -21,5 +22,22 @@ Route::middleware(['auth:api', 'tenant'])->prefix('finance')->group(function ():
         Route::put('one-off-expenses/{id}', [ExpenseController::class, 'updateOneOff']);
         Route::delete('one-off-expenses/{id}', [ExpenseController::class, 'destroyOneOff']);
         Route::post('one-off-expenses/{id}/restore', [ExpenseController::class, 'restoreOneOff']);
+    });
+
+    Route::prefix('commission')->group(function (): void {
+        Route::get('rules', [CommissionController::class, 'rules']);
+        Route::post('rules', [CommissionController::class, 'storeRule']);
+        Route::delete('rules/{id}', [CommissionController::class, 'destroyRule'])->whereNumber('id');
+
+        Route::get('adjustments', [CommissionController::class, 'adjustments']);
+        Route::post('adjustments', [CommissionController::class, 'storeAdjustment']);
+        Route::put('adjustments/{id}', [CommissionController::class, 'updateAdjustment'])->whereNumber('id');
+        Route::delete('adjustments/{id}', [CommissionController::class, 'destroyAdjustment'])->whereNumber('id');
+
+        Route::post('simulate', [CommissionController::class, 'simulate']);
+
+        Route::get('closings', [CommissionController::class, 'closings']);
+        Route::post('closings', [CommissionController::class, 'close']);
+        Route::post('closings/{id}/reopen', [CommissionController::class, 'reopenClosing'])->whereNumber('id');
     });
 });

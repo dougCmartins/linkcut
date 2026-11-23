@@ -57,10 +57,97 @@ describe('BioLinkView', () => {
     await screen.findByRole('heading', { name: 'Rafael Costa' })
 
     // Assert
-    expect(calls.map((call) => call.path)).toEqual(['/public/rafael', '/public/rafael/booking-options'])
+    const paths = calls.map((call) => call.path)
+    expect(paths).toContain('/public/rafael')
+    expect(paths).toContain('/public/rafael/booking-options')
+    expect(paths).toContain('/public/brand/rafael')
     expect(calls.every((call) => !call.headers.Authorization)).toBe(true)
     expect(usePublicPageStore().theme.palette).toBe(ThemePalette.Ocean)
     expect(usePublicPageStore().bookingOptions?.services[0]?.costInCents).toBeUndefined()
+  })
+
+  it('on a brand link, the unit select swaps Quem somos without changing the path', async () => {
+    // Arrange
+    const main = createTestSettings()
+    main.profile.name = 'Marca Demo'
+    main.profile.bio = 'Bio da matriz'
+    const branch = createTestSettings()
+    branch.profile.name = 'Filial Centro'
+    branch.profile.bio = 'Bio da filial'
+    installFakeSettingsApi(main, {
+      'GET /public/brand/marca-demo': () => ({
+        status: 200,
+        body: {
+          name: 'Marca Demo',
+          slug: 'marca-demo',
+          units: [
+            {
+              name: 'Marca Demo',
+              slug: 'marca-demo',
+              is_main: true,
+              address: {
+                zip_code: '01304001',
+                street: 'Rua Augusta',
+                number: '1500',
+                complement: null,
+                district: 'Consolação',
+                city: 'São Paulo',
+                state: 'SP',
+                latitude: null,
+                longitude: null,
+              },
+              photo_url: null,
+            },
+            {
+              name: 'Filial Centro',
+              slug: 'filial-centro',
+              is_main: false,
+              address: {
+                zip_code: '01304001',
+                street: 'Av Paulista',
+                number: '1000',
+                complement: null,
+                district: 'Bela Vista',
+                city: 'São Paulo',
+                state: 'SP',
+                latitude: null,
+                longitude: null,
+              },
+              photo_url: null,
+            },
+          ],
+        },
+      }),
+      'GET /public/marca-demo': () => ({ status: 200, body: publicPageBody(main) }),
+      'GET /public/marca-demo/booking-options': () => ({ status: 200, body: { services: [], weekly_hours: [], slot_interval_minutes: 30, booking_window_days: 7, vacation: { is_enabled: false, starts_on: null, ends_on: null, message: '' } } }),
+      'GET /public/filial-centro': () => ({ status: 200, body: publicPageBody(branch) }),
+      'GET /public/filial-centro/booking-options': () => ({ status: 200, body: { services: [], weekly_hours: [], slot_interval_minutes: 30, booking_window_days: 7, vacation: { is_enabled: false, starts_on: null, ends_on: null, message: '' } } }),
+    })
+    const { router } = await renderBioLink('/marca-demo')
+    await screen.findByRole('heading', { name: 'Marca Demo' })
+    expect(screen.getByLabelText('Unidade')).toBeTruthy()
+    expect(screen.getByText(/Av Paulista/)).toBeTruthy()
+
+    // Act
+    await fireEvent.update(screen.getByLabelText('Unidade'), 'filial-centro')
+
+    // Assert
+    expect(await screen.findByRole('heading', { name: 'Filial Centro' })).toBeTruthy()
+    expect(screen.getByText('Bio da filial')).toBeTruthy()
+    expect(router.currentRoute.value.path).toBe('/marca-demo')
+    expect(screen.getByRole('link', { name: /Agendar Horário Agora/ }).getAttribute('href')).toBe('/filial-centro/agendar')
+  })
+
+  it('an individual barbershop has no unit select', async () => {
+    // Arrange
+    installFakeSettingsApi()
+
+    // Act
+    await renderBioLink()
+    await screen.findByRole('heading', { name: 'Rafael Costa' })
+
+    // Assert
+    expect(screen.queryByLabelText('Unidade')).toBeNull()
   })
 
   it('shows only the social networks that have a link', async () => {

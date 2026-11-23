@@ -12,14 +12,18 @@ use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\Service;
+use Domain\Team\Actions\CreateOwnerStaff;
+use Domain\Team\Data\NewOwnerStaffData;
+use Domain\Team\Models\Staff;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Laravel\Passport\Passport;
 
 /**
  * A barbershop with the default settings: Corte 45 min (R$ 50, cost R$ 6), Barba 30 min (R$ 40, cost R$ 4),
  * Sun closed, Mon–Fri 09–19, Sat 09–14, every 30 min, 7-day window, address in São Paulo.
- * "Now" is Monday 2026-10-19 08:00 local.
+ * "Now" is Monday 2026-10-19 08:00 local. Owner staff + hours/services are seeded (P4).
  */
 trait ScheduleFixtures
 {
@@ -48,7 +52,15 @@ trait ScheduleFixtures
             ProfileSettings::query()->firstOrFail()->update(self::SHOP_ADDRESS);
         });
 
-        return User::factory()->create(['tenant_id' => $tenant->id]);
+        $owner = User::factory()->create(['tenant_id' => $tenant->id]);
+        Organization::query()->whereKey($tenant->organization_id)->update(['owner_user_id' => $owner->id]);
+        app(CreateOwnerStaff::class)->handle(new NewOwnerStaffData(
+            tenant_id: $tenant->id,
+            user_id: $owner->id,
+            name: $owner->name,
+        ));
+
+        return $owner;
     }
 
     protected function actingAsOwner(User $owner): void
@@ -57,19 +69,28 @@ trait ScheduleFixtures
         Passport::actingAs($owner);
     }
 
+    protected function ownerStaffId(User $owner): int
+    {
+        return (int) app(CurrentTenant::class)->run(
+            $owner->tenant_id,
+            fn () => Staff::query()->where('user_id', $owner->id)->value('id'),
+        );
+    }
+
     /** Service id by name ("Corte" or "Barba"). */
     protected function serviceId(User $owner, string $name): int
     {
         return app(CurrentTenant::class)->run($owner->tenant_id, fn () => Service::query()->where('name', $name)->value('id'));
     }
 
-    /** @param array<string, mixed> $attributes e.g. client_id, client_email */
+    /** @param array<string, mixed> $attributes e.g. client_id, client_email, staff_id */
     protected function bookingRequest(User $owner, string $date, string $startsAt, BookingStatus $status = BookingStatus::Pending, string $service = 'Corte', array $attributes = []): BookingRequest
     {
         return app(CurrentTenant::class)->run($owner->tenant_id, function () use ($owner, $date, $startsAt, $status, $service, $attributes): BookingRequest {
             $duration = $service === 'Corte' ? 45 : 30;
 
             return BookingRequest::query()->create([
+                'staff_id' => $attributes['staff_id'] ?? $this->ownerStaffId($owner),
                 'client_name' => 'Ana Souza',
                 'client_whatsapp' => '11912345678',
                 'service_id' => $this->serviceId($owner, $service),

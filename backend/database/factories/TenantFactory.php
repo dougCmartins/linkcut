@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -18,6 +19,8 @@ final class TenantFactory extends Factory
         $name = fake()->unique()->company();
 
         return [
+            'organization_id' => Organization::factory(),
+            'is_main' => true,
             'name' => $name,
             'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(1, 99999),
             'active' => true,

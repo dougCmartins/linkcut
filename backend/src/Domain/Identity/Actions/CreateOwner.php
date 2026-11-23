@@ -23,6 +23,7 @@ final class CreateOwner
         try {
             $user = User::query()->create([
                 'tenant_id' => $data->tenant_id,
+                'organization_id' => $data->organization_id,
                 'role' => UserRole::Owner,
                 'name' => trim($data->name),
                 'email' => $email,

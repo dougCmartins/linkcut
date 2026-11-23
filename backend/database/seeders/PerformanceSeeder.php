@@ -8,6 +8,8 @@ use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Enums\OrganizationType;
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +71,20 @@ final class PerformanceSeeder extends Seeder
         DB::statement('DROP TABLE IF EXISTS perf_tenants');
         DB::statement('CREATE TABLE perf_tenants (idx INT UNSIGNED PRIMARY KEY, tenant_id BIGINT UNSIGNED, service_id BIGINT UNSIGNED)');
         for ($index = 0; $index < self::TENANTS; $index++) {
-            $tenant = Tenant::query()->create(['name' => "Barbearia {$index}", 'slug' => "perf-{$index}", 'active' => true, 'onboarded_at' => now()]);
+            $organization = Organization::query()->create([
+                'owner_user_id' => null,
+                'type' => OrganizationType::Individual,
+                'name' => "Barbearia {$index}",
+                'slug' => "perf-{$index}",
+            ]);
+            $tenant = Tenant::query()->create([
+                'organization_id' => $organization->id,
+                'is_main' => true,
+                'name' => "Barbearia {$index}",
+                'slug' => "perf-{$index}",
+                'active' => true,
+                'onboarded_at' => now(),
+            ]);
             app(CurrentTenant::class)->run($tenant->id, function () use ($tenant, $index): void {
                 app(CreateDefaultSettings::class)->handle(new DefaultSettingsData);
                 ProfileSettings::query()->firstOrFail()->update([

@@ -9,6 +9,7 @@ use Spatie\LaravelData\Attributes\Validation\ArrayType;
 use Spatie\LaravelData\Attributes\Validation\Between;
 use Spatie\LaravelData\Attributes\Validation\DateFormat;
 use Spatie\LaravelData\Attributes\Validation\Email;
+use Spatie\LaravelData\Attributes\Validation\IntegerType;
 use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Attributes\Validation\Min;
 use Spatie\LaravelData\Attributes\Validation\Nullable;
@@ -45,6 +46,9 @@ final class BookingRequestInputData extends Data
         /** A note for the barber ("cabelo cacheado", "vou com meu filho"). */
         #[Nullable, StringType, Max(300)]
         public readonly ?string $client_notes = null,
+        /** Null/absent = any available barber of the unit. */
+        #[Nullable, IntegerType, Min(1)]
+        public readonly ?int $staff_id = null,
     ) {}
 
     /** @return array<string, list<string>> */

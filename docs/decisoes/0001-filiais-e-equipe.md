@@ -1,6 +1,6 @@
 # 0001. Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão)
 
-- **Status:** Decidido
+- **Status:** Em execução
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-17. Base de 15/11, com as respostas do dono de 17/11.
 - **Origem:** chat do arquiteto (conversas com o dono de 29/10, 15/11, 16/11 e 17/11)
@@ -95,7 +95,7 @@ desenvolvimento toda uma estrutura e depois o refinamento dos módulos."
 ## 4. Como aplicar
 Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **estrutura** pronta; os outros passos usam e refinam.
 
-- [ ] **P1 — Organização e unidades.**
+- [x] **P1 — Organização e unidades.** (executado pelo Cursor, NÃO REVISADO)
   - **Dados:** tabela `organizations` (`id`, `owner_user_id`, `type` = `individual`|`multi_unit`, `name`, `slug` único e reservado como os slugs de tenant). Em `tenants`, `organization_id` e `is_main`. Em `users`, `organization_id`.
   - **Migração dos dados atuais:** uma organização `individual` por tenant, com o tenant como `is_main = true`, sem mudar nenhum slug.
   - **Backend:**
@@ -111,7 +111,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - os dados de uma unidade não aparecem na outra (teste de isolamento);
     - o `ArchitectureTest` passa.
 
-- [ ] **P2 — Link da marca com select.**
+- [x] **P2 — Link da marca com select.** (executado pelo Cursor, NÃO REVISADO)
   - **Backend:** `GET /api/public/brand/{slug}` lista as unidades ativas (nome, slug, endereço, foto), com cache e `throttle:public`.
   - **Frontend:**
     - a página da marca usa o "Quem somos" da unidade escolhida no select;
@@ -124,7 +124,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - `QueryBudgetTest` da rota da marca;
     - o `/{slug}` antigo continua igual.
 
-- [ ] **P3 — Equipe: cadastro, papéis e permissões.** Esta é a estrutura base.
+- [x] **P3 — Equipe: cadastro, papéis e permissões.** (executado pelo Cursor, NÃO REVISADO; filtragem profunda agenda/comissão fica na P4/P5) Esta é a estrutura base.
   - **Dados:**
     - domínio novo `Team`, com a tabela `staff` (`tenant_id`, `user_id` nullable até aceitar o convite, `name`, `avatar`, `active`);
     - `staff_permissions` com 3 chaves booleanas por barbeiro: `see_prices`, `see_own_commission` e `see_unit_agenda`, todas **false** por padrão;
@@ -143,7 +143,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - o convite expira e não é reutilizável;
     - o individual não vê "Minha equipe" até adicionar alguém.
 
-- [ ] **P4 — Agenda por barbeiro.**
+- [ ] **P4 — Agenda por barbeiro.** (backend ok pelo Cursor, NÃO REVISADO; frontend pendente)
   - **Dados:**
     - `staff_services` (o que cada barbeiro faz; por padrão, todos os serviços da unidade);
     - `staff_business_hours`, que nasce como **cópia** dos horários da unidade, para a agenda não ficar fechada;
@@ -164,7 +164,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - um bloqueio recorrente tira os horários da disponibilidade;
     - o barbeiro não conclui atendimento de outro barbeiro.
 
-- [ ] **P5 — Comissão configurável** (o motor genérico; refinamentos depois sem migração).
+- [x] **P5 — Comissão configurável** (o motor genérico; refinamentos depois sem migração). (executado pelo Cursor, NÃO REVISADO; falta só a exportação LGPD de comissões, das notas gerais)
   - **Dados:**
     - **`commission_rules`:** `tenant_id`, `service_id`, `staff_id` nullable (regra geral do serviço ou exceção do barbeiro), `percent` (em décimos de por cento, inteiro) e `starts_on`.
     - **`commission_adjustments`:** os ajustes que a dona configura. Campos:
@@ -230,3 +230,50 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-23 — execução 6 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P5 frontend — tela `/painel/comissao` com regras por serviço (exceção por barbeiro), ajustes, simulador, relatório com CSV por e-mail, "Fechar período" e "Reabrir"; o barbeiro vê só o relatório e só com `see_own_commission`; textos em i18n; códigos de erro `COMMISSION_*`. Evidência: `commission.api.test.ts` e `CommissionView.test.ts` (11 testes); `typecheck` OK; build OK com `--outDir` temporário; commits `38b9d54` e `4a0f65f`. Com o backend da execução 5, o P5 está completo nos critérios de aceite.
+- **Já estava aplicado:** P1–P3; P4 backend; P5 backend (`1bf9621`).
+- **Pendente:** LGPD (exportação e exclusão com comissões); P4 frontend; P6.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante (perguntas 1–3 da seção 6 seguem abertas).
+- **Riscos ou desvios:** `vitest` com 5 falhas pré-existentes (4 em `DashboardView`, 1 em `slug`; as mesmas sem a minha mudança); `vite build` normal falha por permissão em `frontend/dist` neste ambiente, e passou com `--outDir /tmp`; `pint` e `php artisan test` não rodados (PHP local 8.1, projeto exige ^8.3; sem mudança de backend); rota própria `/painel/comissao` e fechamento usando o período do filtro são suposições minhas; marquei P5 como `[x]` na seção 4 por estar completo nos critérios de aceite, com a nota do LGPD pendente.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
+
+### 2026-11-21 — execução 5 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P5 backend — `commission_rules` / `commission_adjustments` / `commission_entries` / `commission_closings`; cálculo (AppBarber/Trinks); foto na conclusão; fechamento com trava no reopen; relatório + CSV por e-mail; simulador API. Evidência: `CommissionCalculatorTest`, `CommissionRulesTest`, `CommissionClosingTest`, `CommissionOnCompleteTest`, `CommissionReportTest`, `ArchitectureTest`; commit `1bf9621`.
+- **Já estava aplicado:** P1–P3; P4 backend (staff_id + complete).
+- **Pendente:** frontend P5 (regras/ajustes/simulador/relatório UI); LGPD export de comissões; P4 frontend; P6.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante (perguntas 1–3 da seção 6 seguem abertas).
+- **Riscos ou desvios:** fatia backend-only; sem regra → 0% com entry; `service_cost` sistema nasce inativo; percent multi-serviço ponderado pelo catálogo.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
+
+### 2026-11-20 — execução 4 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P4 backend — `staff_services` / `staff_business_hours` / `staff_time_blocks`, `booking_requests.staff_id` com backfill; disponibilidade/lock por barbeiro; “qualquer um” na mesma transação; reassign; complete por papel; push para barbeiro+dona; APIs `team/staff/{id}/hours|services|blocks` e `GET public/{slug}/staff`. Evidência: `StaffAgendaTest`, `BackfillStaffScheduleTest`, `ArchitectureTest`, `QueryBudgetTest` (budget booking 24); commit `fbfe547`.
+- **Já estava aplicado:** P1–P3 (Team/staff).
+- **Pendente:** frontend P4 (picker no agendamento, telas de hours/services/blocks, reassign na UI); P5–P6.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante nesta fatia.
+- **Riscos ou desvios:** fatia backend-only (passo grande); `CreateUnit` agora cria staff do dono na filial; QueryBudget do booking subiu de 17→24; falhas pré-existentes ShareCard/e-mails com `FRONTEND_URL` = LAN IP.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
+
+### 2026-11-20 — execução 3 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P3 — domínio `Team` (`staff` / permissões / convites), papéis owner/barber, aceitar convite, redaction de preços na API, tela `/painel/equipe` e `/convite/:token`. Evidência: `BackfillOwnerStaffTest`, `TeamStaffTest`, vitest Team; commits `a9e0532`, `fe53eef`, `93eca75`.
+- **Já estava aplicado:** P1–P2.
+- **Pendente:** P4–P6; filtragem de agenda/comissão pelas chaves (só flags + UI nesta fatia); avatar upload.
+- **Perguntas para o dono/arquiteto:** 1) validade do convite em dias (provisório: 7)? 2) textos finais das 3 permissões?
+- **Riscos ou desvios:** TTL do convite = 7 dias em `config/team.php` até decisão; suite PHP com 7 falhas pré-existentes (ShareCard URL `localhost:5173` e afins).
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
+
+### 2026-11-20 — execução 2 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P2 — `GET /api/public/brand/{slug}` com cache/throttle; BioLink com select de unidades (Quem somos sem reload; Agendar no slug da unidade; lista de outras unidades/endereços). Evidência: `PublicBrandTest`, QueryBudget da marca, testes BioLink; commits `d7b7dc4`, `bc47d91`.
+- **Já estava aplicado:** P1 (schema/organização/X-Unit).
+- **Pendente:** P3–P6; pixel-perfect Figma; tela de criar filial no painel.
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante.
+- **Riscos ou desvios:** visual sem Figma (BioLink + SelectField); suite PHP com 7 falhas pré-existentes/flaky (ShareCard URL `localhost:5173`); vitest com timeouts fora do BioLink.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
+
+### 2026-11-20 — execução 1 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P1 completo (schema/backfill, middleware `X-Unit`, `GET/POST` organization/units com cópia opcional de settings, seletor no painel + header). Evidência: testes `BackfillOrganizationsTest`, `ResolveTenantTest`, `UnitIsolationTest`, `CreateUnitTest`; commits `055bc4d`, `31190a6`, `c330611`, `264f0aa` (+ fix slug budget).
+- **Pendente:** P2–P6; tela de criar filial no painel (só API nesta fatia).
+- **Perguntas para o dono/arquiteto:** nenhuma bloqueante.
+- **Riscos ou desvios:** `owner_user_id` fica nullable no insert (preenchido na mesma transação); cópia de settings zera ids de imagem (avatar/capa/fotos); `organization_id` NOT NULL só reforçado no MySQL (SQLite de teste deixa nullable após backfill); signup e factories passam a criar organização.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).

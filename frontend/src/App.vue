@@ -10,6 +10,9 @@ import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
+import { useOrganizationStore } from '@/Domain/Tenant/organization.store'
+import { useTeamStore } from '@/Domain/Team/team.store'
+import UnitSelector from '@/Domain/Tenant/UnitSelector.vue'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
 import { leaveTo } from '@/composables/useQueryOverlay'
@@ -29,6 +32,8 @@ const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const publicPageStore = usePublicPageStore()
 const tenantStore = useTenantStore()
+const organizationStore = useOrganizationStore()
+const teamStore = useTeamStore()
 const { visitorMode } = useVisitorMode()
 
 // Public pages use the theme of the barbershop being visited (visitors may switch light/dark);
@@ -37,11 +42,14 @@ const pageTheme = computed(() => (route.meta.isPublic ? publicPageStore.theme : 
 watchEffect(() => applyThemeToDocument(pageTheme.value, route.meta.isPublic ? visitorMode.value : null))
 provideButtonStyle(computed(() => pageTheme.value.buttonStyle))
 
-// The dashboard pages need the barber's settings (name, photo, theme, services).
+// The dashboard pages need the barber's settings (name, photo, theme, services) and the unit list.
 watch(
   () => route.meta.requiresAuth,
   (requiresAuth) => {
-    if (requiresAuth) void settingsStore.ensureLoaded()
+    if (requiresAuth) {
+      void organizationStore.ensureLoaded()
+      void settingsStore.ensureLoaded()
+    }
   },
   { immediate: true },
 )
@@ -51,6 +59,8 @@ watch(
     if (!user) {
       settingsStore.clear()
       tenantStore.clear()
+      organizationStore.clear()
+      teamStore.clear()
     }
   },
 )
@@ -91,6 +101,7 @@ function closeBooking(): void {
 
 <template>
   <PaletteToggle v-if="route.meta.isPublic && !route.meta.clientArea" class="fixed top-4 right-4 z-40" />
+  <UnitSelector v-if="route.meta.requiresAuth" />
   <RouterView />
   <BookingModal v-if="bookingStore.isModalOpen && publicPageStore.bookingOptions" @close="closeBooking" />
   <UndoToast

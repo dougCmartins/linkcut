@@ -10,6 +10,13 @@ use Domain\Identity\Models\User;
 use Domain\Notification\Jobs\SendPushToClient;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
+use Domain\Settings\Actions\CreateDefaultSettings;
+use Domain\Settings\Data\DefaultSettingsData;
+use Domain\Settings\Models\ProfileSettings;
+use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Enums\OrganizationType;
+use Domain\Tenant\Models\Organization;
+use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -95,8 +102,8 @@ final class QueryBudgetTest extends TestCase
         $queries = $this->countQueries(fn () => $this->postJson('/api/public/rafael/booking-requests', $payload)->assertCreated());
 
         // Assert
-        // 17: settings, slot check under lock, client account, booking, and the barbershop's contact (with its color).
-        $this->assertLessThanOrEqual(17, $queries, "a booking took {$queries} queries");
+        // Staff-scoped booking (P4): settings, eligible staff, hours/blocks, lock, client, booking, targeted push users.
+        $this->assertLessThanOrEqual(24, $queries, "a booking took {$queries} queries");
     }
 
     public function test_the_slug_check_takes_one_query_even_when_many_links_are_taken(): void
@@ -112,6 +119,50 @@ final class QueryBudgetTest extends TestCase
 
         // Assert
         $this->assertSame(1, $queries);
+    }
+
+    public function test_the_brand_page_takes_the_same_queries_for_two_or_five_units(): void
+    {
+        // Arrange
+        $this->brandWithUnits(2, 'marca-duas');
+        $forTwo = $this->countQueries(fn () => $this->getJson('/api/public/brand/marca-duas')->assertOk()->assertJsonCount(2, 'units'));
+        $this->brandWithUnits(5, 'marca-cinco');
+
+        // Act
+        $forFive = $this->countQueries(fn () => $this->getJson('/api/public/brand/marca-cinco')->assertOk()->assertJsonCount(5, 'units'));
+
+        // Assert
+        $this->assertSame($forTwo, $forFive, "2 units: {$forTwo} queries; 5 units: {$forFive}");
+    }
+
+    private function brandWithUnits(int $unitCount, string $orgSlug): void
+    {
+        $organization = Organization::factory()->create([
+            'slug' => $orgSlug,
+            'name' => $orgSlug,
+            'type' => OrganizationType::MultiUnit,
+        ]);
+        for ($index = 0; $index < $unitCount; $index++) {
+            $slug = $index === 0 ? $orgSlug : "{$orgSlug}-{$index}";
+            $tenant = Tenant::factory()->create([
+                'organization_id' => $organization->id,
+                'is_main' => $index === 0,
+                'slug' => $slug,
+                'name' => $slug,
+                'active' => true,
+            ]);
+            app(CurrentTenant::class)->run($tenant->id, function () use ($slug): void {
+                app(CreateDefaultSettings::class)->handle(new DefaultSettingsData(name: $slug));
+                ProfileSettings::query()->firstOrFail()->update([
+                    'address_zip_code' => '01304001',
+                    'address_street' => 'Rua Augusta',
+                    'address_number' => (string) (1000 + strlen($slug)),
+                    'address_district' => 'Consolação',
+                    'address_city' => 'São Paulo',
+                    'address_state' => 'SP',
+                ]);
+            });
+        }
     }
 
     private function clientWithBookingsAt(int $barbershops, string $email): Client

@@ -17,6 +17,9 @@ use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\SocialLink;
 use Domain\Settings\Support\AddressGeocoder;
 use Domain\Settings\Support\PublicSettingsCache;
+use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Models\Tenant;
+use Domain\Tenant\Support\PublicBrandCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +30,8 @@ final class UpdateProfileSettings
     public function __construct(
         private readonly CreateDefaultSettings $createDefaultSettings,
         private readonly PublicSettingsCache $cache,
+        private readonly PublicBrandCache $brandCache,
+        private readonly CurrentTenant $currentTenant,
         private readonly ShowProfileSettings $showProfile,
         private readonly AddressGeocoder $geocoder,
     ) {}
@@ -72,6 +77,10 @@ final class UpdateProfileSettings
         });
 
         $this->cache->forget();
+        $organizationId = Tenant::query()->whereKey($this->currentTenant->id())->value('organization_id');
+        if ($organizationId !== null) {
+            $this->brandCache->forget((int) $organizationId);
+        }
 
         Log::info('settings_profile_updated');
 

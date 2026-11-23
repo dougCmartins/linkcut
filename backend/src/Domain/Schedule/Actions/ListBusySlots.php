@@ -6,6 +6,7 @@ namespace Domain\Schedule\Actions;
 
 use Domain\Schedule\Data\BusySlotData;
 use Domain\Schedule\Data\DateRangeData;
+use Domain\Schedule\Data\StaffBusyRangeData;
 use Domain\Schedule\Models\BookingRequest;
 use Spatie\LaravelData\DataCollection;
 
@@ -13,11 +14,17 @@ use Spatie\LaravelData\DataCollection;
 final class ListBusySlots
 {
     /** @return DataCollection<int, BusySlotData> */
-    public function handle(DateRangeData $range): DataCollection
+    public function handle(DateRangeData $range, ?int $staffId = null): DataCollection
     {
-        $slots = BookingRequest::query()
+        $query = BookingRequest::query()
             ->blocking()
-            ->whereBetween('date', [$range->from, $range->to])
+            ->whereBetween('date', [$range->from, $range->to]);
+
+        if ($staffId !== null) {
+            $query->where('staff_id', $staffId);
+        }
+
+        $slots = $query
             ->get(['date', 'starts_at', 'ends_at'])
             ->map(fn (BookingRequest $request): BusySlotData => new BusySlotData(
                 date: $request->date,
@@ -26,5 +33,11 @@ final class ListBusySlots
             ));
 
         return BusySlotData::collect($slots, DataCollection::class);
+    }
+
+    /** @return DataCollection<int, BusySlotData> */
+    public function forStaff(StaffBusyRangeData $range): DataCollection
+    {
+        return $this->handle(new DateRangeData(from: $range->from, to: $range->to), $range->staff_id);
     }
 }
