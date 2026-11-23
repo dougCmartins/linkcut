@@ -232,7 +232,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
 ### 2026-11-23 — execução 6 (executado pelo Cursor, NÃO REVISADO)
-- **Feito:** P5 frontend — tela `/painel/comissao` com regras por serviço (exceção por barbeiro), ajustes, simulador, relatório com CSV por e-mail, "Fechar período" e "Reabrir"; o barbeiro vê só o relatório e só com `see_own_commission`; textos em i18n; códigos de erro `COMMISSION_*`. Evidência: `commission.api.test.ts` e `CommissionView.test.ts` (11 testes); `typecheck` OK; build OK com `--outDir` temporário; commits `5c1eb30` e `c764bb2`. Com o backend da execução 5, o P5 está completo nos critérios de aceite.
+- **Feito:** P5 frontend — tela `/painel/comissao` com regras por serviço (exceção por barbeiro), ajustes, simulador, relatório com CSV por e-mail, "Fechar período" e "Reabrir"; o barbeiro vê só o relatório e só com `see_own_commission`; textos em i18n; códigos de erro `COMMISSION_*`. Evidência: `commission.api.test.ts` e `CommissionView.test.ts` (11 testes); `typecheck` OK; build OK com `--outDir` temporário; commits `38b9d54` e `4a0f65f`. Com o backend da execução 5, o P5 está completo nos critérios de aceite.
 - **Já estava aplicado:** P1–P3; P4 backend; P5 backend (`1bf9621`).
 - **Pendente:** LGPD (exportação e exclusão com comissões); P4 frontend; P6.
 - **Perguntas para o dono/arquiteto:** nenhuma bloqueante (perguntas 1–3 da seção 6 seguem abertas).
