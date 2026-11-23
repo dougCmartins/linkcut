@@ -197,7 +197,7 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
     - atendimento de período fechado não pode ser desfeito;
     - o `ArchitectureTest` passa (cálculo no `Finance` ou no `Team`; fluxo no `Orchestrator`).
 
-- [ ] **P6 — Relatórios da marca.**
+- [x] **P6 — Relatórios da marca.** (executado pelo Cursor, NÃO REVISADO; ver seção 7, execução 7)
   - **Backend:** faturamento, histórico e comissões somando as unidades da organização, numa Action do `Orchestrator` liberada só para a dona. É o único ponto que cruza unidades. CSV por e-mail.
   - **Frontend:** "Todas as unidades" no seletor, só para a dona, nos relatórios.
   - **Aceite:**
@@ -230,6 +230,14 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-23 — execução 7 (executado pelo Cursor, NÃO REVISADO)
+- **Feito:** P6 completo — Action do `Orchestrator` (`Domain/Orchestrator/BrandReport`) que soma faturamento, histórico (resumo) e comissões das unidades da organização da dona, com filtro de período, total e quebra por unidade, CSV por e-mail (`GET/POST /api/finance/brand/report`, só `owner`, 403 para barbeiro, `throttle:reports`); tela `/painel/marca` e opção "Todas as unidades" no seletor, só para a dona de marca multi-unidade e só nas telas de relatório; textos em i18n. Evidência: `BrandReportTest` (8), `QueryBudgetTest` (consultas constantes de 2 a 6 unidades), testes de frontend da api, da tela e do seletor; `pint` OK; `php artisan test` 319 OK; `typecheck` OK; build OK; commits `b9a91f3` e `5470b99`.
+- **Já estava aplicado:** P1–P3; P4 backend; P5 completo (mergeado de `claude/practical-wozniak-auyi2x`).
+- **Pendente:** LGPD (exportação e exclusão com comissões); P4 frontend.
+- **Perguntas para o dono/arquiteto:** o histórico da marca deve listar cada atendimento ou o resumo por unidade basta? O CSV da marca deve ser por atendimento? (perguntas 1–3 da seção 6 seguem abertas).
+- **Riscos ou desvios:** `vitest` com as mesmas 5 falhas pré-existentes (4 `DashboardView`, 1 `slug`); "Todas as unidades" leva a uma tela própria em vez de tornar histórico/comissão multi-unidade; endpoint responde também para a dona de organização `individual`; marquei P6 `[x]` na seção 4 por cumprir os critérios de aceite. Este branch precisou do merge de `claude/practical-wozniak-auyi2x`.
+- **Branch / PR:** `cursor/cloud-agent-1795474739908-iadbz` (sem PR).
 
 ### 2026-11-23 — execução 6 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P5 frontend — tela `/painel/comissao` com regras por serviço (exceção por barbeiro), ajustes, simulador, relatório com CSV por e-mail, "Fechar período" e "Reabrir"; o barbeiro vê só o relatório e só com `see_own_commission`; textos em i18n; códigos de erro `COMMISSION_*`. Evidência: `commission.api.test.ts` e `CommissionView.test.ts` (11 testes); `typecheck` OK; build OK com `--outDir` temporário; commits `38b9d54` e `4a0f65f`. Com o backend da execução 5, o P5 está completo nos critérios de aceite.
