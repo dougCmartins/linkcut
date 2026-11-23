@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use Closure;
 use Domain\Client\Models\Client;
+use Domain\Finance\Models\RevenueEntry;
 use Domain\Identity\Models\User;
 use Domain\Notification\Jobs\SendPushToClient;
 use Domain\Schedule\Enums\BookingStatus;
@@ -135,6 +136,23 @@ final class QueryBudgetTest extends TestCase
         $this->assertSame($forTwo, $forFive, "2 units: {$forTwo} queries; 5 units: {$forFive}");
     }
 
+    public function test_the_brand_report_takes_the_same_queries_for_two_or_six_units(): void
+    {
+        // Arrange
+        $two = $this->brandOwnerWithUnits(2, 'marca-duas');
+        $six = $this->brandOwnerWithUnits(6, 'marca-seis');
+        $url = '/api/finance/brand/report?from=2026-10-01&to=2026-10-31';
+
+        // Act
+        $this->asOwner($two);
+        $forTwo = $this->countQueries(fn () => $this->getJson($url)->assertOk()->assertJsonCount(2, 'units'));
+        $this->asOwner($six);
+        $forSix = $this->countQueries(fn () => $this->getJson($url)->assertOk()->assertJsonCount(6, 'units'));
+
+        // Assert
+        $this->assertSame($forTwo, $forSix, "2 units: {$forTwo} queries; 6 units: {$forSix}");
+    }
+
     private function brandWithUnits(int $unitCount, string $orgSlug): void
     {
         $organization = Organization::factory()->create([
@@ -163,6 +181,29 @@ final class QueryBudgetTest extends TestCase
                 ]);
             });
         }
+    }
+
+    /** A brand owner whose organization has `$unitCount` units, each with one concluded sale. */
+    private function brandOwnerWithUnits(int $unitCount, string $slug): User
+    {
+        $owner = $this->barbershop($slug);
+        $organizationId = (int) $owner->organization_id;
+        for ($index = 0; $index < $unitCount; $index++) {
+            $unitOwner = $index === 0 ? $owner : $this->barbershop("{$slug}-{$index}");
+            Tenant::query()->whereKey($unitOwner->tenant_id)->update(['organization_id' => $organizationId, 'is_main' => $index === 0]);
+            app(CurrentTenant::class)->run($unitOwner->tenant_id, fn () => RevenueEntry::query()->create([
+                'date' => '2026-10-05', 'time' => '10:00', 'client_name' => 'Ana', 'service_name' => 'Corte',
+                'price_in_cents' => 5000, 'cost_in_cents' => 600,
+            ]));
+        }
+
+        return $owner;
+    }
+
+    private function asOwner(User $owner): void
+    {
+        $this->app['auth']->forgetGuards();
+        Passport::actingAs($owner);
     }
 
     private function clientWithBookingsAt(int $barbershops, string $email): Client
