@@ -231,6 +231,13 @@ Ordem obrigatória: P1 → P2 → P3 → P4 → P5 → P6. P1 e P3 deixam a **es
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
+### 2026-11-24 — revisão do Claude (P1 a P6)
+- **Feito:** revisão do código e das checagens da rodada do Cursor. Correção do slug reservado `convite` (backend e frontend). Relatório completo em `docs/delegacao/revisao-2026-11-24.md`.
+- **Pendente:** P4 frontend; tela de cadastro de filial; LGPD (barbeiros, convites, permissões, comissões, organização); corrigir a redação de valores para o barbeiro com `see_own_commission`; cálculo da comissão em inteiros; 4 testes do `DashboardView`; validar a suíte PHP completa e o build com `gmp` e `.env`.
+- **Perguntas para o dono/arquiteto:** ver a seção "Decisões do dono" da revisão (forma de pagamento, periodicidade, textos das permissões, validade do convite, escopo do relatório da marca).
+- **Riscos ou desvios:** P4 segue `[ ]` (só backend). O Cursor registrou 5 falhas de vitest como "pré-existentes", mas passam em `301e56d`: 1 era real (`convite`, corrigido) e 4 são fixtures sem `role`.
+- **Branch / PR:** `claude/practical-wozniak-auyi2x` (sem PR).
+
 ### 2026-11-23 — execução 7 (executado pelo Cursor, NÃO REVISADO)
 - **Feito:** P6 completo — Action do `Orchestrator` (`Domain/Orchestrator/BrandReport`) que soma faturamento, histórico (resumo) e comissões das unidades da organização da dona, com filtro de período, total e quebra por unidade, CSV por e-mail (`GET/POST /api/finance/brand/report`, só `owner`, 403 para barbeiro, `throttle:reports`); tela `/painel/marca` e opção "Todas as unidades" no seletor, só para a dona de marca multi-unidade e só nas telas de relatório; textos em i18n. Evidência: `BrandReportTest` (8), `QueryBudgetTest` (consultas constantes de 2 a 6 unidades), testes de frontend da api, da tela e do seletor; `pint` OK; `php artisan test` 319 OK; `typecheck` OK; build OK; commits `b9a91f3` e `5470b99`.
 - **Já estava aplicado:** P1–P3; P4 backend; P5 completo (mergeado de `claude/practical-wozniak-auyi2x`).
