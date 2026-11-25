@@ -4,7 +4,7 @@
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-25
 - **Origem:** chat do arquiteto (pedido do dono em 25/11: deixar filiais e equipe usáveis de ponta a ponta)
-- **Base:** [0001](0001-filiais-e-equipe.md) (esta decisão **fecha** o P4 frontend e a lacuna do P1; não muda nenhuma regra da 0001); [revisão de 24/11](../delegacao/revisao-2026-11-24.md); [ADR 0002](../adr/0002-organizacao-com-filiais.md). Não precisa de ADR novo: nenhuma fronteira nem tabela muda.
+- **Base:** [0001](0001-filiais-e-equipe.md) (esta decisão **fecha** o P4 frontend e a lacuna do P1; não muda nenhuma regra da 0001); [revisão de 24/11](../delegacao/revisao-2026-11-24.md); [ADR 0002](../adr/0002-organizacao-com-filiais.md). Não precisa de ADR novo: nenhuma fronteira muda; a única mudança de dados é o intervalo opcional em `staff_business_hours` (P3).
 
 <!--
 Seções 1 a 6: escreve o CHAT DO ARQUITETO. O executor não as altera.
@@ -26,7 +26,9 @@ Valem as da 0001. Nesta decisão, só o que é novo:
 - **Entrada da tela "Nova filial":** em Configurações, num cartão "Filiais" (visível para toda dona, inclusive a individual), e como última opção do seletor de unidade quando ele existir. Criar a 2ª filial transforma a conta em `multi_unit`, e só aí aparece o seletor, como já decidido (0001, P1).
 - **O cliente só vê a escolha de barbeiro quando a unidade tem 2 ou mais barbeiros ativos.** Com 1, a tela do agendamento fica como hoje (o barbeiro individual não vê nada de equipe).
 - **Padrão da escolha:** "Qualquer um disponível".
-- **Quem edita horários, serviços e bloqueios de um barbeiro:** a dona (é o que o backend já impõe). O barbeiro editar os próprios bloqueios é a pergunta 1 da seção 6.
+- **A agenda do barbeiro é controle de acesso (ACL), decidido pelo dono em 25/11:** "o barbeiro não trava a agenda dele; o segredo está no horário de trabalho, o adm define o intervalo". A dona define horários, **intervalo**, serviços e bloqueios de cada barbeiro; o barbeiro só usa a agenda que recebeu. É o que o backend já impõe (`ManageStaffSchedule` só para `owner`).
+- **Intervalo no horário de trabalho:** cada dia tem o período de trabalho e um intervalo opcional (almoço), como os "Período 1" e "Período 2" do AppBarber. O intervalo **não** é um bloqueio: faz parte do horário.
+- **Mais autonomia para o barbeiro** (ex.: bloquear o próprio horário) só entra como uma chave de permissão nova, desligada por padrão e ligada pela dona. Não entra nesta decisão (pergunta 1 da seção 6).
 - **Passar atendimento a outro barbeiro:** só a dona; o outro barbeiro precisa fazer o serviço e estar livre no horário. Se não estiver livre, a tela mostra o erro `SLOT_UNAVAILABLE` e não muda nada.
 
 ## 3. Referências
@@ -43,6 +45,14 @@ Valem as da 0001. Nesta decisão, só o que é novo:
 | Passar atendimento | `POST schedule/requests/{id}/reassign`, corpo `{staff_id}`; erro `SLOT_UNAVAILABLE` se o outro estiver ocupado | só dona |
 | Criar filial | `POST organization/units`, corpo `{name, slug, address{zip_code,street,number,district,city,state,complement,latitude,longitude}, copy_settings}`; devolve `{id,name,slug,is_main}` com 201 | **hoje sem trava de papel (P0)** |
 | Link livre? | `GET sign-up/slug?slug=` devolve `{available, suggestion}` (já usado por `checkSlug`) | público |
+
+### Concorrência (AppBarber, artigos salvos pelo dono no Drive em 25/11)
+- **Horário de trabalho:** por dia da semana, com "Período 1" (obrigatório) e "Período 2" (opcional); quem não faz intervalo preenche só o 1.
+- **"Profissional não aparece na agenda"** tem duas causas: nenhum serviço associado ou nenhum horário de trabalho. Por isso o linkcut nasce com todos os serviços e o horário copiado da unidade, e o P3 avisa quando a agenda fica vazia.
+- **Bloqueio:** horário único ou recorrente, feito no painel de gestão. "Desbloquear" apaga um bloqueio; "Desbloquear horário" remove os bloqueios de um profissional dentro de um período (datas e horas).
+- **Acesso do profissional:** a dona libera ou bloqueia, por profissional, o acesso ao web e ao app; um "Perfil de Acesso" escolhe os menus. O "Gestor" vê tudo. A recepção é cadastrada como profissional sem serviço e sem horário (o linkcut deixou o modo recepção fora do escopo na 0001).
+- **AppBarber PRO** é o app do profissional, sem custo extra; não é um plano pago.
+- **Rodízio de profissionais** é a fila de ordem de chegada (Livre, Em atendimento, Ausente). Não é o "qualquer um" do agendamento online; fica para o futuro.
 
 `BookingRequestData` já traz `staff_id`, mas não o nome. **Não** criar `staff_name` no backend: o painel da dona já tem a lista da equipe (`useTeamStore`), e o barbeiro só vê os próprios atendimentos.
 
@@ -112,8 +122,14 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
 
 - [ ] **P3 — Horários, serviços e bloqueios do barbeiro (dona).**
   - **Entrada:** em "Minha equipe" (`TeamView`), cada barbeiro ganha o botão "Agenda" que abre `/painel/equipe/:id/agenda`.
+  - **Backend do intervalo (antes da tela):**
+    - migração: `staff_business_hours` ganha `break_starts_at` e `break_ends_at` (`string(5)`, nulos). Os registros atuais ficam sem intervalo;
+    - `StaffBusinessHourData` ganha os dois campos (nulos); validação: os dois juntos ou nenhum, dentro do período e com o fim depois do início;
+    - a disponibilidade por barbeiro (`StaffAvailability` / `AvailableTimes`) tira o intervalo, do mesmo jeito que tira um bloqueio: um serviço que encostaria no intervalo não é oferecido;
+    - a cópia dos horários da unidade (`SeedStaffSchedule`, `BackfillStaffSchedule`) continua sem intervalo.
+    - **Aceite:** testes AAA: horário com intervalo 12:00–13:00 não oferece 11:30 para um serviço de 60 min nem 12:30; sem intervalo, nada muda; intervalo fora do período é recusado (422). `QueryBudgetTest` igual.
   - **Tela `StaffAgendaView`**, três seções (nada de abas escondidas no celular, tudo rolável):
-    1. **Horários:** os 7 dias, aberto/fechado e início/fim, no mesmo visual do `WorkingHoursEditor`. Aviso se a agenda ficar toda fechada ("o cliente não verá horário com este barbeiro").
+    1. **Horários:** os 7 dias, aberto/fechado, início/fim e "Intervalo" opcional (início/fim), no mesmo visual do `WorkingHoursEditor`. Atalho "Repetir nos outros dias" para não digitar o mesmo intervalo 6 vezes. Aviso se a agenda ficar toda fechada ("o cliente não verá horário com este barbeiro").
     2. **Serviços:** lista com os serviços da unidade (um interruptor por serviço). Pelo menos um serviço ligado; se não houver, o barbeiro some do agendamento e a tela avisa.
     3. **Bloqueios:** lista dos bloqueios (único e recorrente) com o botão "Bloquear horário". O formulário tem: dia e hora de início e fim, "Repetir toda semana" com os dias da semana, observação. Cada item tem "Desbloquear" (apaga o bloqueio); o recorrente mostra "toda quarta, 13:00–18:00".
   - **Regras de borda:** o fim é depois do início (o backend também valida); `starts_at`/`ends_at` seguem `YYYY-MM-DD HH:mm` no fuso da unidade (usar os utilitários de `utils/date`, nunca `new Date(string)` direto); salvar horários e serviços é um botão só ("Salvar") com `SaveBar`, como nas Configurações.
@@ -146,13 +162,15 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
 - Excluir ou desativar uma filial (precisa de decisão sobre o que acontece com histórico, link e clientes).
 - Trocar o slug de uma filial existente.
 - Agenda visual em grade por barbeiro (colunas lado a lado). Por ora é lista com filtro.
+- Rodízio / fila de ordem de chegada (atendimento sem hora marcada).
+- Perfil de acesso por menus e bloqueio de acesso web/app por barbeiro: as 3 chaves atuais bastam por ora.
 - Avatar do barbeiro (upload) e o visual do Figma da página da marca.
 - LGPD de barbeiros, convites, comissões e organização: segue pendente da 0001 e **precisa entrar antes de divulgar o recurso**; é a próxima decisão depois desta.
 - Forma de pagamento, periodicidade do fechamento e textos das permissões (perguntas 1 a 3 da 0001).
 
 ## 6. Perguntas abertas
-1. **O barbeiro pode bloquear o próprio horário** (almoço, consulta) sem pedir à dona? Recomendação do arquiteto: sim, só nos próprios bloqueios; horários semanais e serviços continuam só da dona. Exige mudar o backend (hoje `ManageStaffSchedule` é só da dona) e uma tela dentro do painel do barbeiro. **Não bloqueia P0 a P4**; é um passo P5 depois da resposta.
-2. **Bloqueio recorrente: liberar só uma data?** (ex.: "toda quarta à tarde", mas quarta que vem trabalha). A 0001 diz "desbloqueio por período". Hoje o backend só apaga o bloqueio inteiro. Não bloqueia: P3 entrega o apagar inteiro.
+1. **Autonomia do barbeiro por permissão.** Respondido em parte (25/11): por padrão o barbeiro não mexe na agenda; a dona controla (ACL). Falta decidir **se e quando** entra uma 4ª chave em `staff_permissions`, por exemplo `manage_own_blocks` ("bloquear os próprios horários"), desligada por padrão. Exige migração (coluna nova), liberar o barbeiro só no próprio `staff_id` em `ManageStaffSchedule` e uma tela no painel dele. Não bloqueia P0 a P4.
+2. **Desbloquear um período.** O AppBarber tem "Desbloquear horário": remove os bloqueios de um profissional entre duas datas e horas. Recomendação: um passo futuro com o mesmo comportamento. Não bloqueia: P3 entrega só o apagar do bloqueio inteiro.
 3. **Cliente sem preferência: pode ver quem foi escolhido?** Se "qualquer um" sorteia o barbeiro, o e-mail e a tela de confirmação dizem o nome só depois que a dona confirma? Não bloqueia: P2 mostra o barbeiro só quando o cliente escolhe.
 4. **Quando a filial é criada, copiar também a equipe?** A resposta assumida é **não**: a filial nasce só com a dona como barbeiro e cada barbeiro novo recebe convite na unidade. Se o dono quiser outra coisa, vira decisão nova.
 
