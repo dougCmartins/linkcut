@@ -64,7 +64,7 @@ final class BarbershopAccountTest extends TestCase
             ->assertJsonPath('account.email', $owner->email)
             ->assertJsonPath('bookings.0.service_name', 'Corte')
             ->assertJsonPath('finance.revenue_entries.0.price_in_cents', 5000)
-            ->assertJsonStructure(['exported_at', 'settings' => ['profile', 'schedule', 'theme']]);
+            ->assertJsonStructure(['exported_at', 'team', 'settings' => ['profile', 'schedule', 'theme']]);
     }
 
     public function test_deleting_needs_the_password_and_the_link_typed_again(): void

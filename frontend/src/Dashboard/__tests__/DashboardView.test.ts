@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, within } from '@testing-library/vue'
 import DashboardView from '../DashboardView.vue'
 import { renderWithPlugins } from '@/utils/testRender'
+import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { fetchMonthToDateFinances } from '@/Domain/Finance/monthToDate.api'
 import { formatBRL } from '@/utils/currency'
 import { createTestSettings, installFakeSettingsApi } from '@/Domain/Settings/__tests__/fakeSettingsApi'
@@ -36,6 +37,18 @@ function installFakeApis(requests?: RequestRow[]) {
   return { finance, schedule }
 }
 
+/** The dashboard is the owner's: the session says so (the role comes from the API in production). */
+function signInAsOwner(): void {
+  const now = Date.now()
+  useAuthStore().session = {
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    accessExpiresAt: now + 60_000,
+    refreshExpiresAt: now + 120_000,
+    user: { id: 7, tenantId: 3, name: 'Rafael Costa', email: 'rafael@linkcut.app', phoneMasked: null, role: 'owner', twoFactorChannel: null },
+  }
+}
+
 describe('DashboardView', () => {
   beforeEach(() => {
     installFakeApis()
@@ -51,7 +64,7 @@ describe('DashboardView', () => {
 
   it('links to the public page of the barbershop in the same tab (a new one closes in-app browsers)', async () => {
     // Arrange & Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     const link = await screen.findByRole('link', { name: /Ver minha página/ })
@@ -61,7 +74,7 @@ describe('DashboardView', () => {
 
   it("shows today's date and that the numbers are month to date", () => {
     // Arrange & Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     expect(screen.getByText('Sábado, 17 de outubro')).toBeTruthy()
@@ -74,7 +87,7 @@ describe('DashboardView', () => {
     const finances = await fetchMonthToDateFinances()
 
     // Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     const expectedLabel = `Faturamento do mês até hoje: ${formatBRL(finances.revenueInCents)}. Ver histórico`
@@ -87,7 +100,7 @@ describe('DashboardView', () => {
     installFakeApis([])
 
     // Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     expect(await screen.findByText(/Nenhum atendimento para hoje/)).toBeTruthy()
@@ -95,7 +108,7 @@ describe('DashboardView', () => {
 
   it('shows placeholders, not "nothing here", while the agenda loads', () => {
     // Arrange & Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     expect(screen.queryByText(/Nenhum atendimento para hoje/)).toBeNull()
@@ -105,7 +118,7 @@ describe('DashboardView', () => {
   it('an accepted request for another day goes to "Próximos atendimentos"', async () => {
     // Arrange
     installFakeApis([requestRow({ id: 7, client_name: 'Caio Rocha', date: '2026-10-19', starts_at: '09:00' })])
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     const pending = await screen.findByRole('heading', { name: 'Caio Rocha' })
 
     // Act
@@ -122,7 +135,7 @@ describe('DashboardView', () => {
     const { schedule } = installFakeApis([requestRow({ id: 5, client_name: 'Ana Souza', date: TODAY, starts_at: '09:00' })])
     const revenueBefore = (await fetchMonthToDateFinances()).revenueInCents
     const revenueLink = (cents: number) => (name: string) => name === `Faturamento do mês até hoje: ${formatBRL(cents)}. Ver histórico`
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     await screen.findByRole('link', { name: revenueLink(revenueBefore) })
 
     // Act
@@ -146,7 +159,7 @@ describe('DashboardView', () => {
 
   it('lists the pending requests from the API with the service price', async () => {
     // Arrange & Act (App.vue loads the barber's settings on dashboard pages)
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     await useSettingsStore().ensureLoaded()
 
     // Assert
@@ -162,7 +175,7 @@ describe('DashboardView', () => {
     Object.defineProperty(navigator, 'serviceWorker', { value: worker, configurable: true })
     const requests = [requestRow({ id: 1, client_name: 'Bruno Lima', starts_at: '10:00' })]
     installFakeApis(requests)
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     await screen.findByText('Bruno Lima')
 
     // Act: a client books on the public page, and the push reaches this browser
@@ -188,7 +201,7 @@ describe('DashboardView', () => {
     ])
 
     // Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     const card = (await screen.findByText('Caio Rocha')).closest('article') as HTMLElement
@@ -204,7 +217,7 @@ describe('DashboardView', () => {
     installFakeSettingsApi(settings, { ...createFinanceRoutes({ today: TODAY }).routes, ...createScheduleRoutes({ today: TODAY }).routes })
 
     // Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     await useSettingsStore().ensureLoaded()
 
     // Assert
@@ -216,7 +229,7 @@ describe('DashboardView', () => {
   it('shows the API message when a request was already answered elsewhere', async () => {
     // Arrange
     const { schedule } = installFakeApis()
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     const card = (await screen.findByText('Bruno Lima')).closest('article') as HTMLElement
     schedule.requests[0]!.status = 'rejected'
 
@@ -233,7 +246,7 @@ describe('DashboardView', () => {
     const { revenueInCents, expenses } = await fetchMonthToDateFinances()
     const profit = revenueInCents - expenses.totalInCents
     const margin = `${((profit / revenueInCents) * 100).toFixed(1).replace('.', ',')}%`
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
     const button = await screen.findByRole('button', { name: 'Como a margem é calculada' })
     await screen.findByText(margin)
 
@@ -254,7 +267,7 @@ describe('DashboardView', () => {
     const { expenses } = await fetchMonthToDateFinances()
 
     // Act
-    renderWithPlugins(DashboardView)
+    renderWithPlugins(DashboardView, {}, signInAsOwner)
 
     // Assert
     const expectedLabel = `Despesas do mês até hoje: ${formatBRL(expenses.totalInCents)}. Ver e cadastrar despesas`
@@ -264,7 +277,7 @@ describe('DashboardView', () => {
 
   it('"Sair" goes back to the sign-in page of the barbershop', async () => {
     // Arrange
-    const { router } = renderWithPlugins(DashboardView)
+    const { router } = renderWithPlugins(DashboardView, {}, signInAsOwner)
     await screen.findByRole('link', { name: /Ver minha página/ })
     await vi.waitFor(() => expect(screen.getByRole('link', { name: /Ver minha página/ }).getAttribute('href')).toBe('/rafael'))
 

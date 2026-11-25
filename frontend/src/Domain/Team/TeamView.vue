@@ -24,7 +24,7 @@ const showInviteForm = ref(false)
 
 onMounted(() => {
   void team.ensureLoaded().catch((caught: unknown) => {
-    error.value = t(messageKey(caught))
+    error.value = t(`errors.api.${messageKey(caught)}`)
   })
 })
 
@@ -38,7 +38,7 @@ async function submitInvite(): Promise<void> {
     inviteEmail.value = ''
     showInviteForm.value = false
   } catch (caught) {
-    error.value = t(messageKey(caught))
+    error.value = t(`errors.api.${messageKey(caught)}`)
   } finally {
     inviting.value = false
   }
@@ -49,7 +49,7 @@ async function toggleActive(member: StaffMember, active: boolean): Promise<void>
   try {
     await team.setActive(member.id, active)
   } catch (caught) {
-    error.value = t(messageKey(caught))
+    error.value = t(`errors.api.${messageKey(caught)}`)
   }
 }
 
@@ -58,7 +58,7 @@ async function togglePermission(member: StaffMember, key: keyof StaffPermissions
   try {
     await team.setPermissions(member.id, { ...member.permissions, [key]: value })
   } catch (caught) {
-    error.value = t(messageKey(caught))
+    error.value = t(`errors.api.${messageKey(caught)}`)
   }
 }
 </script>

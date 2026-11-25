@@ -17,6 +17,9 @@ export const useTeamStore = defineStore('team', () => {
     try {
       members.value = await teamApi.fetchStaff()
       loaded.value = true
+    } catch {
+      // The team is extra on the dashboard: without it the rest still works (no unhandled error in the browser).
+      members.value = []
     } finally {
       loading.value = false
     }

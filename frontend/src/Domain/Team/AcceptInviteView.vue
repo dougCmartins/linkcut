@@ -28,7 +28,7 @@ onMounted(async () => {
     preview.value = await fetchStaffInvite(token)
     name.value = preview.value.name
   } catch (caught) {
-    error.value = t(messageKey(caught))
+    error.value = t(`errors.api.${messageKey(caught)}`)
   } finally {
     loading.value = false
   }
@@ -43,7 +43,7 @@ async function submit(): Promise<void> {
     auth.startSession(session)
     await router.replace('/painel')
   } catch (caught) {
-    error.value = t(messageKey(caught))
+    error.value = t(`errors.api.${messageKey(caught)}`)
   } finally {
     submitting.value = false
   }
