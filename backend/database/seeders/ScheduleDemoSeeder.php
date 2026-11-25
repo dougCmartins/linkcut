@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Domain\Schedule\Enums\BookingStatus;
 use Domain\Schedule\Models\BookingRequest;
 use Domain\Settings\Models\Service;
+use Domain\Team\Models\Staff;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Context\TenantClock;
 use Domain\Tenant\Models\Tenant;
@@ -35,7 +36,13 @@ final class ScheduleDemoSeeder extends Seeder
 
     private function request(string $client, string $whatsapp, Service $service, CarbonImmutable $date, string $time, BookingStatus $status): void
     {
+        $staffId = (int) Staff::query()->where('active', true)->orderBy('id')->value('id');
+        if ($staffId < 1) {
+            return;
+        }
+
         BookingRequest::query()->create([
+            'staff_id' => $staffId,
             'client_name' => $client,
             'client_whatsapp' => $whatsapp,
             'service_id' => $service->id,

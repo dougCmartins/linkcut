@@ -11,6 +11,8 @@ use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Settings\Models\SocialLink;
 use Domain\Tenant\Context\CurrentTenant;
+use Domain\Tenant\Enums\OrganizationType;
+use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -98,15 +100,30 @@ final class DatabaseSeeder extends Seeder
 
     private function tenantWithOwner(string $tenantName, string $slug, string $name, string $email, ?string $phone): Tenant
     {
-        $tenant = Tenant::query()->updateOrCreate(['slug' => $slug], ['name' => $tenantName, 'active' => true, 'onboarded_at' => now()]);
+        $organization = Organization::query()->updateOrCreate(
+            ['slug' => $slug],
+            ['name' => $tenantName, 'type' => OrganizationType::Individual, 'owner_user_id' => null],
+        );
+        $tenant = Tenant::query()->updateOrCreate(
+            ['slug' => $slug],
+            [
+                'organization_id' => $organization->id,
+                'is_main' => true,
+                'name' => $tenantName,
+                'active' => true,
+                'onboarded_at' => now(),
+            ],
+        );
 
-        User::query()->updateOrCreate(['email' => $email], [
+        $owner = User::query()->updateOrCreate(['email' => $email], [
             'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'role' => UserRole::Owner,
             'name' => $name,
             'phone' => $phone,
             'password' => 'linkcut123',
         ]);
+        $organization->update(['owner_user_id' => $owner->id]);
 
         return $tenant;
     }

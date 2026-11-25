@@ -10,6 +10,7 @@ use Spatie\LaravelData\Data;
 final class NewBookingRequestData extends Data
 {
     public function __construct(
+        public readonly int $staff_id,
         public readonly string $client_name,
         public readonly string $client_whatsapp,
         /** The first chosen service (the others are in `service_ids`). */

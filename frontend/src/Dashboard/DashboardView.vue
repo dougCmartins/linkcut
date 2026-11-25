@@ -25,6 +25,7 @@ import PushPrompt from '@/Domain/Notification/PushPrompt.vue'
 import { usePushStore } from '@/Domain/Notification/push.store'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { loginLocation } from '@/Domain/Identity/auth.guard'
+import { useTeamStore } from '@/Domain/Team/team.store'
 import { useRouter } from 'vue-router'
 import { formatBRL } from '@/utils/currency'
 import { formatAddress } from '@/utils/address'
@@ -34,9 +35,14 @@ const { messageKey } = useApiErrors()
 const dashboardStore = useMonthToDateStore()
 const agendaStore = useAgendaStore()
 const settingsStore = useSettingsStore()
+const teamStore = useTeamStore()
 
 const authStore = useAuthStore()
 const router = useRouter()
+const isOwner = computed(() => authStore.user?.role === 'owner')
+const myStaff = computed(() => teamStore.members.find((m) => m.userId === authStore.user?.id) ?? null)
+const canSeeCommission = computed(() => isOwner.value || Boolean(myStaff.value?.permissions.seeOwnCommission))
+const canSeePrices = computed(() => isOwner.value || Boolean(myStaff.value?.permissions.seePrices))
 
 const pushStore = usePushStore()
 
@@ -88,6 +94,9 @@ onMounted(() => {
   void dashboardStore.load()
   void agendaStore.load()
   void tenantStore.ensureLoaded()
+  if (isOwner.value || authStore.user?.role === 'barber') {
+    void teamStore.ensureLoaded()
+  }
 })
 
 // "Agenda de hoje": conclude in one click, with a few seconds to undo a mistaken tap.
@@ -212,7 +221,7 @@ async function undo(): Promise<void> {
           <span class="sr-only">— {{ t('dashboard.monthToDateInfo') }}</span>
         </span>
       </div>
-      <div class="mt-3 grid grid-cols-2 gap-3">
+      <div v-if="canSeePrices" class="mt-3 grid grid-cols-2 gap-3">
         <RouterLink
           to="/painel/historico"
           class="col-span-2 rounded-card transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -249,6 +258,18 @@ async function undo(): Promise<void> {
           </template>
         </MetricCard>
       </div>
+    </section>
+
+    <section v-if="canSeeCommission" class="mt-2" :aria-label="t('commission.title')">
+      <RouterLink to="/painel/comissao" class="inline-flex min-h-11 items-center text-sm font-semibold text-accent">
+        {{ t('commission.openFromDashboard') }} →
+      </RouterLink>
+    </section>
+
+    <section v-if="isOwner" class="mt-6" :aria-label="t('team.title')">
+      <RouterLink to="/painel/equipe" class="inline-flex min-h-11 items-center text-sm font-semibold text-accent">
+        {{ teamStore.showTeamNav ? t('team.openTeam') : t('team.addFromDashboard') }} →
+      </RouterLink>
     </section>
 
     <p

@@ -10,5 +10,6 @@ Route::middleware(['throttle:public', 'tenant.slug'])
     ->where(['slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
     ->group(function (): void {
         Route::get('availability', [PublicBookingController::class, 'availability']);
+        Route::get('staff', [PublicBookingController::class, 'staff']);
         Route::post('booking-requests', [PublicBookingController::class, 'store'])->middleware('throttle:booking');
     });

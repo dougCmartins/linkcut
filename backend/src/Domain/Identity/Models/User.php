@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 
 /**
- * A barber who signs in to the dashboard. Belongs to one tenant (tenant_id),
+ * A barber who signs in to the dashboard. Belongs to one home tenant (tenant_id) and one organization,
  * but is not tenant-scoped: sign-in happens before any tenant is resolved.
  */
 final class User extends Authenticatable
@@ -25,7 +25,19 @@ final class User extends Authenticatable
 
     use Notifiable;
 
-    protected $fillable = ['tenant_id', 'role', 'name', 'email', 'phone', 'password', 'two_factor_channel', 'email_verified_at', 'terms_accepted_at', 'terms_version'];
+    protected $fillable = [
+        'tenant_id',
+        'organization_id',
+        'role',
+        'name',
+        'email',
+        'phone',
+        'password',
+        'two_factor_channel',
+        'email_verified_at',
+        'terms_accepted_at',
+        'terms_version',
+    ];
 
     protected $hidden = ['password', 'remember_token'];
 

@@ -34,24 +34,35 @@ export const usePublicPageStore = defineStore('publicPage', () => {
 
   const theme = computed(() => page.value?.theme ?? DEFAULT_THEME)
 
-  async function load(nextSlug: string): Promise<void> {
+  async function load(nextSlug: string, options: { keepContent?: boolean } = {}): Promise<void> {
     const isCurrent = nextSlug === slug.value && (status.value === LoadStatus.Loading || status.value === LoadStatus.Ready)
     if (isCurrent) return
     slug.value = nextSlug
-    page.value = null
-    bookingOptions.value = null
+    if (!options.keepContent) {
+      page.value = null
+      bookingOptions.value = null
+    }
     status.value = LoadStatus.Loading
     try {
-      const [loadedPage, options] = await Promise.all([fetchPublicPage(nextSlug), fetchBookingOptions(nextSlug)])
+      const [loadedPage, booking] = await Promise.all([fetchPublicPage(nextSlug), fetchBookingOptions(nextSlug)])
       if (slug.value !== nextSlug) return
       page.value = loadedPage
-      bookingOptions.value = options
+      bookingOptions.value = booking
       status.value = LoadStatus.Ready
       rememberVisitedSlug(nextSlug)
     } catch (caught) {
       if (slug.value !== nextSlug) return
+      if (!options.keepContent) {
+        page.value = null
+        bookingOptions.value = null
+      }
       status.value = caught instanceof ApiError && caught.status === 404 ? LoadStatus.NotFound : LoadStatus.Failed
     }
+  }
+
+  /** Swap the unit on a brand page without blanking the current "Quem somos". */
+  function loadUnit(nextSlug: string): Promise<void> {
+    return load(nextSlug, { keepContent: true })
   }
 
   function reload(): Promise<void> {
@@ -61,5 +72,5 @@ export const usePublicPageStore = defineStore('publicPage', () => {
     return load(current)
   }
 
-  return { slug, page, bookingOptions, status, theme, load, reload }
+  return { slug, page, bookingOptions, status, theme, load, loadUnit, reload }
 })

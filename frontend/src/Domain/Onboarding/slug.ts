@@ -11,6 +11,7 @@ export const RESERVED_SLUGS = [
   'assets',
   'cadastrar',
   'conta',
+  'convite',
   'entrar',
   'icons',
   'login',

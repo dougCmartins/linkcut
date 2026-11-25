@@ -15,7 +15,7 @@ final class BookingRequest extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'client_name', 'client_whatsapp', 'service_id', 'service_name', 'duration_minutes',
+        'tenant_id', 'staff_id', 'client_name', 'client_whatsapp', 'service_id', 'service_name', 'duration_minutes',
         'date', 'starts_at', 'ends_at', 'status', 'completed_at', 'client_distance_meters',
         'client_id', 'client_email', 'reminded_at', 'service_ids', 'price_in_cents', 'client_notes',
     ];
@@ -23,6 +23,7 @@ final class BookingRequest extends Model
     protected function casts(): array
     {
         return [
+            'staff_id' => 'integer',
             'service_id' => 'integer',
             'service_ids' => 'array',
             'price_in_cents' => 'integer',

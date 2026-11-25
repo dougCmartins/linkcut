@@ -88,11 +88,35 @@ final class UpdateScheduleSettings
                 $service->update($attributes);
             } else {
                 $service = Service::query()->create($attributes);
+                $this->attachServiceToStaff($service->id);
             }
             $keptIds[] = $service->id;
         }
 
         Service::query()->whereKeyNot($keptIds)->delete();
+    }
+
+    /** New services are offered by every barber of the unit until the owner narrows the list. */
+    private function attachServiceToStaff(int $serviceId): void
+    {
+        $now = now();
+        $tenantId = $this->currentTenant->id();
+        $staffIds = DB::table('staff')->where('tenant_id', $tenantId)->pluck('id');
+        foreach ($staffIds as $staffId) {
+            $exists = DB::table('staff_services')
+                ->where('staff_id', $staffId)
+                ->where('service_id', $serviceId)
+                ->exists();
+            if ($exists) {
+                continue;
+            }
+            DB::table('staff_services')->insert([
+                'staff_id' => $staffId,
+                'service_id' => $serviceId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 
     /** Rules that need the whole week: each weekday once, and an open day closes after it opens. */

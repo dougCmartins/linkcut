@@ -18,6 +18,8 @@ declare module 'vue-router' {
     openBooking?: boolean
     /** Barber-only page: needs a session (see Domain/Identity/auth.guard.ts). */
     requiresAuth?: boolean
+    /** Report screen: the brand owner can pick "Todas as unidades" in the unit selector here. */
+    reportScreen?: boolean
     /** Client-area page: needs the client's session (see Domain/Client/client.guard.ts). */
     requiresClient?: boolean
     /** Client area inside a barbershop (/<slug>/account…): its own header and menu, no light/dark toggle. */
@@ -53,7 +55,13 @@ export const routes: RouteRecordRaw[] = [
     path: '/painel/historico',
     name: 'history',
     component: () => import('@/Domain/Finance/History/HistoryView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, reportScreen: true },
+  },
+  {
+    path: '/painel/marca',
+    name: 'brand-report',
+    component: () => import('@/Domain/Finance/BrandReport/BrandReportView.vue'),
+    meta: { requiresAuth: true, reportScreen: true },
   },
   {
     path: '/painel/despesas',
@@ -66,6 +74,24 @@ export const routes: RouteRecordRaw[] = [
     name: 'settings',
     component: () => import('@/Domain/Settings/SettingsView.vue'),
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/painel/equipe',
+    name: 'team',
+    component: () => import('@/Domain/Team/TeamView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/painel/comissao',
+    name: 'commission',
+    component: () => import('@/Domain/Finance/Commission/CommissionView.vue'),
+    meta: { requiresAuth: true, reportScreen: true },
+  },
+  {
+    path: '/convite/:token',
+    name: 'staff-invite',
+    component: () => import('@/Domain/Team/AcceptInviteView.vue'),
+    meta: { isPublic: true },
   },
   {
     path: '/painel/reviews',

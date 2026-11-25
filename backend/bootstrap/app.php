@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\AssignRequestContext;
+use App\Http\Middleware\RedactMoneyForStaff;
 use Domain\Tenant\Exceptions\TenantMismatchException;
 use Domain\Tenant\Exceptions\TenantNotResolvedException;
+use Domain\Tenant\Exceptions\UnitForbiddenException;
 use Domain\Tenant\Middleware\ResolveTenant;
 use Domain\Tenant\Middleware\ResolveTenantFromSlug;
 use Illuminate\Auth\AuthenticationException;
@@ -45,17 +47,24 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [AssignRequestContext::class]);
+        $middleware->api(append: [RedactMoneyForStaff::class]);
         // Behind a reverse proxy (Caddy in production, Vite in development): trust its X-Forwarded-* headers, so the
         // app sees https and the visitor's real IP (signed links, rate limits). The app port is never public in production.
         $middleware->trustProxies(at: '*');
-        $middleware->alias(['tenant' => ResolveTenant::class, 'tenant.slug' => ResolveTenantFromSlug::class]);
+        $middleware->alias([
+            'tenant' => ResolveTenant::class,
+            'tenant.slug' => ResolveTenantFromSlug::class,
+            'redact.money' => RedactMoneyForStaff::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) use ($envelope, $isApi): void {
         // Expected domain errors (wrong code, expired session…) are answers, not incidents: keep them out
         // of Sentry and the error log. Tenant isolation errors are always reported (bug or attack).
         // Registered before Sentry, so returning false stops the report there too.
         $exceptions->report(function (DomainException $exception) {
-            $isTenantIsolationError = $exception instanceof TenantNotResolvedException || $exception instanceof TenantMismatchException;
+            $isTenantIsolationError = $exception instanceof TenantNotResolvedException
+                || $exception instanceof TenantMismatchException
+                || $exception instanceof UnitForbiddenException;
             if ($isTenantIsolationError) {
                 Log::channel('security')->error('tenant_isolation_error', ['code' => $exception->getErrorCode()]);
 
