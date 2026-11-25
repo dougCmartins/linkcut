@@ -37,6 +37,7 @@ Sobre o formato, o dono pediu (25/11): "abre o leque e deixa pro usuário decidi
 - **Serviços na filial de destino:** a dona escolhe; padrão sugerido, todos os serviços da filial de destino. Os serviços da origem não servem (cada filial tem os seus, com os seus preços).
 - **Permissões (as 3 chaves):** a dona escolhe entre "manter as da filial de origem" (padrão sugerido) e "começar com tudo desligado".
 - **Ganhos:** o que ele ganhou na origem fica na origem, com as regras dela; o que ganhar no destino é do destino, com as regras dele. No relatório, aparece **por unidade e por pessoa** (seção 4, P4).
+- **O barbeiro vê o que ganhou na filial antiga (25/11):** só leitura e **até a dona fechar o período** daquela filial. Depois do fechamento, só a dona vê. Vale se ele tiver `see_own_commission` na filial atual.
 - **Só a dona** move barbeiros. Só entre unidades da mesma organização. Barbeiro com convite pendente (sem login) não se move: a dona convida direto na outra filial.
 - **Movimentar de novo para uma filial onde ele já trabalhou reativa a ficha antiga** (não cria outra), com o horário e os serviços que a dona definir no movimento.
 
@@ -93,7 +94,8 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
 - [ ] **P4 — Ganhos por pessoa e por unidade.**
   - O relatório de comissão da marca (P6 da 0001) ganha a visão **por pessoa**: junta as fichas do mesmo `user_id` e mostra o total e a quebra por unidade ("Filial A: R$ X · Filial B: R$ Y").
   - Cada unidade continua com o próprio fechamento de período; no mês do movimento, a dona fecha cada uma.
-  - **Aceite:** com um barbeiro que trabalhou em A e B no mesmo mês, a soma por pessoa = a soma das duas unidades; a soma da marca não muda; `QueryBudgetTest` do relatório sem N+1.
+  - **Visão do barbeiro:** na tela de comissão dele, uma seção "Filial anterior" (só leitura) com as `commission_entries` das outras fichas dele que ainda não entraram num fechamento (`closing_id` nulo). A API devolve isso só para o próprio `user_id` e só com `see_own_commission`; nenhuma ação de escrita.
+  - **Aceite:** o barbeiro vê os ganhos de A antes do fechamento de A e deixa de ver depois; sem `see_own_commission` não vê; nunca vê de outro barbeiro. Com um barbeiro que trabalhou em A e B no mesmo mês, a soma por pessoa = a soma das duas unidades; a soma da marca não muda; `QueryBudgetTest` do relatório sem N+1.
 
 **Notas para todos os passos**
 - **LGPD:** a exportação e a exclusão do barbeiro incluem todas as fichas e os `staff_moves`.
@@ -108,7 +110,7 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
 - Rodízio / fila por ordem de chegada.
 
 ## 6. Perguntas abertas
-1. **O barbeiro vê os ganhos da filial antiga?** Depois do movimento ele entra no destino. Padrão sugerido: com `see_own_commission`, ele vê só para leitura o que ganhou nas outras fichas dele. Não bloqueia P1 a P3; afeta o P4.
+1. ~~O barbeiro vê os ganhos da filial antiga?~~ Respondido em 25/11: sim, só leitura, até o fechamento do período (seção 2).
 2. **Agendar na origem para depois da volta?** Durante um empréstimo, a origem não oferece o barbeiro, nem para datas depois de `ends_on`. Padrão: não oferece (mais simples). Se a dona quiser, a origem passa a oferecer só datas depois da volta. Não bloqueia.
 
 ## 7. Execução
