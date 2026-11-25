@@ -26,6 +26,11 @@ Valem as da 0001. Nesta decisão, só o que é novo:
 - **Entrada da tela "Nova filial":** em Configurações, num cartão "Filiais" (visível para toda dona, inclusive a individual), e como última opção do seletor de unidade quando ele existir. Criar a 2ª filial transforma a conta em `multi_unit`, e só aí aparece o seletor, como já decidido (0001, P1).
 - **O cliente só vê a escolha de barbeiro quando a unidade tem 2 ou mais barbeiros ativos.** Com 1, a tela do agendamento fica como hoje (o barbeiro individual não vê nada de equipe).
 - **Padrão da escolha:** "Qualquer um disponível".
+- **Quem o "qualquer um" escolhe (25/11):** "o que tem menos horários e o que tem liberação mais próxima do que o cliente selecionou", no espírito do rodízio do AppBarber (dividir o trabalho, não sobrecarregar um). Entre os barbeiros livres no horário escolhido, nesta ordem:
+  1. o que tem **menos atendimentos no dia** (pendentes e confirmados);
+  2. empate: o que fica com **menos buraco na agenda**, ou seja, cujo atendimento anterior (ou o início do expediente/fim do intervalo) termina mais perto do horário escolhido;
+  3. empate: o menor `staff.id`.
+- **O cliente vê o nome do barbeiro (25/11):** sempre, inclusive quando escolheu "qualquer um": na confirmação, nos e-mails e na área do cliente.
 - **A agenda do barbeiro é controle de acesso (ACL), decidido pelo dono em 25/11:** "o barbeiro não trava a agenda dele; o segredo está no horário de trabalho, o adm define o intervalo". A dona define horários, **intervalo**, serviços e bloqueios de cada barbeiro; o barbeiro só usa a agenda que recebeu. É o que o backend já impõe (`ManageStaffSchedule` só para `owner`).
 - **Intervalo no horário de trabalho:** cada dia tem o período de trabalho e um intervalo opcional (almoço), como os "Período 1" e "Período 2" do AppBarber. O intervalo **não** é um bloqueio: faz parte do horário.
 - **Mais autonomia para o barbeiro** (ex.: bloquear o próprio horário) só entra como uma chave de permissão nova, desligada por padrão e ligada pela dona. Não entra nesta decisão (pergunta 1 da seção 6).
@@ -108,12 +113,15 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
     - `/{slug-da-filial}` e `/{slug-da-filial}/agendar` abrem a página e o agendamento da filial nova.
 
 - [ ] **P2 — O cliente escolhe o barbeiro ou "qualquer um" (agendamento).**
-  - **Backend (pequeno):** `GET public/{slug}/staff` passa a aceitar `service_ids[]` e devolve só os barbeiros ativos que fazem **todos** os serviços escolhidos (tabela `staff_services`). Sem `service_ids`, devolve todos os ativos, como hoje. Teste AAA e `QueryBudgetTest` da rota (uma consulta a mais, no máximo).
+  - **Backend, distribuição do "qualquer um":** hoje `RequestBooking::resolveStaffId` pega o **primeiro** barbeiro livre por `id`, então a dona (o `staff` mais antigo) recebe todos os pedidos sem preferência. Trocar pela regra da seção 2 (menos atendimentos no dia → menor buraco → menor id), dentro da mesma transação e da mesma trava. A regra fica numa classe pura do `Team` ou do `Orchestrator/PublicBooking/Support` (ex.: `PickAnyStaff`), testável sem banco.
+    - **Aceite:** testes AAA unitários da regra (os 3 critérios e os empates) e um teste de feature: dois barbeiros livres, um com 3 atendimentos no dia e outro com 1 → o pedido "qualquer um" vai para o de 1.
+  - **Backend, nome do barbeiro para o cliente:** `BookingConfirmationData` ganha `staff_name`; os e-mails de pedido recebido/confirmado e a lista da área do cliente mostram o barbeiro. O nome vem do `Team` (já há `FindStaff`/`ListActiveStaff`) composto no `Orchestrator`, nunca pela tabela direto.
+  - **Backend (pequeno):** `GET public/{slug}/staff` passa a aceitar `service_ids[]` e devolve só os barbeiros ativos que fazem **todos** os serviços escolhidos (tabela `staff_services`; reaproveitar o `ListActiveStaff($serviceIds)` que o agendamento já usa). Sem `service_ids`, devolve todos os ativos, como hoje. Teste AAA e `QueryBudgetTest` da rota (uma consulta a mais, no máximo).
   - **Frontend:**
     - `booking.api.ts`: `fetchPublicStaff(slug, serviceIds)`, `staffId` opcional em `fetchAvailability` e `createBookingRequest` (`staff_id`).
     - `StaffPicker.vue`: cartões "Qualquer um disponível" (padrão) e um por barbeiro, com foto e nome. Só aparece com 2 ou mais barbeiros; com 1 não aparece e o modal fica igual ao de hoje.
     - Trocar serviço ou barbeiro **busca os horários de novo** e limpa a hora escolhida se ela deixar de existir. Se o barbeiro escolhido deixar de fazer os serviços novos, volta para "Qualquer um".
-    - A confirmação ("Pedido enviado") mostra o barbeiro quando o cliente escolheu um.
+    - A confirmação ("Pedido enviado") mostra sempre o barbeiro (`staff_name`), inclusive no "qualquer um".
     - O picker é overlay com `useQueryOverlay` quando for em tela cheia no celular.
   - **Aceite:**
     - teste do `BookingModal` (AAA): unidade com 1 barbeiro não mostra o picker; com 2, mostra; escolher barbeiro manda `staff_id` nos dois pedidos (horários e agendamento); "qualquer um" não manda `staff_id`; `SLOT_UNAVAILABLE` mostra a mensagem existente e atualiza os horários;
@@ -171,7 +179,7 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
 ## 6. Perguntas abertas
 1. **Autonomia do barbeiro por permissão.** Respondido em parte (25/11): por padrão o barbeiro não mexe na agenda; a dona controla (ACL). Falta decidir **se e quando** entra uma 4ª chave em `staff_permissions`, por exemplo `manage_own_blocks` ("bloquear os próprios horários"), desligada por padrão. Exige migração (coluna nova), liberar o barbeiro só no próprio `staff_id` em `ManageStaffSchedule` e uma tela no painel dele. Não bloqueia P0 a P4.
 2. **Desbloquear um período.** O AppBarber tem "Desbloquear horário": remove os bloqueios de um profissional entre duas datas e horas. Recomendação: um passo futuro com o mesmo comportamento. Não bloqueia: P3 entrega só o apagar do bloqueio inteiro.
-3. **Cliente sem preferência: pode ver quem foi escolhido?** Se "qualquer um" sorteia o barbeiro, o e-mail e a tela de confirmação dizem o nome só depois que a dona confirma? Não bloqueia: P2 mostra o barbeiro só quando o cliente escolhe.
+3. ~~Cliente sem preferência vê o barbeiro?~~ Respondido em 25/11: sim, sempre (seção 2).
 4. **Quando a filial é criada, copiar também a equipe?** A resposta assumida é **não**: a filial nasce só com a dona como barbeiro e cada barbeiro novo recebe convite na unidade. Se o dono quiser outra coisa, vira decisão nova.
 
 ## 7. Execução
