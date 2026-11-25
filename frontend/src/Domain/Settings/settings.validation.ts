@@ -2,6 +2,7 @@ import {
   BRAZIL_STATES,
   MAX_PORTFOLIO_PHOTOS,
   type AppSettings,
+  type BarbershopAddress,
   type PortfolioSettings,
   type ProfileSettings,
   type ScheduleSettings,
@@ -107,7 +108,12 @@ export function validateProfile(profile: ProfileSettings): ValidationErrors {
     add(`links.${index}.url`, urlError)
   })
   // Required: clients see the address when they book.
-  const { address } = profile
+  return { ...errors, ...validateAddress(profile.address) }
+}
+
+/** Errors of a barbershop address, under "address.<field>" (also used by "Nova filial"). */
+export function validateAddress(address: BarbershopAddress): ValidationErrors {
+  const { errors, add } = createCollector()
   add('address.zipCode', address.zipCode.replace(/\D/g, '').length === 8 ? null : { key: 'zipCode' })
   add('address.street', checkLength(address.street, TEXT_LIMITS.addressStreet, true))
   add('address.number', checkLength(address.number, TEXT_LIMITS.addressNumber, true))

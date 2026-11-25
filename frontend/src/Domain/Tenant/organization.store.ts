@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { fetchOrganization, type OrganizationSummary, type OrganizationUnit } from './organization.api'
+import {
+  createUnit as createUnitRequest,
+  fetchOrganization,
+  type NewUnitInput,
+  type OrganizationSummary,
+  type OrganizationUnit,
+} from './organization.api'
 import { setHttpUnitIdProvider } from '@/http/client'
 import { useSettingsStore } from '@/Domain/Settings/settings.store'
 import { useTenantStore } from '@/Domain/Tenant/tenant.store'
@@ -63,6 +69,19 @@ export const useOrganizationStore = defineStore('organization', () => {
     await loading
   }
 
+  /** Loads the organization again (e.g. after a new unit), keeping the active unit when it still exists. */
+  async function reload(): Promise<void> {
+    organization.value = null
+    await ensureLoaded()
+  }
+
+  /** Creates a branch and reloads the units; the caller decides whether to switch to it. */
+  async function createUnit(input: NewUnitInput): Promise<OrganizationUnit> {
+    const unit = await createUnitRequest(input)
+    await reload()
+    return unit
+  }
+
   async function selectUnit(unitId: number): Promise<void> {
     if (activeUnitId.value === unitId) return
     if (!units.value.some((unit) => unit.id === unitId)) return
@@ -90,5 +109,5 @@ export const useOrganizationStore = defineStore('organization', () => {
     writeStoredUnitId(null)
   }
 
-  return { organization, activeUnitId, activeUnit, units, isMultiUnit, ensureLoaded, selectUnit, clear }
+  return { organization, activeUnitId, activeUnit, units, isMultiUnit, ensureLoaded, reload, createUnit, selectUnit, clear }
 })

@@ -16,6 +16,8 @@ use Domain\Tenant\Enums\OrganizationType;
 use Domain\Tenant\Models\Organization;
 use Domain\Tenant\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
 
@@ -63,6 +65,66 @@ final class CreateUnitTest extends TestCase
         $response->assertForbidden()->assertJsonPath('code', 'OWNER_REQUIRED');
         $this->assertSame(1, Tenant::query()->where('organization_id', $owner->organization_id)->count());
         $this->assertSame(OrganizationType::Individual, Organization::query()->findOrFail($owner->organization_id)->type);
+    }
+
+    public function test_the_new_unit_gets_the_owner_as_barber_with_the_unit_hours(): void
+    {
+        // Arrange
+        [$user] = $this->individualOwnerWithSettings();
+        Passport::actingAs($user);
+
+        // Act
+        $branchId = (int) $this->postJson('/api/organization/units', $this->unitPayload('filial-horas', 'Filial Horas'))->json('id');
+
+        // Assert
+        $staffId = DB::table('staff')->where('tenant_id', $branchId)->where('user_id', $user->id)->value('id');
+        $this->assertNotNull($staffId);
+        $unitHours = DB::table('business_hours')->where('tenant_id', $branchId)->count();
+        $this->assertGreaterThan(0, $unitHours);
+        $this->assertSame($unitHours, DB::table('staff_business_hours')->where('staff_id', $staffId)->count());
+        $this->assertSame(
+            DB::table('services')->where('tenant_id', $branchId)->count(),
+            DB::table('staff_services')->where('staff_id', $staffId)->count(),
+        );
+    }
+
+    public function test_the_new_unit_public_page_and_booking_open_on_its_own_slug(): void
+    {
+        // Arrange
+        [$user] = $this->individualOwnerWithSettings();
+        Passport::actingAs($user);
+        $this->postJson('/api/organization/units', $this->unitPayload('filial-publica', 'Filial Publica'))->assertCreated();
+        $this->app['auth']->forgetGuards();
+
+        // Act
+        $page = $this->getJson('/api/public/filial-publica');
+        $staff = $this->getJson('/api/public/filial-publica/staff');
+
+        // Assert
+        $page->assertOk()->assertJsonPath('profile.name', 'Filial Publica');
+        $staff->assertOk()->assertJsonCount(1);
+    }
+
+    public function test_an_address_without_a_point_is_located_like_in_settings(): void
+    {
+        // Arrange
+        config(['services.nominatim.url' => 'https://nominatim.test']);
+        Http::fake(['nominatim.test/*' => Http::response([['lat' => '-23.5577', 'lon' => '-46.6608']])]);
+        [$user] = $this->individualOwnerWithSettings();
+        Passport::actingAs($user);
+        $payload = $this->unitPayload('filial-mapa', 'Filial Mapa');
+        $payload['address']['latitude'] = null;
+        $payload['address']['longitude'] = null;
+
+        // Act
+        $branchId = (int) $this->postJson('/api/organization/units', $payload)->assertCreated()->json('id');
+
+        // Assert
+        app(CurrentTenant::class)->run($branchId, function (): void {
+            $settings = ProfileSettings::query()->firstOrFail();
+            $this->assertEqualsWithDelta(-23.5577, (float) $settings->latitude, 0.0001);
+            $this->assertEqualsWithDelta(-46.6608, (float) $settings->longitude, 0.0001);
+        });
     }
 
     public function test_copy_settings_clones_services_from_the_main_unit_once(): void

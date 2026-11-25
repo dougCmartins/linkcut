@@ -13,6 +13,7 @@ import { useTenantStore } from '@/Domain/Tenant/tenant.store'
 import { useOrganizationStore } from '@/Domain/Tenant/organization.store'
 import { useTeamStore } from '@/Domain/Team/team.store'
 import UnitSelector from '@/Domain/Tenant/UnitSelector.vue'
+import NewUnitNotice from '@/Domain/Tenant/NewUnitNotice.vue'
 import { provideButtonStyle } from '@/composables/useButtonStyle'
 import { applyThemeToDocument, useVisitorMode } from '@/composables/useTheme'
 import { leaveTo } from '@/composables/useQueryOverlay'
@@ -102,6 +103,7 @@ function closeBooking(): void {
 <template>
   <PaletteToggle v-if="route.meta.isPublic && !route.meta.clientArea" class="fixed top-4 right-4 z-40" />
   <UnitSelector v-if="route.meta.requiresAuth" />
+  <NewUnitNotice v-if="route.meta.requiresAuth" />
   <RouterView />
   <BookingModal v-if="bookingStore.isModalOpen && publicPageStore.bookingOptions" @close="closeBooking" />
   <UndoToast

@@ -12,6 +12,7 @@ use Domain\Settings\Actions\CloneUnitSettings;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
+use Domain\Settings\Support\AddressGeocoder;
 use Domain\Team\Actions\CreateOwnerStaff;
 use Domain\Team\Data\NewOwnerStaffData;
 use Domain\Team\Exceptions\OwnerRequiredException;
@@ -35,6 +36,7 @@ final class CreateUnit
         private readonly CreateOwnerStaff $createOwnerStaff,
         private readonly CurrentTenant $currentTenant,
         private readonly PublicBrandCache $brandCache,
+        private readonly AddressGeocoder $geocoder,
     ) {}
 
     public function handle(CreateUnitData $data): UnitData
@@ -55,7 +57,12 @@ final class CreateUnit
             ->where('is_main', true)
             ->firstOrFail();
 
-        return DB::transaction(function () use ($data, $organization, $main): UnitData {
+        // Same as saving the address in Settings: without a point from the device, look it up (outside the transaction).
+        $point = $data->address->latitude !== null && $data->address->longitude !== null
+            ? ['latitude' => $data->address->latitude, 'longitude' => $data->address->longitude]
+            : $this->geocoder->locate($data->address);
+
+        return DB::transaction(function () use ($data, $organization, $main, $point): UnitData {
             $name = trim($data->name);
             $tenant = $this->createTenant->handle(new NewTenantData(
                 name: $name,
@@ -65,7 +72,7 @@ final class CreateUnit
             ));
             Tenant::query()->whereKey($tenant->id)->update(['onboarded_at' => now()]);
 
-            $this->currentTenant->run($tenant->id, function () use ($data, $name, $main, $organization): void {
+            $this->currentTenant->run($tenant->id, function () use ($data, $name, $main, $organization, $point): void {
                 if ($data->copy_settings) {
                     $this->cloneUnitSettings->handle($main->id);
                 } else {
@@ -81,8 +88,8 @@ final class CreateUnit
                     'address_district' => trim($data->address->district),
                     'address_city' => trim($data->address->city),
                     'address_state' => $data->address->state,
-                    'latitude' => $data->address->latitude,
-                    'longitude' => $data->address->longitude,
+                    'latitude' => $point['latitude'] ?? null,
+                    'longitude' => $point['longitude'] ?? null,
                 ]);
 
                 $owner = $organization->owner_user_id

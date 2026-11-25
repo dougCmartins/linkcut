@@ -7,6 +7,8 @@ import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { useOrganizationStore } from './organization.store'
 
 const ALL_UNITS = 'all'
+const NEW_UNIT = 'new'
+const NEW_UNIT_ROUTE = 'unit-new'
 const BRAND_ROUTE = 'brand-report'
 
 const { t } = useI18n()
@@ -27,11 +29,16 @@ const options = computed(() => [
     value: String(unit.id),
     label: unit.isMain ? t('organization.mainUnit', { name: unit.name }) : unit.name,
   })),
+  ...(auth.user?.role === 'owner' ? [{ value: NEW_UNIT, label: t('organization.newUnit.option') }] : []),
 ])
 
 const selected = computed({
   get: () => (onBrandReport.value ? ALL_UNITS : String(organizationStore.activeUnitId ?? '')),
   set: (value: string) => {
+    if (value === NEW_UNIT) {
+      void router.push({ name: NEW_UNIT_ROUTE })
+      return
+    }
     if (value === ALL_UNITS) {
       void router.push({ name: BRAND_ROUTE })
       return

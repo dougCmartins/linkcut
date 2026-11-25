@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AuthHeading from '@/components/ui/AuthHeading.vue'
@@ -10,8 +10,10 @@ import { CODE_LENGTH, PASSWORD_MIN_LENGTH, codeSchema, credentialsSchema } from 
 import { useAuthStore } from '@/Domain/Identity/auth.store'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { ApiErrorCode } from '@/types/apiErrorCode'
-import { checkSlug, sendSignUpCode, signUp } from './onboarding.api'
-import { SLUG_MAX_LENGTH, isReservedSlug, isValidSlug, slugify } from './slug'
+import { sendSignUpCode, signUp } from './onboarding.api'
+import SlugField from './SlugField.vue'
+import { slugify } from './slug'
+import { useSlugCheck } from './useSlugCheck'
 import LegalDialog from '@/Legal/LegalDialog.vue'
 import { useLegalOverlay } from '@/Legal/useLegalDocument'
 
@@ -21,11 +23,6 @@ import { useLegalOverlay } from '@/Legal/useLegalDocument'
  * and answers with the session, so the barber goes straight to the setup wizard.
  */
 type Step = 'account' | 'code' | 'barbershop'
-type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
-
-const SLUG_CHECK_DELAY_MS = 400
-/** Where the public page will live, e.g. "linkcut.app/". */
-const publicHost = `${window.location.host}/`
 const NAME_MIN_LENGTH = 2
 
 const { t } = useI18n()
@@ -54,10 +51,7 @@ const resendInSeconds = computed(() => Math.max(0, Math.ceil((resendAvailableAt.
 
 // The link follows the barbershop name until the barber edits it.
 const slugEdited = ref(false)
-const slugStatus = ref<SlugStatus>('idle')
-const slugSuggestion = ref('')
-let slugTimer: ReturnType<typeof setTimeout> | undefined
-let slugRequest = 0
+const { status: slugStatus, suggestion: slugSuggestion, recheck: recheckSlug } = useSlugCheck(toRef(form, 'slug'))
 
 watch(
   () => form.barbershopName,
@@ -66,41 +60,6 @@ watch(
   },
 )
 
-watch(
-  () => form.slug,
-  (slug) => {
-    clearTimeout(slugTimer)
-    slugSuggestion.value = ''
-    if (!slug) return void (slugStatus.value = 'idle')
-    if (!isValidSlug(slug)) return void (slugStatus.value = 'invalid')
-    if (isReservedSlug(slug)) {
-      slugStatus.value = 'taken'
-      slugSuggestion.value = `${slug}-barbearia`.slice(0, SLUG_MAX_LENGTH)
-      return
-    }
-    slugStatus.value = 'checking'
-    slugTimer = setTimeout(() => void verifySlug(slug), SLUG_CHECK_DELAY_MS)
-  },
-)
-
-async function verifySlug(slug: string): Promise<void> {
-  const request = ++slugRequest
-  try {
-    const answer = await checkSlug(slug)
-    if (request !== slugRequest || slug !== form.slug) return
-    slugStatus.value = answer.available ? 'available' : 'taken'
-    slugSuggestion.value = answer.available ? '' : answer.suggestion
-  } catch {
-    if (request === slugRequest) slugStatus.value = 'idle'
-  }
-}
-
-function editSlug(value: string): void {
-  slugEdited.value = true
-  form.slug = slugify(value)
-}
-
-const slugMessage = computed(() => (slugStatus.value === 'idle' ? '' : t(`signUp.slug.${slugStatus.value}`)))
 const canFinish = computed(
   () => form.barbershopName.trim().length >= NAME_MIN_LENGTH && slugStatus.value === 'available' && form.acceptTerms && !isBusy.value,
 )
@@ -121,7 +80,7 @@ async function run(action: () => Promise<void>): Promise<void> {
       form.code = ''
       step.value = 'account'
     }
-    if (apiErrors.hasErrorCode(caught, ApiErrorCode.SlugUnavailable)) void verifySlug(form.slug)
+    if (apiErrors.hasErrorCode(caught, ApiErrorCode.SlugUnavailable)) recheckSlug()
   } finally {
     isBusy.value = false
   }
@@ -161,7 +120,6 @@ function finish(): Promise<void> {
 onMounted(() => (timer = setInterval(() => (now.value = Date.now()), 1000)))
 onBeforeUnmount(() => {
   clearInterval(timer)
-  clearTimeout(slugTimer)
 })
 </script>
 
@@ -204,36 +162,14 @@ onBeforeUnmount(() => {
 
     <form v-else class="grid grid-cols-1 gap-5" novalidate @submit.prevent="finish">
       <TextField v-model="form.barbershopName" :label="t('signUp.barbershopName')" :maxlength="40" :hint="t('signUp.barbershopHint')" />
-      <div>
-        <label for="sign-up-slug" class="block pl-2 text-xs font-semibold text-muted">{{ t('signUp.slug.label') }}</label>
-        <div
-          class="mt-1.5 flex h-11 items-center rounded-full bg-surface pl-5 ring-1 ring-line shadow-soft focus-within:ring-2 focus-within:ring-accent"
-        >
-          <span class="shrink-0 text-base text-muted" aria-hidden="true">{{ publicHost }}</span>
-          <input
-            id="sign-up-slug"
-            :value="form.slug"
-            class="h-full min-w-0 flex-1 rounded-r-full bg-transparent pr-5 text-base text-ink focus:outline-none"
-            autocomplete="off"
-            autocapitalize="none"
-            spellcheck="false"
-            :maxlength="SLUG_MAX_LENGTH"
-            aria-describedby="sign-up-slug-status"
-            @input="editSlug(($event.target as HTMLInputElement).value)"
-          />
-        </div>
-        <p
-          id="sign-up-slug-status"
-          class="mt-1.5 pl-2 text-xs font-semibold"
-          :class="slugStatus === 'available' ? 'text-success' : slugStatus === 'checking' ? 'text-muted' : 'text-danger'"
-          role="status"
-        >
-          {{ slugMessage }}
-          <button v-if="slugSuggestion" type="button" class="ml-1 text-accent underline" @click="editSlug(slugSuggestion)">
-            {{ t('signUp.slug.use', { slug: slugSuggestion }) }}
-          </button>
-        </p>
-      </div>
+      <SlugField
+        id="sign-up-slug"
+        v-model="form.slug"
+        :label="t('signUp.slug.label')"
+        :status="slugStatus"
+        :suggestion="slugSuggestion"
+        @edit="slugEdited = true"
+      />
       <label class="flex items-start gap-3 text-sm leading-relaxed">
         <input v-model="form.acceptTerms" type="checkbox" class="mt-1 size-4 shrink-0 accent-[var(--accent)]" />
         <span>

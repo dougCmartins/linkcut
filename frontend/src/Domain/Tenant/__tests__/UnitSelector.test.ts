@@ -138,6 +138,28 @@ describe('UnitSelector', () => {
       expect(screen.queryByRole('option', { name: 'Todas as unidades' })).toBeNull()
     })
 
+    it('"Nova filial" is the last option for the owner and opens the form', async () => {
+      // Arrange
+      const user = userEvent.setup()
+      const { router } = renderAs('owner')
+      await router.push('/painel/equipe')
+
+      // Act
+      await user.selectOptions(screen.getByLabelText('Unidade'), 'new')
+
+      // Assert
+      await waitFor(() => expect(router.currentRoute.value.name).toBe('unit-new'))
+    })
+
+    it('a barber never sees "Nova filial"', async () => {
+      // Arrange
+      const { router } = renderAs('barber')
+      await router.push('/painel/equipe')
+
+      // Assert
+      expect(screen.queryByRole('option', { name: '+ Nova filial' })).toBeNull()
+    })
+
     it('is never offered to a barber', async () => {
       // Arrange
       const { router } = renderAs('barber')

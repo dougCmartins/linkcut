@@ -8,6 +8,7 @@ import TextArea from '@/components/ui/TextArea.vue'
 import TextField from '@/components/ui/TextField.vue'
 import AddressEditor from './AddressEditor.vue'
 import PublicLinkCard from './PublicLinkCard.vue'
+import UnitsCard from '@/Domain/Tenant/UnitsCard.vue'
 import LinkPreview from './LinkPreview.vue'
 import PhoneFrame from './PhoneFrame.vue'
 import SettingsCard from './SettingsCard.vue'
@@ -63,6 +64,7 @@ function iconValue(link: ProfileLink): string {
   <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
     <div class="grid gap-5">
       <PublicLinkCard />
+      <UnitsCard />
       <SettingsCard :title="t('settings.link.profileTitle')" :description="t('settings.link.profileDescription')">
         <ImageUploader
           :label="t('settings.link.avatar')"

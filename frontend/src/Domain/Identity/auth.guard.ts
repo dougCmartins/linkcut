@@ -44,6 +44,9 @@ export function installAuthGuard(router: Router): void {
       if (tenant?.onboarded && to.name === ONBOARDING_ROUTE) return HOME_AFTER_LOGIN
     }
 
+    // Owner-only screens (e.g. "Nova filial"): a barber goes back to the panel.
+    if (to.meta.requiresOwner && auth.user?.role !== 'owner') return HOME_AFTER_LOGIN
+
     // Signed in already: the entrance (/, /cadastrar, /entrar) goes on to the dashboard.
     if (to.meta.authMode && auth.hasValidAccess()) {
       return safeRedirect(to.query.redirect)

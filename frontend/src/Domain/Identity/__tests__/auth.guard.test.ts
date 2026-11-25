@@ -12,7 +12,7 @@ function createTestRouter() {
   return router
 }
 
-function signIn(): void {
+function signIn(role: 'owner' | 'barber' = 'owner'): void {
   const now = Date.now()
   useAuthStore().session = {
     accessToken: 'access',
@@ -25,7 +25,7 @@ function signIn(): void {
       name: 'Rafael Costa',
       email: 'rafael@linkcut.app',
       phoneMasked: null,
-      role: 'owner',
+      role,
       twoFactorChannel: null,
     },
   }
@@ -92,6 +92,23 @@ describe('auth guard', () => {
 
     // Assert
     expect(router.currentRoute.value.path).toBe('/painel')
+  })
+
+  it('sends a barber away from an owner-only screen and lets the owner in', async () => {
+    // Arrange
+    installFakeApi({ 'GET /tenant': () => ({ status: 200, body: { id: 3, name: 'Rafael', slug: 'rafael', onboarded: true } }) })
+    const barberRouter = createTestRouter()
+    signIn('barber')
+
+    // Act
+    await barberRouter.push('/painel/unidades/nova')
+    signIn('owner')
+    const ownerRouter = createTestRouter()
+    await ownerRouter.push('/painel/unidades/nova')
+
+    // Assert
+    expect(barberRouter.currentRoute.value.path).toBe('/painel')
+    expect(ownerRouter.currentRoute.value.name).toBe('unit-new')
   })
 
   it('lets a signed-in barber open the dashboard', async () => {
