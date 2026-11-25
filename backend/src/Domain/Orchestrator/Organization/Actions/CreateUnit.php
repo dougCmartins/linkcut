@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Orchestrator\Organization\Actions;
 
+use Domain\Identity\Enums\UserRole;
 use Domain\Identity\Models\User;
 use Domain\Orchestrator\Organization\Data\CreateUnitData;
 use Domain\Orchestrator\Organization\Data\UnitData;
@@ -13,6 +14,7 @@ use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
 use Domain\Team\Actions\CreateOwnerStaff;
 use Domain\Team\Data\NewOwnerStaffData;
+use Domain\Team\Exceptions\OwnerRequiredException;
 use Domain\Tenant\Actions\CreateTenant;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Data\NewTenantData;
@@ -37,7 +39,11 @@ final class CreateUnit
 
     public function handle(CreateUnitData $data): UnitData
     {
+        /** @var User|null $user */
         $user = Auth::user();
+        if ($user !== null && $user->role !== UserRole::Owner) {
+            throw new OwnerRequiredException;
+        }
         $organizationId = $user?->organization_id;
         if (! $organizationId) {
             throw new TenantNotResolvedException;

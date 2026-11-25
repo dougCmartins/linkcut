@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Orchestrator\Organization\Tests\Feature;
 
 use Domain\Catalog\Models\Product;
+use Domain\Identity\Enums\UserRole;
 use Domain\Identity\Models\User;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
@@ -42,6 +43,26 @@ final class CreateUnitTest extends TestCase
             $this->assertSame('Filial Centro', ProfileSettings::query()->firstOrFail()->name);
             $this->assertSame('01304001', ProfileSettings::query()->firstOrFail()->address_zip_code);
         });
+    }
+
+    public function test_a_barber_cannot_create_a_unit_and_nothing_is_created(): void
+    {
+        // Arrange
+        [$owner] = $this->individualOwnerWithSettings();
+        $barber = User::factory()->create([
+            'tenant_id' => $owner->tenant_id,
+            'organization_id' => $owner->organization_id,
+            'role' => UserRole::Barber,
+        ]);
+        Passport::actingAs($barber);
+
+        // Act
+        $response = $this->postJson('/api/organization/units', $this->unitPayload('filial-barbeiro', 'Filial Barbeiro'));
+
+        // Assert
+        $response->assertForbidden()->assertJsonPath('code', 'OWNER_REQUIRED');
+        $this->assertSame(1, Tenant::query()->where('organization_id', $owner->organization_id)->count());
+        $this->assertSame(OrganizationType::Individual, Organization::query()->findOrFail($owner->organization_id)->type);
     }
 
     public function test_copy_settings_clones_services_from_the_main_unit_once(): void
