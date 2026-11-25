@@ -1,0 +1,160 @@
+# 0002. Filiais e equipe de ponta a ponta: telas que faltam (P4 frontend e "Nova filial")
+
+- **Status:** Decidido
+  <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
+- **Data da decisão:** 2026-11-25
+- **Origem:** chat do arquiteto (pedido do dono em 25/11: deixar filiais e equipe usáveis de ponta a ponta)
+- **Base:** [0001](0001-filiais-e-equipe.md) (esta decisão **fecha** o P4 frontend e a lacuna do P1; não muda nenhuma regra da 0001); [revisão de 24/11](../delegacao/revisao-2026-11-24.md); [ADR 0002](../adr/0002-organizacao-com-filiais.md). Não precisa de ADR novo: nenhuma fronteira nem tabela muda.
+
+<!--
+Seções 1 a 6: escreve o CHAT DO ARQUITETO. O executor não as altera.
+Seção 7: escreve o EXECUTOR (skill executar-decisoes). O arquiteto só lê.
+-->
+
+## 1. Contexto
+O backend de filiais e equipe está pronto (P1 a P6 da 0001), mas **duas pontas não existem na tela**:
+1. **P4 frontend.** O cliente não escolhe barbeiro; o dono não edita horários, serviços e bloqueios de um barbeiro; não há como passar um atendimento a outro barbeiro. Tudo isso já tem rota (ver seção 3).
+2. **Nova filial.** `POST /api/organization/units` existe, mas só quem chama a API cria filial. O `UnitSelector` só aparece com 2 ou mais unidades, então o dono individual nem tem por onde começar.
+
+Pedido do dono (25/11): "Para filiais e equipe serem usáveis de ponta a ponta: P4 no frontend (cliente escolhe o barbeiro ou 'qualquer um', telas de horários e bloqueios do barbeiro, passar atendimento a outro barbeiro) e a tela de Nova filial."
+
+**Achado da avaliação (backend, falta antes das telas):** `POST /api/organization/units` não confere o papel. Um barbeiro convidado tem `organization_id`, então hoje ele consegue criar filial da marca pela API. A rota só exige `auth:api` + `tenant`; o `CreateUnitTest` não tem caso de barbeiro. Vira o passo P0.
+
+## 2. Decisões do dono
+Valem as da 0001. Nesta decisão, só o que é novo:
+- **Quem cria filial:** só a dona (`role = owner`). O barbeiro nunca vê o botão e a API recusa com 403.
+- **Entrada da tela "Nova filial":** em Configurações, num cartão "Filiais" (visível para toda dona, inclusive a individual), e como última opção do seletor de unidade quando ele existir. Criar a 2ª filial transforma a conta em `multi_unit`, e só aí aparece o seletor, como já decidido (0001, P1).
+- **O cliente só vê a escolha de barbeiro quando a unidade tem 2 ou mais barbeiros ativos.** Com 1, a tela do agendamento fica como hoje (o barbeiro individual não vê nada de equipe).
+- **Padrão da escolha:** "Qualquer um disponível".
+- **Quem edita horários, serviços e bloqueios de um barbeiro:** a dona (é o que o backend já impõe). O barbeiro editar os próprios bloqueios é a pergunta 1 da seção 6.
+- **Passar atendimento a outro barbeiro:** só a dona; o outro barbeiro precisa fazer o serviço e estar livre no horário. Se não estiver livre, a tela mostra o erro `SLOT_UNAVAILABLE` e não muda nada.
+
+## 3. Referências
+
+### Rotas que já existem (não criar de novo)
+| Uso | Rota | Quem |
+|---|---|---|
+| Lista pública de barbeiros ativos (`id`, `name`, `avatar`) | `GET public/{slug}/staff` | público, `throttle:public` |
+| Horários livres, por barbeiro ou de qualquer um | `GET public/{slug}/availability?service_ids[]=..&staff_id=` | público |
+| Pedir horário, com ou sem barbeiro | `POST public/{slug}/booking-requests` (`staff_id` opcional; nulo = qualquer um) | público |
+| Horários semanais do barbeiro | `GET`/`PUT team/staff/{id}/hours`, corpo `{weekly_hours: [{weekday 0-6, is_open, opens_at "HH:mm", closes_at "HH:mm"}]}` | só dona |
+| Serviços do barbeiro | `GET`/`PUT team/staff/{id}/services`, corpo `{service_ids: [...]}` | só dona |
+| Bloqueios | `GET`/`POST team/staff/{id}/blocks`, `DELETE team/staff/{id}/blocks/{blockId}`. Corpo: `{starts_at "YYYY-MM-DD HH:mm", ends_at, recurrence: null\|"weekly", weekdays: [0-6]\|null, note}` | só dona |
+| Passar atendimento | `POST schedule/requests/{id}/reassign`, corpo `{staff_id}`; erro `SLOT_UNAVAILABLE` se o outro estiver ocupado | só dona |
+| Criar filial | `POST organization/units`, corpo `{name, slug, address{zip_code,street,number,district,city,state,complement,latitude,longitude}, copy_settings}`; devolve `{id,name,slug,is_main}` com 201 | **hoje sem trava de papel (P0)** |
+| Link livre? | `GET sign-up/slug?slug=` devolve `{available, suggestion}` (já usado por `checkSlug`) | público |
+
+`BookingRequestData` já traz `staff_id`, mas não o nome. **Não** criar `staff_name` no backend: o painel da dona já tem a lista da equipe (`useTeamStore`), e o barbeiro só vê os próprios atendimentos.
+
+### Código do frontend a reaproveitar
+- `Domain/Settings/AddressEditor.vue` + `cep.api.ts` (CEP preenche o endereço) e `useGeolocation` para o endereço da filial.
+- `Domain/Settings/WorkingHoursEditor.vue` para os horários do barbeiro (ver se já aceita `v-model` genérico; se for preso ao Settings, extrair o corpo para `components/` sem mudar o comportamento).
+- `Domain/Onboarding/slug.ts` (`slugify`, `RESERVED_SLUGS`, limites) e `checkSlug`.
+- `composables/useQueryOverlay.ts` para o seletor de barbeiro e o "passar para" (o "voltar" do celular fecha).
+- `components/ui/`: `BaseButton`, `TextField`, `SelectField`, `ToggleSwitch`, `BaseCard`.
+- `Domain/Tenant/organization.store.ts`: hoje `ensureLoaded()` só carrega uma vez. Precisa de `reload()` para enxergar a filial nova. `selectUnit()` já recarrega settings, tenant, agenda, mês e equipe.
+- Erros: `useApiErrors().messageKey` e `t('errors.api.' + chave)` (o `TeamView` usa a chave crua: corrigir de passagem, defeito 3 da revisão).
+
+### Estrutura de pastas (frontend)
+```
+Domain/Tenant/
+  NewUnitView.vue              # P1: formulário da filial   (rota /painel/unidades/nova, name: unit-new)
+  UnitsCard.vue                # P1: cartão "Filiais" nas Configurações
+  organization.api.ts          # + createUnit()
+  organization.store.ts        # + reload(), createUnit()
+Domain/Team/
+  StaffAgendaView.vue          # P3: telas do barbeiro      (rota /painel/equipe/:id/agenda, name: staff-agenda)
+  StaffHoursSection.vue        # P3
+  StaffServicesSection.vue     # P3
+  StaffBlocksSection.vue       # P3: lista + formulário de bloqueio
+  staffSchedule.api.ts         # P3: hours, services, blocks
+  staffSchedule.store.ts       # P3
+Domain/Schedule/
+  StaffPicker.vue              # P2: "Qualquer um" + barbeiros, dentro do BookingModal
+  ReassignSheet.vue            # P4: "Passar para outro barbeiro" (overlay)
+  booking.api.ts               # + fetchPublicStaff(), staffId em fetchAvailability/createBookingRequest, reassignBookingRequest()
+```
+`BookingModal.vue` já tem 415 linhas: o picker entra como componente e o modal só orquestra. Nenhuma lógica de regra no componente.
+
+## 4. Como aplicar
+Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (podem ir em PRs paralelas); P3 e P4 vêm depois porque só fazem sentido com equipe.
+
+- [ ] **P0 — Trava de papel ao criar filial (backend).**
+  - `CreateUnit` (ou o controller) recusa quem não é `owner` com `OwnerRequiredException`, igual ao `ManageStaffSchedule::ensureOwner()`.
+  - **Aceite:** teste AAA em `CreateUnitTest`: barbeiro recebe 403 e nada é criado; dona continua com 201. `ArchitectureTest` e `pint` passam.
+
+- [ ] **P1 — Tela "Nova filial".**
+  - **Rota:** `/painel/unidades/nova` (`requiresAuth`), só dona; barbeiro vai para `/painel`.
+  - **Campos:** nome; link (`slug`, sugerido por `slugify(nome)`, editável); endereço (`AddressEditor`, obrigatório, como no resto do app); caixa "Copiar as configurações da matriz" (`copy_settings`, desligada por padrão, com a explicação de que fotos não são copiadas: o backend zera os ids de imagem).
+  - **Link livre:** checa com `checkSlug` (debounce) e mostra "disponível" ou a sugestão; slugs reservados e fora do padrão são recusados antes de enviar.
+  - **Entradas:** `UnitsCard.vue` nas Configurações (lista as unidades e o botão "Adicionar filial"; para a conta individual, um texto curto de que ela vira uma marca com filiais) e a opção "Nova filial" no fim do `UnitSelector`.
+  - **Depois de salvar:** `organization.reload()`, `selectUnit(nova.id)`, volta ao `/painel` com um aviso que mostra o link da filial.
+  - **Textos:** tudo em `pt-BR.ts` (grupo `organization.newUnit.*`) e erros novos em `errors.api.*`.
+  - **Aceite:**
+    - teste de tela (AAA): preenche, envia o corpo certo (`snake_case`), troca para a unidade nova; link ocupado mostra a sugestão; barbeiro não vê o botão;
+    - teste de `organization.store`: `reload()` traz a filial e `isMultiUnit` vira `true` depois da 2ª unidade;
+    - **conferir no código e cobrir com teste de backend, se faltar:** a filial recém-criada tem os horários do barbeiro-dono copiados (`SeedStaffSchedule`). Sem isso a agenda da filial nasce fechada e o cliente não vê horário;
+    - **conferir:** o ponto no mapa do endereço (latitude/longitude). Se o `CreateUnit` não o resolve como o `UpdateProfileSettings`, usar o mesmo mecanismo e registrar na execução;
+    - `/{slug-da-filial}` e `/{slug-da-filial}/agendar` abrem a página e o agendamento da filial nova.
+
+- [ ] **P2 — O cliente escolhe o barbeiro ou "qualquer um" (agendamento).**
+  - **Backend (pequeno):** `GET public/{slug}/staff` passa a aceitar `service_ids[]` e devolve só os barbeiros ativos que fazem **todos** os serviços escolhidos (tabela `staff_services`). Sem `service_ids`, devolve todos os ativos, como hoje. Teste AAA e `QueryBudgetTest` da rota (uma consulta a mais, no máximo).
+  - **Frontend:**
+    - `booking.api.ts`: `fetchPublicStaff(slug, serviceIds)`, `staffId` opcional em `fetchAvailability` e `createBookingRequest` (`staff_id`).
+    - `StaffPicker.vue`: cartões "Qualquer um disponível" (padrão) e um por barbeiro, com foto e nome. Só aparece com 2 ou mais barbeiros; com 1 não aparece e o modal fica igual ao de hoje.
+    - Trocar serviço ou barbeiro **busca os horários de novo** e limpa a hora escolhida se ela deixar de existir. Se o barbeiro escolhido deixar de fazer os serviços novos, volta para "Qualquer um".
+    - A confirmação ("Pedido enviado") mostra o barbeiro quando o cliente escolheu um.
+    - O picker é overlay com `useQueryOverlay` quando for em tela cheia no celular.
+  - **Aceite:**
+    - teste do `BookingModal` (AAA): unidade com 1 barbeiro não mostra o picker; com 2, mostra; escolher barbeiro manda `staff_id` nos dois pedidos (horários e agendamento); "qualquer um" não manda `staff_id`; `SLOT_UNAVAILABLE` mostra a mensagem existente e atualiza os horários;
+    - a tela de agendamento de uma unidade só com o dono passa nos testes atuais sem mudar uma linha;
+    - CLS: o picker reserva a altura final enquanto carrega (esqueleto).
+
+- [ ] **P3 — Horários, serviços e bloqueios do barbeiro (dona).**
+  - **Entrada:** em "Minha equipe" (`TeamView`), cada barbeiro ganha o botão "Agenda" que abre `/painel/equipe/:id/agenda`.
+  - **Tela `StaffAgendaView`**, três seções (nada de abas escondidas no celular, tudo rolável):
+    1. **Horários:** os 7 dias, aberto/fechado e início/fim, no mesmo visual do `WorkingHoursEditor`. Aviso se a agenda ficar toda fechada ("o cliente não verá horário com este barbeiro").
+    2. **Serviços:** lista com os serviços da unidade (um interruptor por serviço). Pelo menos um serviço ligado; se não houver, o barbeiro some do agendamento e a tela avisa.
+    3. **Bloqueios:** lista dos bloqueios (único e recorrente) com o botão "Bloquear horário". O formulário tem: dia e hora de início e fim, "Repetir toda semana" com os dias da semana, observação. Cada item tem "Desbloquear" (apaga o bloqueio); o recorrente mostra "toda quarta, 13:00–18:00".
+  - **Regras de borda:** o fim é depois do início (o backend também valida); `starts_at`/`ends_at` seguem `YYYY-MM-DD HH:mm` no fuso da unidade (usar os utilitários de `utils/date`, nunca `new Date(string)` direto); salvar horários e serviços é um botão só ("Salvar") com `SaveBar`, como nas Configurações.
+  - **Aceite:**
+    - testes AAA do `staffSchedule.api` (corpo e conversão `snake_case` ↔ `camelCase`) e da tela (carrega, edita, salva, cria e apaga bloqueio, recorrente envia `weekdays`);
+    - barbeiro (role `barber`) que abre a URL é mandado para `/painel`;
+    - um bloqueio recorrente criado na tela tira o horário do `GET availability` (teste de ponta a ponta no backend já existe para a regra; aqui basta o frontend mandar o corpo certo).
+  - **Desbloqueio "por período"** (0001): fica como o `DELETE` do bloqueio inteiro. Liberar só uma ocorrência de um bloqueio recorrente depende da pergunta 2.
+
+- [ ] **P4 — Passar um atendimento para outro barbeiro e ver quem atende.**
+  - **Painel da dona, com 2 ou mais barbeiros:**
+    - cada cartão da agenda (`TodayAgendaCard`, `UpcomingAppointmentCard`, `PendingRequestCard`) mostra o nome do barbeiro (pelo `staffId` + `useTeamStore`);
+    - filtro "Barbeiro" no topo da agenda (todos / um), guardado só na sessão.
+  - **"Passar para outro barbeiro":** ação no cartão (só dona, só atendimento ainda não concluído) que abre `ReassignSheet` (overlay) com os barbeiros ativos, menos o atual. Se o backend recusar com `SLOT_UNAVAILABLE`, mostra o erro e mantém o atendimento onde estava. Sucesso: atualiza o cartão no `agenda.store` sem recarregar a página.
+  - **Barbeiro (role `barber`):** não vê a ação nem o filtro; continua vendo só os próprios atendimentos.
+  - **Aceite:**
+    - teste do `agenda.store` (AAA): `reassign` troca o `staffId`; erro mantém o estado;
+    - teste de tela: dona vê o botão; barbeiro não; unidade com 1 barbeiro não mostra nome nem filtro;
+    - os 4 testes de `DashboardView` que falham hoje (fixtures sem `role`) passam: ajustar as fixtures, não o produto.
+
+**Notas para todos os passos**
+- Texto de tela em `frontend/src/i18n/pt-BR.ts`; código em inglês; AAA nos testes; tipos sem `any`.
+- Cada passo é uma PR, na ordem. Depois de cada uma: `npm run typecheck`, `npx vitest run`, `npm run build` e, se tocou o backend, `vendor/bin/pint --test`, `php artisan test` e o `ArchitectureTest`.
+- Capturas de tela em 390 px na descrição da PR (regra do `proximos-passos.md`, seção 4).
+- Nada de `localStorage` para coisa que precisa persistir; só preferência de tela.
+
+## 5. Fora do escopo
+- Planos, limites de barbeiros e de filiais.
+- Mover um barbeiro de uma filial para outra (recusado na 0001: um barbeiro, uma filial).
+- Excluir ou desativar uma filial (precisa de decisão sobre o que acontece com histórico, link e clientes).
+- Trocar o slug de uma filial existente.
+- Agenda visual em grade por barbeiro (colunas lado a lado). Por ora é lista com filtro.
+- Avatar do barbeiro (upload) e o visual do Figma da página da marca.
+- LGPD de barbeiros, convites, comissões e organização: segue pendente da 0001 e **precisa entrar antes de divulgar o recurso**; é a próxima decisão depois desta.
+- Forma de pagamento, periodicidade do fechamento e textos das permissões (perguntas 1 a 3 da 0001).
+
+## 6. Perguntas abertas
+1. **O barbeiro pode bloquear o próprio horário** (almoço, consulta) sem pedir à dona? Recomendação do arquiteto: sim, só nos próprios bloqueios; horários semanais e serviços continuam só da dona. Exige mudar o backend (hoje `ManageStaffSchedule` é só da dona) e uma tela dentro do painel do barbeiro. **Não bloqueia P0 a P4**; é um passo P5 depois da resposta.
+2. **Bloqueio recorrente: liberar só uma data?** (ex.: "toda quarta à tarde", mas quarta que vem trabalha). A 0001 diz "desbloqueio por período". Hoje o backend só apaga o bloqueio inteiro. Não bloqueia: P3 entrega o apagar inteiro.
+3. **Cliente sem preferência: pode ver quem foi escolhido?** Se "qualquer um" sorteia o barbeiro, o e-mail e a tela de confirmação dizem o nome só depois que a dona confirma? Não bloqueia: P2 mostra o barbeiro só quando o cliente escolhe.
+4. **Quando a filial é criada, copiar também a equipe?** A resposta assumida é **não**: a filial nasce só com a dona como barbeiro e cada barbeiro novo recebe convite na unidade. Se o dono quiser outra coisa, vira decisão nova.
+
+## 7. Execução
+<!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->

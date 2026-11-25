@@ -10,6 +10,7 @@
 - **2026-11-21:** P5 backend (comissão configurável: regras, ajustes, foto, fechamento, relatório/CSV) na mesma branch — **não revisado**; frontend P5 pendente; depois P6.
 - **2026-11-23:** P5 frontend (tela `/painel/comissao`: regras, ajustes, simulador, relatório, fechar/reabrir) na mesma branch — **não revisado**; pendentes: LGPD de comissões, P4 frontend e P6.
 - **2026-11-23:** P6 (relatórios da marca: Action do Orchestrator só para a dona, `/painel/marca`, opção "Todas as unidades" no seletor) no branch `cursor/cloud-agent-1795474739908-iadbz` — **não revisado**; pendentes: LGPD de comissões e P4 frontend.
+- **2026-11-25:** decisão [0002](decisoes/0002-filiais-e-equipe-telas.md): fecha o P4 frontend (cliente escolhe barbeiro, horários/serviços/bloqueios, passar atendimento) e cria a tela "Nova filial". Antes das telas, P0 trava a criação de filial só para a dona (hoje um barbeiro consegue pela API).
 
 **Para quem é:** este documento é o roteiro para continuar o trabalho, inclusive no Cursor. Cada item vira uma PR. Depois, cada PR passa pela revisão do Claude.
 
