@@ -180,7 +180,7 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
 1. **Autonomia do barbeiro por permissão.** Respondido em parte (25/11): por padrão o barbeiro não mexe na agenda; a dona controla (ACL). Falta decidir **se e quando** entra uma 4ª chave em `staff_permissions`, por exemplo `manage_own_blocks` ("bloquear os próprios horários"), desligada por padrão. Exige migração (coluna nova), liberar o barbeiro só no próprio `staff_id` em `ManageStaffSchedule` e uma tela no painel dele. Não bloqueia P0 a P4.
 2. **Desbloquear um período.** O AppBarber tem "Desbloquear horário": remove os bloqueios de um profissional entre duas datas e horas. Recomendação: um passo futuro com o mesmo comportamento. Não bloqueia: P3 entrega só o apagar do bloqueio inteiro.
 3. ~~Cliente sem preferência vê o barbeiro?~~ Respondido em 25/11: sim, sempre (seção 2).
-4. **Quando a filial é criada, copiar também a equipe?** A resposta assumida é **não**: a filial nasce só com a dona como barbeiro e cada barbeiro novo recebe convite na unidade. Se o dono quiser outra coisa, vira decisão nova.
+4. ~~Copiar a equipe ao criar a filial?~~ Respondido em 25/11: não. Cada filial tem os próprios barbeiros; mover um barbeiro entre filiais (transferência ou empréstimo) é a [0003](0003-transferencia-e-emprestimo-de-barbeiro.md).
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->

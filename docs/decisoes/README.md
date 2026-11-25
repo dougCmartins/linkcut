@@ -30,3 +30,4 @@ Decisões de arquitetura grandes continuam virando ADR em `docs/adr/`. O arquivo
 |---|---|---|---|
 | [0001](0001-filiais-e-equipe.md) | Filiais e equipe: estrutura completa (organização, unidades, equipe, agenda por barbeiro e comissão) | Em execução | `claude/practical-wozniak-auyi2x` (P1–P6 pelo Cursor, não revisado; P4 frontend pendente) |
 | [0002](0002-filiais-e-equipe-telas.md) | Filiais e equipe de ponta a ponta: telas que faltam (P4 frontend e "Nova filial") | Decidido | P0 a P4, ainda sem branch |
+| [0003](0003-transferencia-e-emprestimo-de-barbeiro.md) | Transferência e empréstimo de barbeiro entre filiais (horário novo no destino, estender, encerrar, tornar definitivo) | Decidido | depois da 0002 |
