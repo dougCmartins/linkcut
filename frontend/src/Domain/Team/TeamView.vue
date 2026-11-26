@@ -111,6 +111,14 @@ async function togglePermission(member: StaffMember, key: keyof StaffPermissions
             @update:model-value="toggleActive(member, $event)"
           />
         </div>
+        <RouterLink
+          v-if="isOwner"
+          :to="{ name: 'staff-agenda', params: { id: member.id } }"
+          class="mt-3 inline-flex text-sm font-bold text-accent"
+          :aria-label="t('team.agenda.open', { name: member.name })"
+        >
+          {{ t('team.agenda.openShort') }} →
+        </RouterLink>
         <div v-if="isOwner" class="mt-4 space-y-3 border-t border-line pt-3">
           <p class="text-xs font-bold uppercase tracking-wide text-muted">{{ t('team.permissions') }}</p>
           <ToggleSwitch

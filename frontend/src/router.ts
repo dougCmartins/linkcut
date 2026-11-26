@@ -90,6 +90,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/painel/equipe/:id(\\d+)/agenda',
+    name: 'staff-agenda',
+    component: () => import('@/Domain/Team/StaffAgendaView.vue'),
+    meta: { requiresAuth: true, requiresOwner: true },
+  },
+  {
     path: '/painel/comissao',
     name: 'commission',
     component: () => import('@/Domain/Finance/Commission/CommissionView.vue'),

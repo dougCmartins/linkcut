@@ -68,4 +68,29 @@ describe('TeamView', () => {
     // Assert
     await waitFor(() => expect(screen.getByText('João')).toBeTruthy())
   })
+
+  it('each barber has an "Agenda" link for the owner, and none for a barber', async () => {
+    // Arrange
+    installTeamApi(2)
+    const session = (role: 'owner' | 'barber') => ({
+      accessToken: 'a',
+      refreshToken: 'r',
+      accessExpiresAt: Date.now() + 60_000,
+      refreshExpiresAt: Date.now() + 120_000,
+      user: { id: 7, tenantId: 3, name: role, email: `${role}@example.com`, phoneMasked: null, role, twoFactorChannel: null },
+    })
+
+    // Act
+    const owner = renderWithPlugins(TeamView, {}, () => useAuthStore().startSession(session('owner')))
+    const link = await screen.findByRole('link', { name: 'Agenda de Owner' })
+    const ownerLinks = screen.getAllByRole('link', { name: /^Agenda de/ }).length
+    owner.unmount()
+    renderWithPlugins(TeamView, {}, () => useAuthStore().startSession(session('barber')))
+    await waitFor(() => expect(screen.getByText('Owner')).toBeTruthy())
+
+    // Assert
+    expect(link.getAttribute('href')).toBe('/painel/equipe/1/agenda')
+    expect(ownerLinks).toBe(2)
+    expect(screen.queryByRole('link', { name: /^Agenda de/ })).toBeNull()
+  })
 })

@@ -102,11 +102,14 @@ describe('auth guard', () => {
 
     // Act
     await barberRouter.push('/painel/unidades/nova')
+    const barberOnUnitNew = barberRouter.currentRoute.value.path
+    await barberRouter.push('/painel/equipe/2/agenda')
     signIn('owner')
     const ownerRouter = createTestRouter()
     await ownerRouter.push('/painel/unidades/nova')
 
     // Assert
+    expect(barberOnUnitNew).toBe('/painel')
     expect(barberRouter.currentRoute.value.path).toBe('/painel')
     expect(ownerRouter.currentRoute.value.name).toBe('unit-new')
   })
