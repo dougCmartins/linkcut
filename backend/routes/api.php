@@ -28,3 +28,4 @@ require base_path('src/Domain/Orchestrator/Catalog/Routes/api.php');
 require base_path('src/Domain/Orchestrator/Organization/Routes/api.php');
 require base_path('src/Domain/Orchestrator/StaffInvite/Routes/api.php');
 require base_path('src/Domain/Orchestrator/StaffSchedule/Routes/api.php');
+require base_path('src/Domain/Orchestrator/StaffMove/Routes/api.php');
