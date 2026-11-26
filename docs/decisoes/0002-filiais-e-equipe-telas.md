@@ -185,6 +185,19 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
 
+### 2026-11-25 — execução 2
+- **Feito:** resposta do dono no chat ("sim, recusar") à pergunta 1 da execução 1. Agora a API recusa passar um atendimento quando:
+  - o outro barbeiro não faz um dos serviços: `STAFF_SERVICE_UNAVAILABLE` (409, código novo, com mensagem própria na tela);
+  - o horário fica fora do expediente dele, no intervalo ou num bloqueio: `SLOT_UNAVAILABLE`, como já acontecia com outro atendimento no mesmo horário;
+  - o atendimento não está mais pendente ou confirmado: `INVALID_STATUS_TRANSITION`.
+  - As checagens rodam dentro da mesma trava do `ReassignBookingRequest`; as regras do `Team` entram por um callback do `Orchestrator`.
+  - Evidência: `StaffAgendaTest` (3 testes novos), `DashboardTeam.test.ts` (o aviso do serviço); `php artisan test` 336 OK; `vitest` 442 OK. Commit `9bfba28`.
+- **Já estava aplicado:** nada novo.
+- **Pendente:** o mesmo da execução 1 (capturas em 390 px e teste no navegador).
+- **Perguntas para o dono/arquiteto:** a pergunta 2 da execução 1 (barbeiro com convite pendente) segue aberta.
+- **Riscos ou desvios:** o código `STAFF_SERVICE_UNAVAILABLE` é novo; escolhi um código próprio para a tela não dizer "não está livre" quando o motivo é o serviço.
+- **Branch / PR:** `claude/decision-0002-branch-screens`, mergeado na `main` a pedido do dono.
+
 ### 2026-11-25 — execução 1
 - **Feito:**
   - **P0:** só a dona cria filial. Um barbeiro recebe 403 `OWNER_REQUIRED`, e nada é criado. Teste `CreateUnitTest::test_a_barber_cannot_create_a_unit_and_nothing_is_created`. Commit `4caef33`.
@@ -227,7 +240,7 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
   - Capturas em 390 px para a PR: não há PR, e não testei no navegador. Só os testes automatizados cobrem as telas.
   - O seletor de barbeiro fica dentro do modal, sem tela cheia própria. Por isso não usa `useQueryOverlay`; o "passar para outro" usa.
 - **Perguntas para o dono/arquiteto:**
-  1. **Passar atendimento:** a rota `reassign`, que já existia, só confere se o outro barbeiro tem atendimento sobreposto. Ela não confere se ele faz o serviço, se o horário cai no expediente, no intervalo ou num bloqueio dele, nem se o atendimento já foi concluído. A tela só oferece a ação em atendimento pendente ou confirmado. A seção 2 diz "precisa fazer o serviço e estar livre": a API deve recusar esses casos também? Com qual código de erro (`SLOT_UNAVAILABLE` para tudo?)
+  1. ~~**Passar atendimento:**~~ respondida pelo dono em 25/11 (recusar); ver a execução 2. A rota `reassign`, que já existia, só confere se o outro barbeiro tem atendimento sobreposto. Ela não confere se ele faz o serviço, se o horário cai no expediente, no intervalo ou num bloqueio dele, nem se o atendimento já foi concluído. A tela só oferece a ação em atendimento pendente ou confirmado. A seção 2 diz "precisa fazer o serviço e estar livre": a API deve recusar esses casos também? Com qual código de erro (`SLOT_UNAVAILABLE` para tudo?)
   2. **Barbeiro com convite pendente:** ele está `active` e entra na lista pública e no "qualquer um", mesmo antes de aceitar o convite. Isso vem do comportamento atual do backend, que não mudei. Ele deve ficar de fora até aceitar?
   3. As perguntas 1 e 2 da seção 6 seguem abertas e não bloquearam nada.
 - **Riscos ou desvios:**
