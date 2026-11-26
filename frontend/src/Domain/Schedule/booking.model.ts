@@ -43,6 +43,8 @@ export interface BookingRequestInput {
   time: string
   /** Only when the client shared the location (used to compute the distance; never stored). */
   clientLocation?: { latitude: number; longitude: number } | null
+  /** The chosen barber; null or missing is "Qualquer um disponível". */
+  staffId?: number | null
 }
 
 /** A day of the booking window and its free start times ("HH:mm"). */
@@ -59,4 +61,14 @@ export interface BookingConfirmation {
   time: string
   /** Short-lived signed link to get this booking's answers as notifications on this device. */
   pushUrl: string | null
+  /** Who will do it, also when the client chose "Qualquer um disponível". */
+  staffName: string | null
+}
+
+/** A barber on the public booking ("Escolha o barbeiro"). */
+export interface PublicStaff {
+  id: number
+  name: string
+  /** Photo URL, or null (the picker shows the initial). */
+  avatar: string | null
 }

@@ -1,4 +1,4 @@
-import type { AvailableDay, BookingConfirmation, BookingRequest, BookingRequestInput } from './booking.model'
+import type { AvailableDay, BookingConfirmation, BookingRequest, BookingRequestInput, PublicStaff } from './booking.model'
 import { http } from '@/http/client'
 import type { AppointmentStatus } from '@/types/appointmentStatus'
 
@@ -41,16 +41,36 @@ const publicPath = (slug: string) => `/public/${encodeURIComponent(slug)}`
 
 /* Visitor (no session) */
 
-/** Free times of every day of the booking window, for the chosen services together (or the shortest one). */
-export async function fetchAvailability(slug: string, serviceIds: string[]): Promise<AvailableDay[]> {
-  const query = serviceIds.length ? `?${serviceIds.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&')}` : ''
+const serviceQuery = (serviceIds: string[]) => serviceIds.map((id) => `service_ids[]=${encodeURIComponent(id)}`)
+
+/** Active barbers of the unit; with services, only those who do all of them. */
+export async function fetchPublicStaff(slug: string, serviceIds: string[] = []): Promise<PublicStaff[]> {
+  const query = serviceIds.length ? `?${serviceQuery(serviceIds).join('&')}` : ''
+  const { data } = await http<PublicStaff[]>(`${publicPath(slug)}/staff${query}`, { auth: false })
+  return data.map((member) => ({ id: member.id, name: member.name, avatar: member.avatar ?? null }))
+}
+
+/**
+ * Free times of every day of the booking window, for the chosen services together (or the shortest one),
+ * of one barber or of any of them (no staffId).
+ */
+export async function fetchAvailability(slug: string, serviceIds: string[], staffId: number | null = null): Promise<AvailableDay[]> {
+  const params = [...serviceQuery(serviceIds), ...(staffId !== null ? [`staff_id=${staffId}`] : [])]
+  const query = params.length ? `?${params.join('&')}` : ''
   const { data } = await http<{ days: AvailableDay[] }>(`${publicPath(slug)}/availability${query}`, { auth: false })
   return data.days
 }
 
 /** Rejects with SLOT_UNAVAILABLE (409) when the time was taken in the meantime. */
 export async function createBookingRequest(slug: string, input: BookingRequestInput): Promise<BookingConfirmation> {
-  const { data } = await http<{ id: number; service_name: string; date: string; time: string; push_url?: string | null }>(
+  const { data } = await http<{
+    id: number
+    service_name: string
+    date: string
+    time: string
+    push_url?: string | null
+    staff_name?: string | null
+  }>(
     `${publicPath(slug)}/booking-requests`,
     {
       method: 'POST',
@@ -65,10 +85,18 @@ export async function createBookingRequest(slug: string, input: BookingRequestIn
         time: input.time,
         client_latitude: input.clientLocation?.latitude ?? null,
         client_longitude: input.clientLocation?.longitude ?? null,
+        ...(input.staffId != null ? { staff_id: input.staffId } : {}),
       },
     },
   )
-  return { id: data.id, serviceName: data.service_name, date: data.date, time: data.time, pushUrl: data.push_url ?? null }
+  return {
+    id: data.id,
+    serviceName: data.service_name,
+    date: data.date,
+    time: data.time,
+    pushUrl: data.push_url ?? null,
+    staffName: data.staff_name ?? null,
+  }
 }
 
 /* Barber */

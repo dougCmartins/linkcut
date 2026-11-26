@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { fetchBookingOptions, fetchPublicPage } from './settings.api'
 import { DEFAULT_THEME } from './settings.defaults'
 import type { PublicPage, ScheduleSettings } from './settings.model'
+import { fetchPublicStaff } from '@/Domain/Schedule/booking.api'
+import type { PublicStaff } from '@/Domain/Schedule/booking.model'
 import { ApiError } from '@/http/apiError'
 import { LoadStatus } from '@/types/loadStatus'
 
@@ -30,6 +32,8 @@ export const usePublicPageStore = defineStore('publicPage', () => {
   const slug = ref<string | null>(null)
   const page = ref<PublicPage | null>(null)
   const bookingOptions = ref<ScheduleSettings | null>(null)
+  /** Active barbers of the unit: the booking shows "Escolha o barbeiro" from 2 on. */
+  const staff = ref<PublicStaff[]>([])
   const status = ref<LoadStatus>(LoadStatus.Idle)
 
   const theme = computed(() => page.value?.theme ?? DEFAULT_THEME)
@@ -41,13 +45,20 @@ export const usePublicPageStore = defineStore('publicPage', () => {
     if (!options.keepContent) {
       page.value = null
       bookingOptions.value = null
+      staff.value = []
     }
     status.value = LoadStatus.Loading
     try {
-      const [loadedPage, booking] = await Promise.all([fetchPublicPage(nextSlug), fetchBookingOptions(nextSlug)])
+      const [loadedPage, booking, members] = await Promise.all([
+        fetchPublicPage(nextSlug),
+        fetchBookingOptions(nextSlug),
+        // Without the list the booking works as with one barber ("Qualquer um").
+        fetchPublicStaff(nextSlug).catch(() => []),
+      ])
       if (slug.value !== nextSlug) return
       page.value = loadedPage
       bookingOptions.value = booking
+      staff.value = members
       status.value = LoadStatus.Ready
       rememberVisitedSlug(nextSlug)
     } catch (caught) {
@@ -72,5 +83,5 @@ export const usePublicPageStore = defineStore('publicPage', () => {
     return load(current)
   }
 
-  return { slug, page, bookingOptions, status, theme, load, loadUnit, reload }
+  return { slug, page, bookingOptions, staff, status, theme, load, loadUnit, reload }
 })

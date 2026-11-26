@@ -30,6 +30,7 @@ interface AppointmentBody {
   status: AppointmentStatus
   has_review?: boolean
   has_products?: boolean
+  staff_name?: string | null
   barbershop: {
     name: string
     slug: string
@@ -73,6 +74,7 @@ const toAppointment = (body: AppointmentBody): ClientAppointment => ({
     avatarUrl: body.barbershop.avatar_url ?? null,
   },
   hasReview: body.has_review === true,
+  staffName: body.staff_name ?? null,
   hasProducts: body.has_products === true,
 })
 

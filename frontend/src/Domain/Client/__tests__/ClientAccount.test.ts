@@ -145,6 +145,7 @@ describe('client area', () => {
     // Assert
     expect(await screen.findByText('Barba')).toBeTruthy()
     expect(screen.getByText('Confirmado')).toBeTruthy()
+    expect(screen.getByText('Com Bruno')).toBeTruthy()
     expect(screen.getByRole('link', { name: /Como chegar/ }).getAttribute('href')).toContain('google.com/maps')
     expect(screen.getByRole('link', { name: 'Falar no WhatsApp' }).getAttribute('href')).toBe('https://wa.me/5511999998888')
     expect(calls.find((call) => call.path === '/client/appointments')?.headers.Authorization).toBe('Bearer client-access-1')

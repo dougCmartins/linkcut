@@ -58,4 +58,6 @@ export interface ClientAppointment {
   hasReview: boolean
   /** The barbershop has at least one active product. */
   hasProducts: boolean
+  /** Who attends (null for bookings older than the team). */
+  staffName?: string | null
 }

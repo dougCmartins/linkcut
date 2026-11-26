@@ -5,11 +5,12 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import ServiceCard from './ServiceCard.vue'
 import DayPicker from './DayPicker.vue'
 import TimeSlotPicker from './TimeSlotPicker.vue'
+import StaffPicker from './StaffPicker.vue'
 import BookingForm from './BookingForm.vue'
 import BookingSuccess from './BookingSuccess.vue'
 import BookingVacationNotice from './BookingVacationNotice.vue'
-import { createBookingRequest, fetchAvailability } from './booking.api'
-import type { AvailableDay } from './booking.model'
+import { createBookingRequest, fetchAvailability, fetchPublicStaff } from './booking.api'
+import type { AvailableDay, PublicStaff } from './booking.model'
 import { isOnVacation, isScheduleLocked } from './availability'
 import { usePublicPageStore } from '@/Domain/Settings/publicPage.store'
 import { useBookingStore, type BookingNotice } from './booking.store'
@@ -93,6 +94,8 @@ const whatsappUrl = computed(() => {
 
 const form = reactive({
   serviceIds: [] as string[],
+  /** null = "Qualquer um disponível". */
+  staffId: null as number | null,
   date: null as string | null,
   time: null as string | null,
   // A signed-in client (client area) books without typing their data again.
@@ -108,6 +111,31 @@ const submittedSummary = ref<string | null>(null)
 const isSubmitting = ref(false)
 const submitError = ref('')
 
+/** "Escolha o barbeiro" only when the unit has 2 or more active barbers; with one, the modal stays as it was. */
+const showsStaffPicker = computed(() => publicPageStore.staff.length >= 2)
+/** Barbers who do every chosen service (all of them before a service is chosen). */
+const eligibleStaff = ref<PublicStaff[]>(publicPageStore.staff)
+const isLoadingStaff = ref(false)
+let staffRequest = 0
+
+async function loadEligibleStaff(): Promise<void> {
+  const slug = publicPageStore.slug
+  if (!slug || !showsStaffPicker.value) return
+  const request = ++staffRequest
+  isLoadingStaff.value = true
+  try {
+    const members = await fetchPublicStaff(slug, form.serviceIds)
+    if (request !== staffRequest) return
+    eligibleStaff.value = members
+    // The chosen barber does not do the new services: back to "Qualquer um".
+    if (form.staffId !== null && !members.some((member) => member.id === form.staffId)) form.staffId = null
+  } catch {
+    if (request === staffRequest) eligibleStaff.value = publicPageStore.staff
+  } finally {
+    if (request === staffRequest) isLoadingStaff.value = false
+  }
+}
+
 /** Free times of the booking window, computed by the API (its "today" is the barbershop's). */
 const availability = ref<AvailableDay[]>([])
 const isLoadingTimes = ref(false)
@@ -119,7 +147,7 @@ async function loadAvailability(): Promise<void> {
   isLoadingTimes.value = true
   availabilityFailed.value = false
   try {
-    availability.value = await fetchAvailability(slug, form.serviceIds)
+    availability.value = await fetchAvailability(slug, form.serviceIds, form.staffId)
   } catch {
     availabilityFailed.value = true
   } finally {
@@ -154,8 +182,15 @@ const canSubmit = computed(() => isFilled.value && !isSubmitting.value)
  */
 let isClosed = false
 
-// The free times depend on the length of the chosen services together.
-watch(() => form.serviceIds, loadAvailability)
+// The free times depend on the length of the chosen services together, and on the chosen barber.
+watch(
+  () => form.serviceIds,
+  () => {
+    void loadAvailability()
+    void loadEligibleStaff()
+  },
+)
+watch(() => form.staffId, loadAvailability)
 // A time picked earlier may not fit after changing the day or the service.
 watch(times, (available) => {
   if (form.time && !available.includes(form.time)) form.time = null
@@ -193,14 +228,16 @@ async function submit(): Promise<void> {
       clientWhatsapp: onlyDigits(form.clientWhatsapp),
       clientEmail: form.clientEmail.trim(),
       clientLocation: geolocation.point.value,
+      staffId: form.staffId,
     })
     registerEmail.value = clientStore.isSignedIn ? null : form.clientEmail.trim()
     pushUrl.value = confirmation.pushUrl
-    submittedSummary.value = t('booking.summary', {
+    const summary = t('booking.summary', {
       service: confirmation.serviceName || chosenServices.value.map((service) => service.name).join(' + '),
       date: formatDayMonth(fromIsoDate(confirmation.date)),
       time: confirmation.time,
     })
+    submittedSummary.value = confirmation.staffName ? t('booking.summaryWithStaff', { summary, staff: confirmation.staffName }) : summary
     if (isClosed) finishInBackground({ kind: 'sent', message: t('booking.notice.sent', { summary: submittedSummary.value }) })
   } catch (caught) {
     if (isClosed) {
@@ -349,6 +386,11 @@ onBeforeUnmount(() => {
                 />
               </div>
               <p v-if="totalLabel" class="mt-3 text-right font-display text-sm font-extrabold" role="status">{{ totalLabel }}</p>
+            </fieldset>
+
+            <fieldset v-if="showsStaffPicker" class="min-w-0">
+              <legend class="mb-1 text-sm font-bold">{{ t('booking.staff.title') }}</legend>
+              <StaffPicker v-model="form.staffId" :staff="eligibleStaff" :is-loading="isLoadingStaff" :label="t('booking.staff.title')" />
             </fieldset>
 
             <fieldset class="min-w-0">

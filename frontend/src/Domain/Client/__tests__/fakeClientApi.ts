@@ -26,6 +26,7 @@ export const APPOINTMENTS = [
     starts_at: '15:00',
     ends_at: '15:30',
     status: 'confirmed',
+    staff_name: 'Bruno',
     barbershop: {
       name: 'Navalha',
       slug: 'navalha',

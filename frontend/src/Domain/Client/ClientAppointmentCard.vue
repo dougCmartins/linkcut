@@ -81,6 +81,7 @@ const linkClass = 'inline-flex items-center gap-1 text-sm font-bold text-accent'
 
     <h3 v-if="showBarbershop" class="mt-3 text-base break-words">{{ appointment.serviceName }}</h3>
     <p class="text-sm font-semibold tabular-nums">{{ when }}</p>
+    <p v-if="appointment.staffName" class="text-sm text-muted">{{ t('client.appointments.withStaff', { staff: appointment.staffName }) }}</p>
     <p v-if="isUpcoming && appointment.barbershop.address" class="mt-1 text-sm text-muted break-words">
       {{ appointment.barbershop.address }}
     </p>
