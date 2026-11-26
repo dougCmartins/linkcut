@@ -1,6 +1,6 @@
 # 0003. Transferência e empréstimo de barbeiro entre filiais
 
-- **Status:** Decidido
+- **Status:** Em execução
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-25
 - **Origem:** chat do arquiteto (conversa com o dono em 25/11, a partir da pergunta 4 da 0002)
@@ -53,7 +53,7 @@ Sobre o formato, o dono pediu (25/11): "abre o leque e deixa pro usuário decidi
 ## 4. Como aplicar
 Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o relatório.
 
-- [ ] **P1 — Dados e transferência definitiva (backend).**
+- [x] **P1 — Dados e transferência definitiva (backend).**
   - **Tabela `staff_moves`:** `id`, `organization_id`, `user_id`, `from_staff_id`, `to_staff_id`, `kind` (`transfer` | `loan`), `starts_on`, `ends_on` (nulo na transferência), `status` (`active` | `ended` | `made_permanent`), `created_by`, `ended_at`, `ended_by`, timestamps. Índice por `(organization_id, status)` e por `(user_id, status)`.
   - **Fluxo** em `Domain/Orchestrator/StaffMove` (cruza `Team`, `Identity` e `Schedule`):
     - `POST team/staff/{id}/move` com `{to_unit_id, kind: "transfer", weekly_hours: [...com intervalo], service_ids: [...], permissions: "keep" | "reset"}`;
@@ -115,3 +115,41 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-26 — execução 1
+- **Feito: P1, dados e transferência definitiva (backend).**
+  - **Tabela:** `staff_moves` com os campos e os índices da seção 4.
+  - **Rota:** `POST /api/team/staff/{id}/move` (`kind: "transfer"`), só para a dona.
+  - **Fluxo** em `Domain/Orchestrator/StaffMove/Actions/MoveStaff.php`. A unidade de origem é a escolhida no topo. Numa transação:
+    - a ficha do destino é ligada (a antiga, se ele já trabalhou lá; senão uma nova);
+    - os horários, com intervalo, e os serviços escolhidos são gravados. Os serviços são conferidos contra os do destino, senão `STAFF_SERVICE_UNAVAILABLE`;
+    - as permissões são mantidas ou desligadas, como a dona escolher;
+    - a ficha da origem é desligada, nunca apagada;
+    - o `users.tenant_id` passa para o destino;
+    - o movimento é gravado.
+  - **Depois:** o barbeiro recebe o e-mail "Você agora atende em {filial}".
+  - **Recusas:**
+    - com atendimentos futuros (pendentes ou confirmados, de hoje em diante) na origem: 409 `STAFF_HAS_UPCOMING_APPOINTMENTS`, com `data.appointments` (id, data, hora, cliente), e nada muda;
+    - outra marca ou a mesma unidade: `MOVE_DESTINATION_INVALID`;
+    - convite pendente: `STAFF_NOT_MOVABLE`;
+    - barbeiro tentando mover: 403.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/StaffMove/Tests/Feature/MoveStaffTest.php`: 5 testes.
+      - Transferência: o barbeiro entra no destino e recebe 403 com o `X-Unit` da origem.
+      - Ganhos: a comissão antiga fica igual na origem, e a nova sai pela regra do destino (30% contra 50% na origem).
+      - Atendimento futuro: recusa sem mudar nada.
+      - Erros: outra marca, mesma unidade, convite pendente, serviço da origem, empréstimo ainda não aceito e barbeiro.
+      - Volta: transferir de volta religa a ficha antiga, sem criar outra.
+    - 342 testes no total, o `ArchitectureTest` incluído.
+    - Commit `d036954`.
+- **Junto:** Symfony atualizado para a 7.4.24 (commit `a331cc5`). Avisos de segurança novos em `http-kernel`, `mailer` e `routing` derrubavam o `composer audit` do CI.
+- **Pendente:**
+  - **P2 (empréstimo):** a rota aceita só `transfer` por enquanto. `loan` dá 422 até o P2.
+  - **P3** (tela) e **P4** (ganhos por pessoa).
+  - **Push para o barbeiro no movimento:** só o e-mail foi feito.
+  - **LGPD:** os `staff_moves` ainda não entram na exportação.
+- **Perguntas para o dono/arquiteto:** nenhuma nova. A pergunta 2 da seção 6 não bloqueia.
+- **Riscos ou desvios:**
+  - O movimento começa sempre "hoje" (`starts_on` = hoje, na hora local da origem). A seção 4 não pede data futura para a transferência.
+  - Uma transferência de quem já tinha um movimento ativo encerra o anterior (`status = ended`), para haver um movimento ativo por pessoa.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR), a partir da `main` de 26/11. O histórico antigo do branch (P1 a P3 da 0001, substituído pela #76) foi preservado no merge.
