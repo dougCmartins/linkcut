@@ -1,6 +1,6 @@
 # 0002. Filiais e equipe de ponta a ponta: telas que faltam (P4 frontend e "Nova filial")
 
-- **Status:** Decidido
+- **Status:** Aplicado
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-25
 - **Origem:** chat do arquiteto (pedido do dono em 25/11: deixar filiais e equipe usáveis de ponta a ponta)
@@ -94,11 +94,11 @@ Domain/Schedule/
 ## 4. Como aplicar
 Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (podem ir em PRs paralelas); P3 e P4 vêm depois porque só fazem sentido com equipe.
 
-- [ ] **P0 — Trava de papel ao criar filial (backend).**
+- [x] **P0 — Trava de papel ao criar filial (backend).**
   - `CreateUnit` (ou o controller) recusa quem não é `owner` com `OwnerRequiredException`, igual ao `ManageStaffSchedule::ensureOwner()`.
   - **Aceite:** teste AAA em `CreateUnitTest`: barbeiro recebe 403 e nada é criado; dona continua com 201. `ArchitectureTest` e `pint` passam.
 
-- [ ] **P1 — Tela "Nova filial".**
+- [x] **P1 — Tela "Nova filial".**
   - **Rota:** `/painel/unidades/nova` (`requiresAuth`), só dona; barbeiro vai para `/painel`.
   - **Campos:** nome; link (`slug`, sugerido por `slugify(nome)`, editável); endereço (`AddressEditor`, obrigatório, como no resto do app); caixa "Copiar as configurações da matriz" (`copy_settings`, desligada por padrão, com a explicação de que fotos não são copiadas: o backend zera os ids de imagem).
   - **Link livre:** checa com `checkSlug` (debounce) e mostra "disponível" ou a sugestão; slugs reservados e fora do padrão são recusados antes de enviar.
@@ -112,7 +112,7 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
     - **conferir:** o ponto no mapa do endereço (latitude/longitude). Se o `CreateUnit` não o resolve como o `UpdateProfileSettings`, usar o mesmo mecanismo e registrar na execução;
     - `/{slug-da-filial}` e `/{slug-da-filial}/agendar` abrem a página e o agendamento da filial nova.
 
-- [ ] **P2 — O cliente escolhe o barbeiro ou "qualquer um" (agendamento).**
+- [x] **P2 — O cliente escolhe o barbeiro ou "qualquer um" (agendamento).**
   - **Backend, distribuição do "qualquer um":** hoje `RequestBooking::resolveStaffId` pega o **primeiro** barbeiro livre por `id`, então a dona (o `staff` mais antigo) recebe todos os pedidos sem preferência. Trocar pela regra da seção 2 (menos atendimentos no dia → menor buraco → menor id), dentro da mesma transação e da mesma trava. A regra fica numa classe pura do `Team` ou do `Orchestrator/PublicBooking/Support` (ex.: `PickAnyStaff`), testável sem banco.
     - **Aceite:** testes AAA unitários da regra (os 3 critérios e os empates) e um teste de feature: dois barbeiros livres, um com 3 atendimentos no dia e outro com 1 → o pedido "qualquer um" vai para o de 1.
   - **Backend, nome do barbeiro para o cliente:** `BookingConfirmationData` ganha `staff_name`; os e-mails de pedido recebido/confirmado e a lista da área do cliente mostram o barbeiro. O nome vem do `Team` (já há `FindStaff`/`ListActiveStaff`) composto no `Orchestrator`, nunca pela tabela direto.
@@ -128,7 +128,7 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
     - a tela de agendamento de uma unidade só com o dono passa nos testes atuais sem mudar uma linha;
     - CLS: o picker reserva a altura final enquanto carrega (esqueleto).
 
-- [ ] **P3 — Horários, serviços e bloqueios do barbeiro (dona).**
+- [x] **P3 — Horários, serviços e bloqueios do barbeiro (dona).**
   - **Entrada:** em "Minha equipe" (`TeamView`), cada barbeiro ganha o botão "Agenda" que abre `/painel/equipe/:id/agenda`.
   - **Backend do intervalo (antes da tela):**
     - migração: `staff_business_hours` ganha `break_starts_at` e `break_ends_at` (`string(5)`, nulos). Os registros atuais ficam sem intervalo;
@@ -147,7 +147,7 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
     - um bloqueio recorrente criado na tela tira o horário do `GET availability` (teste de ponta a ponta no backend já existe para a regra; aqui basta o frontend mandar o corpo certo).
   - **Desbloqueio "por período"** (0001): fica como o `DELETE` do bloqueio inteiro. Liberar só uma ocorrência de um bloqueio recorrente depende da pergunta 2.
 
-- [ ] **P4 — Passar um atendimento para outro barbeiro e ver quem atende.**
+- [x] **P4 — Passar um atendimento para outro barbeiro e ver quem atende.**
   - **Painel da dona, com 2 ou mais barbeiros:**
     - cada cartão da agenda (`TodayAgendaCard`, `UpcomingAppointmentCard`, `PendingRequestCard`) mostra o nome do barbeiro (pelo `staffId` + `useTeamStore`);
     - filtro "Barbeiro" no topo da agenda (todos / um), guardado só na sessão.
@@ -184,3 +184,54 @@ Ordem: **P0 → P1 → P2 → P3 → P4**. P1 e P2 não dependem um do outro (po
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-25 — execução 1
+- **Feito:**
+  - **P0:** só a dona cria filial. Um barbeiro recebe 403 `OWNER_REQUIRED`, e nada é criado. Teste `CreateUnitTest::test_a_barber_cannot_create_a_unit_and_nothing_is_created`. Commit `4caef33`.
+  - **P1:** tela "Nova filial" em `/painel/unidades/nova` (só a dona). A dona chega por um cartão "Filiais" na aba Link das Configurações ou pela opção "+ Nova filial" no fim do seletor de unidade. O link é checado enquanto ela digita; a checagem foi extraída do cadastro para `useSlugCheck`/`SlugField`, e o cadastro usa a mesma. Depois de salvar, o painel troca para a filial nova e mostra o link dela. Testes: `NewUnitView.test.ts` (corpo em snake_case, link ocupado, link reservado, cartão da dona/barbeiro, `reload()` e `isMultiUnit`), `UnitSelector.test.ts`, `auth.guard.test.ts` (barbeiro vai para `/painel`). Commit `9e31721`.
+    - **Conferido no código:** a filial nova já nascia com o horário do dono copiado (`CreateOwnerStaff` → `SeedStaffSchedule`). Agora tem teste: `test_the_new_unit_gets_the_owner_as_barber_with_the_unit_hours`.
+    - `/{slug-da-filial}` e `/staff` respondem logo depois de criar: `test_the_new_unit_public_page_and_booking_open_on_its_own_slug`.
+    - **Ponto no mapa:** o `CreateUnit` gravava latitude/longitude nulas. Agora usa o mesmo `AddressGeocoder` das Configurações, fora da transação. Teste `test_an_address_without_a_point_is_located_like_in_settings`.
+  - **P2 backend:**
+    - **"Qualquer um":** a regra `PickAnyStaff` escolhe o barbeiro com menos atendimentos no dia; no empate, o de menor buraco antes do horário; depois, o de menor id. Roda dentro da mesma trava.
+    - **Nome do barbeiro:** aparece na confirmação (`staff_name`), nos e-mails (linha "Barbeiro: …") e na área do cliente.
+    - **Filtro por serviço:** `GET public/{slug}/staff?service_ids[]=` lista só quem faz todos os serviços escolhidos.
+    - **Evidência:** `PickAnyStaffTest` (5 testes); em `StaffAgendaTest`, o pedido "qualquer um" vai para o barbeiro com 1 atendimento, não para o de 3, e o filtro de serviço tem teste; `BookingEmailsTest`, `ClientAppointmentsTest`, `QueryBudgetTest` (a rota `/staff` faz 1 consulta a mais, constante com 1 ou 5 barbeiros; o agendamento segue em 24 e os lembretes seguem constantes). Commit `7e6bab0`.
+  - **P2 frontend:** `StaffPicker` dentro do `BookingModal`, só com 2 ou mais barbeiros ativos. O padrão é "Qualquer um disponível".
+    - Trocar serviço ou barbeiro busca os horários de novo.
+    - Se o barbeiro escolhido não faz um serviço novo, a escolha volta para "Qualquer um".
+    - Enquanto carrega, um esqueleto ocupa o lugar da lista.
+    - A confirmação mostra "· com {barbeiro}", e a área do cliente mostra "Com {barbeiro}".
+    - A lista de barbeiros vem junto com a página pública (`publicPage.store`). Assim, uma unidade com 1 barbeiro não faz nenhuma chamada a mais no modal, e o `BookingModal.test.ts` passou sem mudar nenhuma linha.
+    - Testes em `BookingModalStaff.test.ts` (6) e `ClientAccount.test.ts`. Commit `c9cdc97`.
+  - **P3 backend:** intervalo opcional (`break_starts_at`/`break_ends_at`) em `staff_business_hours`. Precisa dos dois campos ou de nenhum, dentro do expediente, com o fim depois do início; senão, 422. A disponibilidade e o agendamento pulam o intervalo como um bloqueio. Testes em `StaffAgendaTest`: com intervalo 12:00–13:00, um Corte de 45 min não aparece às 11:30, 12:00 nem 12:30; aparece às 11:00 e às 13:00, e o dia sem intervalo não muda. Um intervalo fora do expediente ou pela metade dá 422. Migração `2026_11_25_100000`. Commit `aad25e5`.
+  - **P3 frontend:** "Agenda" em cada barbeiro de "Minha equipe" abre `/painel/equipe/:id/agenda` (só a dona; o barbeiro vai para `/painel`).
+    - **Horários:** o `WorkingHoursEditor` ganhou a opção `with-break`, com intervalo por dia e "Repetir nos outros dias". As Configurações continuam iguais.
+    - **Serviços:** um interruptor por serviço.
+    - **Bloqueios:** único ou semanal, com os dias da semana e a data final opcional. "Desbloquear" apaga o bloqueio.
+    - **Salvar:** um `SaveBar` só para horários e serviços.
+    - **Avisos:** "agenda toda fechada" e "nenhum serviço" (sem serviço, o botão Salvar fica bloqueado, porque a API recusa a lista vazia).
+    - Testes: `staffSchedule.api.test.ts` (4), `StaffAgendaView.test.ts` (4), `TeamView.test.ts`, `auth.guard.test.ts`. Commit `6a37db5`.
+  - **P4:** com 2 ou mais barbeiros ativos, os cartões da agenda da dona mostram "Com {barbeiro}".
+    - Um filtro "Barbeiro" no topo da agenda vale só para a sessão do navegador (`sessionStorage`).
+    - "Passar para outro" abre o `ReassignSheet` (`?passar=<id>`, com `useQueryOverlay`) com os outros barbeiros ativos. Só aparece em atendimento pendente ou confirmado.
+    - Se o barbeiro estiver ocupado (`SLOT_UNAVAILABLE`), a tela mostra "{nome} não está livre neste horário. Nada mudou." e o atendimento fica onde estava.
+    - O barbeiro e a unidade com 1 barbeiro não veem nada disso.
+    - Testes: `agenda.store.test.ts` (troca o `staffId`; o erro mantém o estado), `DashboardTeam.test.ts` (5). Commit `2594d7d`.
+  - **Checagens:** `pint --test` OK; `php artisan test` 333 OK, incluindo `ArchitectureTest` e `QueryBudgetTest`; `typecheck` OK; `vitest` 441 OK; o build passou com `--outDir` temporário, porque o `frontend/dist` local pertence ao root.
+- **Já estava aplicado:**
+  - Os 4 testes do `DashboardView` (P4) já passavam: as fixtures ganharam `role` no #76 (`c3a4450`).
+  - O defeito 3 da revisão (o `TeamView` mostrava a chave de erro crua) já estava corrigido: o `TeamView` usa `errors.api.`.
+  - A cópia do horário para o barbeiro-dono na filial nova (P1) também já estava feita.
+- **Pendente:**
+  - Capturas em 390 px para a PR: não há PR, e não testei no navegador. Só os testes automatizados cobrem as telas.
+  - O seletor de barbeiro fica dentro do modal, sem tela cheia própria. Por isso não usa `useQueryOverlay`; o "passar para outro" usa.
+- **Perguntas para o dono/arquiteto:**
+  1. **Passar atendimento:** a rota `reassign`, que já existia, só confere se o outro barbeiro tem atendimento sobreposto. Ela não confere se ele faz o serviço, se o horário cai no expediente, no intervalo ou num bloqueio dele, nem se o atendimento já foi concluído. A tela só oferece a ação em atendimento pendente ou confirmado. A seção 2 diz "precisa fazer o serviço e estar livre": a API deve recusar esses casos também? Com qual código de erro (`SLOT_UNAVAILABLE` para tudo?)
+  2. **Barbeiro com convite pendente:** ele está `active` e entra na lista pública e no "qualquer um", mesmo antes de aceitar o convite. Isso vem do comportamento atual do backend, que não mudei. Ele deve ficar de fora até aceitar?
+  3. As perguntas 1 e 2 da seção 6 seguem abertas e não bloquearam nada.
+- **Riscos ou desvios:**
+  - **Filiais na tela:** o cartão "Filiais" ficou na aba **Link** das Configurações, porque as Configurações são em abas e a decisão não diz qual.
+  - **Fim do bloqueio:** a data final opcional segue a regra da API: num bloqueio semanal, `ends_at` em outro dia marca a última semana.
+  - **Barbeiro sem serviço:** `ListActiveStaffForServices` agora faz 2 consultas em vez de 1 por barbeiro. Ela mantém a regra antiga: um barbeiro sem nenhuma linha em `staff_services` conta como apto. Hoje isso não acontece, porque a API recusa uma lista vazia.
+- **Branch / PR:** `claude/decision-0002-branch-screens` (sem PR).
