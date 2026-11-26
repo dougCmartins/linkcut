@@ -80,7 +80,7 @@ logs:
 migrate:
 	$(COMPOSE) exec backend php artisan migrate --force
 
-seed: ## Barbearias de demonstração e o login rafael@linkcut.app / linkcut123
+seed: ## Barbearias de demonstração; logins rafael@linkcut.app, dona@cortefino.app e barbeiro@cortefino.app (senha linkcut123)
 	$(COMPOSE) exec backend php artisan db:seed --force
 
 fresh:

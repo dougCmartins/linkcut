@@ -19,8 +19,9 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
- * Demo data (idempotent). Two tenants, so tenant isolation can be checked by hand.
+ * Demo data (idempotent). Two tenants, so tenant isolation can be checked by hand, and a brand with a branch.
  * Demo login: rafael@linkcut.app / linkcut123
+ * Branch test: dona@cortefino.app (owner) and barbeiro@cortefino.app (barber of the branch), both linkcut123.
  */
 final class DatabaseSeeder extends Seeder
 {
@@ -49,6 +50,8 @@ final class DatabaseSeeder extends Seeder
             app(FinanceDemoSeeder::class)->forTenant($rafael);
             app(ScheduleDemoSeeder::class)->forTenant($rafael);
             app(ReviewsDemoSeeder::class)->forTenant($rafael);
+
+            app(BranchDemoSeeder::class)->run();
         });
     }
 
