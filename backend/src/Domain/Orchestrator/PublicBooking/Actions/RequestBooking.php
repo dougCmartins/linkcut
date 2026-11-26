@@ -175,7 +175,7 @@ final class RequestBooking
             ->map(fn (BusySlotData $slot): array => [$slot->starts_at, $slot->ends_at])
             ->values()
             ->all();
-        $blocks = $this->listBlocks->handle(new StaffIdData(id: $staffId), $data->date);
+        $blocks = [...$this->listBlocks->handle(new StaffIdData(id: $staffId), $data->date), ...($match?->breakRanges() ?? [])];
         $times = StaffAvailability::forDay(
             date: $data->date,
             hours: $hours,

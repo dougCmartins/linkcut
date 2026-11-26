@@ -53,7 +53,13 @@ final class ShowAvailability
             $date = $day->toDateString();
             $times = [];
             foreach ($staffIds as $staffId) {
-                $hours = $this->staffHoursForDay($staffId, $day->dayOfWeek);
+                $staffHours = $this->staffHoursForDay($staffId, $day->dayOfWeek);
+                $hours = $staffHours === null ? null : new BusinessHourData(
+                    weekday: $staffHours->weekday,
+                    is_open: $staffHours->is_open,
+                    opens_at: $staffHours->opens_at,
+                    closes_at: $staffHours->closes_at,
+                );
                 $busy = collect($this->listBusySlots->handle(new DateRangeData(from: $date, to: $date), $staffId)->all())
                     ->map(fn (BusySlotData $slot): array => [$slot->starts_at, $slot->ends_at])
                     ->values()
@@ -65,7 +71,7 @@ final class ShowAvailability
                     vacation: $options->vacation,
                     intervalMinutes: $options->slot_interval_minutes,
                     durationMinutes: $service->duration_minutes,
-                    busy: array_merge($busy, $blocks),
+                    busy: array_merge($busy, $blocks, $staffHours?->breakRanges() ?? []),
                     nowMinutes: $day->isSameDay($now) ? $now->hour * 60 + $now->minute : null,
                 );
                 $times = array_values(array_unique([...$times, ...$staffTimes]));
@@ -77,20 +83,11 @@ final class ShowAvailability
         return new AvailabilityData(service_id: $service->id, days: new DataCollection(AvailableDayData::class, $days));
     }
 
-    private function staffHoursForDay(int $staffId, int $weekday): ?BusinessHourData
+    private function staffHoursForDay(int $staffId, int $weekday): ?StaffBusinessHourData
     {
         $hours = $this->listHours->handle(new StaffIdData(id: $staffId));
-        /** @var StaffBusinessHourData|null $match */
-        $match = collect($hours->all())->first(fn (StaffBusinessHourData $item): bool => $item->weekday === $weekday);
-        if ($match === null) {
-            return null;
-        }
 
-        return new BusinessHourData(
-            weekday: $match->weekday,
-            is_open: $match->is_open,
-            opens_at: $match->opens_at,
-            closes_at: $match->closes_at,
-        );
+        /** @var StaffBusinessHourData|null */
+        return collect($hours->all())->first(fn (StaffBusinessHourData $item): bool => $item->weekday === $weekday);
     }
 }

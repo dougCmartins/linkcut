@@ -32,6 +32,8 @@ final class UpdateStaffBusinessHours
                     'is_open' => $hour->is_open,
                     'opens_at' => $hour->opens_at,
                     'closes_at' => $hour->closes_at,
+                    'break_starts_at' => $hour->is_open ? $hour->break_starts_at : null,
+                    'break_ends_at' => $hour->is_open ? $hour->break_ends_at : null,
                 ]);
             }
         });
@@ -51,6 +53,25 @@ final class UpdateStaffBusinessHours
             if ($hours->is_open && $hours->closes_at <= $hours->opens_at) {
                 throw ValidationException::withMessages(["weekly_hours.{$index}.closes_at" => 'after']);
             }
+            if ($hours->is_open) {
+                $this->ensureValidBreak($hours, $index);
+            }
+        }
+    }
+
+    /** The break is both times or none, inside the working period, ending after it starts. */
+    private function ensureValidBreak(StaffBusinessHourData $hours, int|string $index): void
+    {
+        $start = $hours->break_starts_at;
+        $end = $hours->break_ends_at;
+        if ($start === null && $end === null) {
+            return;
+        }
+        if ($start === null || $end === null) {
+            throw ValidationException::withMessages(["weekly_hours.{$index}.break_ends_at" => 'required_with']);
+        }
+        if ($end <= $start || $start <= $hours->opens_at || $end >= $hours->closes_at) {
+            throw ValidationException::withMessages(["weekly_hours.{$index}.break_starts_at" => 'within_hours']);
         }
     }
 }

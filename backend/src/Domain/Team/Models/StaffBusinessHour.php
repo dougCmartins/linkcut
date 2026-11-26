@@ -14,7 +14,7 @@ final class StaffBusinessHour extends Model
 
     protected $table = 'staff_business_hours';
 
-    protected $fillable = ['tenant_id', 'staff_id', 'weekday', 'is_open', 'opens_at', 'closes_at'];
+    protected $fillable = ['tenant_id', 'staff_id', 'weekday', 'is_open', 'opens_at', 'closes_at', 'break_starts_at', 'break_ends_at'];
 
     protected function casts(): array
     {

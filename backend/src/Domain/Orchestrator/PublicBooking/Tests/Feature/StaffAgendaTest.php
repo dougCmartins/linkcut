@@ -177,6 +177,62 @@ final class StaffAgendaTest extends TestCase
         $withBarba->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', $ownerStaff);
     }
 
+    public function test_a_break_in_the_working_hours_takes_its_times_out_of_the_availability(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $staffId = $this->ownerStaffId($owner);
+        $this->actingAsOwner($owner);
+        $week = collect(range(0, 6))->map(fn (int $weekday): array => [
+            'weekday' => $weekday,
+            'is_open' => true,
+            'opens_at' => '09:00',
+            'closes_at' => '19:00',
+            'break_starts_at' => $weekday === 2 ? '12:00' : null,
+            'break_ends_at' => $weekday === 2 ? '13:00' : null,
+        ])->all();
+        $this->putJson("/api/team/staff/{$staffId}/hours", ['weekly_hours' => $week])->assertOk();
+        $this->app['auth']->forgetGuards();
+
+        // Act
+        $response = $this->getJson('/api/public/rafael/availability?service_ids[]='.$this->serviceId($owner, 'Corte').'&staff_id='.$staffId);
+
+        // Assert
+        $days = collect($response->assertOk()->json('days'))->keyBy('date');
+        $tuesday = $days['2026-10-20']['times'];
+        $this->assertNotContains('11:30', $tuesday);
+        $this->assertNotContains('12:00', $tuesday);
+        $this->assertNotContains('12:30', $tuesday);
+        $this->assertContains('11:00', $tuesday);
+        $this->assertContains('13:00', $tuesday);
+        $this->assertContains('12:00', $days['2026-10-21']['times']);
+    }
+
+    public function test_the_break_is_returned_and_one_outside_the_period_is_refused(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $staffId = $this->ownerStaffId($owner);
+        $this->actingAsOwner($owner);
+        $day = ['weekday' => 1, 'is_open' => true, 'opens_at' => '09:00', 'closes_at' => '18:00'];
+
+        // Act
+        $saved = $this->putJson("/api/team/staff/{$staffId}/hours", ['weekly_hours' => [
+            [...$day, 'break_starts_at' => '12:00', 'break_ends_at' => '13:00'],
+        ]]);
+        $outside = $this->putJson("/api/team/staff/{$staffId}/hours", ['weekly_hours' => [
+            [...$day, 'break_starts_at' => '17:30', 'break_ends_at' => '19:00'],
+        ]]);
+        $half = $this->putJson("/api/team/staff/{$staffId}/hours", ['weekly_hours' => [
+            [...$day, 'break_starts_at' => '12:00', 'break_ends_at' => null],
+        ]]);
+
+        // Assert
+        $saved->assertOk()->assertJsonPath('0.break_starts_at', '12:00')->assertJsonPath('0.break_ends_at', '13:00');
+        $outside->assertStatus(422);
+        $half->assertStatus(422);
+    }
+
     /** @return array{0: int, 1: int} */
     private function twoActiveBarbers(User $owner): array
     {

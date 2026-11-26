@@ -23,6 +23,8 @@ final class ListStaffBusinessHours
                 is_open: $hour->is_open,
                 opens_at: substr((string) $hour->opens_at, 0, 5),
                 closes_at: substr((string) $hour->closes_at, 0, 5),
+                break_starts_at: $hour->break_starts_at !== null ? substr((string) $hour->break_starts_at, 0, 5) : null,
+                break_ends_at: $hour->break_ends_at !== null ? substr((string) $hour->break_ends_at, 0, 5) : null,
             ));
 
         return StaffBusinessHourData::collect($hours, DataCollection::class);
