@@ -135,6 +135,48 @@ final class StaffAgendaTest extends TestCase
         $response->assertSuccessful()->assertJsonPath('staff_id', $staffB);
     }
 
+    public function test_any_barber_goes_to_the_free_barber_with_fewer_bookings_that_day(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        [$busyBarber, $quietBarber] = $this->twoActiveBarbers($owner);
+        foreach (['09:00', '10:00', '11:00'] as $time) {
+            $this->bookingRequest($owner, '2026-10-20', $time, BookingStatus::Confirmed, attributes: ['staff_id' => $busyBarber]);
+        }
+        $this->bookingRequest($owner, '2026-10-20', '09:00', BookingStatus::Confirmed, attributes: ['staff_id' => $quietBarber]);
+
+        // Act
+        $response = $this->postJson('/api/public/rafael/booking-requests', [
+            'client_name' => 'Cliente Qualquer',
+            'client_whatsapp' => '11944444444',
+            'client_email' => 'qualquer@example.com',
+            'service_ids' => [$this->serviceId($owner, 'Corte')],
+            'date' => '2026-10-20',
+            'time' => '15:00',
+        ]);
+
+        // Assert
+        $response->assertCreated()->assertJsonPath('staff_name', 'Segundo');
+        $this->assertSame($quietBarber, (int) DB::table('booking_requests')->where('id', $response->json('id'))->value('staff_id'));
+    }
+
+    public function test_public_staff_lists_only_barbers_who_do_every_chosen_service(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        [$ownerStaff, $other] = $this->twoActiveBarbers($owner);
+        $barba = $this->serviceId($owner, 'Barba');
+        app(CurrentTenant::class)->run($owner->tenant_id, fn () => StaffService::query()->where('staff_id', $other)->where('service_id', $barba)->delete());
+
+        // Act
+        $all = $this->getJson('/api/public/rafael/staff');
+        $withBarba = $this->getJson('/api/public/rafael/staff?service_ids[]='.$this->serviceId($owner, 'Corte').'&service_ids[]='.$barba);
+
+        // Assert
+        $all->assertOk()->assertJsonCount(2);
+        $withBarba->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', $ownerStaff);
+    }
+
     /** @return array{0: int, 1: int} */
     private function twoActiveBarbers(User $owner): array
     {

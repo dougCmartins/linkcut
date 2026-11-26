@@ -14,6 +14,7 @@ use Domain\Notification\Enums\BookingEmailKind;
 use Domain\Orchestrator\Barbershop\Actions\ShowBarbershopContact;
 use Domain\Orchestrator\Barbershop\Data\BarbershopContactData;
 use Domain\Schedule\Data\BookingRequestData;
+use Domain\Team\Actions\ListStaffNames;
 
 /**
  * Tells the client about a booking of the current barbershop: the e-mail (skipped for old requests without e-mail)
@@ -25,20 +26,26 @@ final class BookingEmails
         private readonly ShowBarbershopContact $showContact,
         private readonly SendBookingEmail $sendEmail,
         private readonly NotifyClient $notifyClient,
+        private readonly ListStaffNames $staffNames,
     ) {}
 
-    /** @param BarbershopContactData|null $barbershop already read by the caller (batches), else read here */
+    /**
+     * @param  BarbershopContactData|null  $barbershop  already read by the caller (batches), else read here
+     * @param  array<int, string>|null  $staffNames  barber names by staff id, already read by the caller, else read here
+     */
     public function send(
         BookingRequestData $booking,
         BookingEmailKind $kind,
         ?string $registrationUrl = null,
         ?string $optOutUrl = null,
         ?BarbershopContactData $barbershop = null,
+        ?array $staffNames = null,
     ): void {
         if ($booking->client_email === '') {
             return;
         }
         $barbershop ??= $this->showContact->handle();
+        $staffNames ??= $this->staffNames->handle([$booking->staff_id]);
         $this->push($booking, $kind, $barbershop);
 
         $this->sendEmail->handle(new BookingEmailData(
@@ -57,6 +64,7 @@ final class BookingEmails
             opt_out_url: $optOutUrl,
             logo_url: self::absolute($barbershop->avatar_url),
             accent_color: $barbershop->accent_color,
+            staff_name: $staffNames[$booking->staff_id] ?? null,
         ));
     }
 

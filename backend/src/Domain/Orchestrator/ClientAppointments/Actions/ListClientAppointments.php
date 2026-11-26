@@ -13,6 +13,7 @@ use Domain\Review\Data\BookingIdsData;
 use Domain\Schedule\Actions\ListClientBookings;
 use Domain\Schedule\Data\ClientBookingData;
 use Domain\Schedule\Data\ClientBookingsQueryData;
+use Domain\Team\Actions\ListStaffNames;
 use Domain\Tenant\Data\TenantIdsData;
 use Spatie\LaravelData\DataCollection;
 
@@ -27,6 +28,7 @@ final class ListClientAppointments
         private readonly ListBarbershopContacts $listContacts,
         private readonly ListReviewedBookingIds $listReviewed,
         private readonly ListTenantIdsWithActiveProducts $listShopsWithProducts,
+        private readonly ListStaffNames $listStaffNames,
     ) {}
 
     /** @return DataCollection<int, ClientAppointmentData> */
@@ -43,6 +45,10 @@ final class ListClientAppointments
             ids: $bookings->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
         ))->ids);
 
+        $staffNames = $this->listStaffNames->handle(
+            $bookings->pluck('staff_id')->map(fn (mixed $id): int => (int) $id)->filter()->values()->all(),
+        );
+
         $appointments = $bookings->map(fn (ClientBookingData $booking): ClientAppointmentData => new ClientAppointmentData(
             id: $booking->id,
             service_name: $booking->service_name,
@@ -53,6 +59,7 @@ final class ListClientAppointments
             barbershop: $barbershops[$booking->tenant_id],
             has_review: isset($reviewed[$booking->id]),
             has_products: isset($withProducts[$booking->tenant_id]),
+            staff_name: $staffNames[$booking->staff_id] ?? null,
         ));
 
         return ClientAppointmentData::collect($appointments, DataCollection::class);

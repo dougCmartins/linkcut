@@ -26,7 +26,7 @@ final class ListClientBookings
             ->orderByDesc('date')
             ->orderByDesc('starts_at')
             ->limit(self::LIMIT)
-            ->get(['id', 'tenant_id', 'service_name', 'date', 'starts_at', 'ends_at', 'status'])
+            ->get(['id', 'tenant_id', 'staff_id', 'service_name', 'date', 'starts_at', 'ends_at', 'status'])
             ->map(fn (BookingRequest $booking): ClientBookingData => new ClientBookingData(
                 id: $booking->id,
                 tenant_id: $booking->tenant_id,
@@ -35,6 +35,7 @@ final class ListClientBookings
                 starts_at: $booking->starts_at,
                 ends_at: $booking->ends_at,
                 status: $booking->status,
+                staff_id: (int) $booking->staff_id,
             ));
 
         return ClientBookingData::collect($bookings, DataCollection::class);

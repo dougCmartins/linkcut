@@ -20,5 +20,7 @@ final class ClientBookingData extends Data
         public readonly BookingStatus $status,
         /** The name typed on the booking. Only the review flow reads it. */
         public readonly string $client_name = '',
+        /** The barber of the booking (0 for bookings older than the team). */
+        public readonly int $staff_id = 0,
     ) {}
 }

@@ -22,5 +22,7 @@ final class ClientAppointmentData extends Data
         public readonly bool $has_review,
         /** The barbershop has at least one active product. */
         public readonly bool $has_products,
+        /** Who does it (null for bookings older than the team). */
+        public readonly ?string $staff_name = null,
     ) {}
 }

@@ -56,7 +56,9 @@ final class ClientAppointmentsTest extends TestCase
             ->assertJsonPath('0.barbershop.booking_url', 'http://localhost:5173/navalha')
             ->assertJsonPath('1.barbershop.slug', 'rafael')
             ->assertJsonPath('1.barbershop.address', 'Rua Augusta, 1500 – Consolação, São Paulo/SP')
-            ->assertJsonPath('1.status', 'completed');
+            ->assertJsonPath('1.status', 'completed')
+            ->assertJsonPath('0.staff_name', $navalha->name)
+            ->assertJsonPath('1.staff_name', $rafael->name);
         $this->assertArrayNotHasKey('client_whatsapp', $response->json('0'));
     }
 

@@ -10,6 +10,7 @@ use Domain\Orchestrator\PublicBooking\Data\AvailabilityData;
 use Domain\Orchestrator\PublicBooking\Data\AvailabilityQueryData;
 use Domain\Orchestrator\PublicBooking\Data\BookingConfirmationData;
 use Domain\Orchestrator\PublicBooking\Data\BookingRequestInputData;
+use Domain\Orchestrator\PublicBooking\Data\PublicStaffQueryData;
 use Domain\Team\Actions\ListPublicStaff;
 use Domain\Team\Data\PublicStaffData;
 use Spatie\LaravelData\DataCollection;
@@ -22,9 +23,9 @@ final class PublicBookingController
     }
 
     /** @return DataCollection<int, PublicStaffData> */
-    public function staff(ListPublicStaff $action): DataCollection
+    public function staff(PublicStaffQueryData $query, ListPublicStaff $action): DataCollection
     {
-        return $action->handle();
+        return $action->handle(array_map('intval', $query->service_ids ?? []));
     }
 
     public function store(BookingRequestInputData $data, RequestBooking $action): BookingConfirmationData

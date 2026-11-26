@@ -20,7 +20,9 @@ use Domain\Orchestrator\PublicBooking\Data\BookingRequestInputData;
 use Domain\Orchestrator\PublicBooking\Exceptions\BarbershopAddressMissingException;
 use Domain\Orchestrator\PublicBooking\Support\AvailableTimes;
 use Domain\Orchestrator\PublicBooking\Support\Distance;
+use Domain\Orchestrator\PublicBooking\Support\PickAnyStaff;
 use Domain\Orchestrator\PublicBooking\Support\StaffAvailability;
+use Domain\Orchestrator\PublicBooking\Support\StaffCandidate;
 use Domain\Schedule\Actions\CreateBookingRequest;
 use Domain\Schedule\Actions\ListBusySlots;
 use Domain\Schedule\Data\BookingRequestData;
@@ -107,8 +109,10 @@ final class RequestBooking
             ));
         });
 
-        $this->notifyBarberAndOwner($request);
-        $this->emails->send($request, BookingEmailKind::Received, registrationUrl: self::registrationUrl($client));
+        $staff = Staff::query()->whereKey($request->staff_id)->first(['id', 'user_id', 'name']);
+        $staffNames = $staff ? [$staff->id => $staff->name] : [];
+        $this->notifyBarberAndOwner($request, $staff);
+        $this->emails->send($request, BookingEmailKind::Received, registrationUrl: self::registrationUrl($client), staffNames: $staffNames);
 
         return new BookingConfirmationData(
             id: $request->id,
@@ -116,6 +120,7 @@ final class RequestBooking
             date: $request->date,
             time: $request->starts_at,
             status: $request->status->value,
+            staff_name: $staffNames[$request->staff_id] ?? null,
             push_url: URL::temporarySignedRoute('client-push.subscribe', now()->addHours(2), ['client' => $client->id], absolute: false),
         );
     }
@@ -127,43 +132,33 @@ final class RequestBooking
         PublicServiceData $service,
         array $serviceIds,
     ): int {
-        $candidates = $data->staff_id !== null
-            ? [$data->staff_id]
-            : $this->listActiveStaff->handle($serviceIds);
-
-        if ($candidates === []) {
-            throw new SlotUnavailableException;
-        }
-
         if ($data->staff_id !== null) {
             $this->findStaff->handle(new StaffIdData(id: $data->staff_id));
-            if (! $this->slotIsFreeForStaff($data->staff_id, $data, $options, $service)) {
-                throw new SlotUnavailableException;
-            }
 
-            return $data->staff_id;
+            return $this->candidate($data->staff_id, $data, $options, $service)?->staff_id
+                ?? throw new SlotUnavailableException;
         }
 
-        foreach ($candidates as $staffId) {
-            if ($this->slotIsFreeForStaff($staffId, $data, $options, $service)) {
-                return $staffId;
-            }
-        }
+        $candidates = array_values(array_filter(array_map(
+            fn (int $staffId): ?StaffCandidate => $this->candidate($staffId, $data, $options, $service),
+            $this->listActiveStaff->handle($serviceIds),
+        )));
 
-        throw new SlotUnavailableException;
+        return PickAnyStaff::pick($candidates) ?? throw new SlotUnavailableException;
     }
 
-    private function slotIsFreeForStaff(
+    /** The barber when the asked time is free for them (with their load that day), else null. */
+    private function candidate(
         int $staffId,
         BookingRequestInputData $data,
         BookingOptionsData $options,
         PublicServiceData $service,
-    ): bool {
+    ): ?StaffCandidate {
         $now = $this->clock->now();
         $today = $now->startOfDay();
         $day = CarbonImmutable::createFromFormat('!Y-m-d', $data->date, $now->getTimezone());
         if (! $day || $day < $today || $day > $today->addDays($options->booking_window_days - 1)) {
-            return false;
+            return null;
         }
 
         $hoursCollection = $this->listHours->handle(new StaffIdData(id: $staffId));
@@ -190,13 +185,19 @@ final class RequestBooking
             busy: array_merge($busy, $blocks),
             nowMinutes: $day->isSameDay($now) ? $now->hour * 60 + $now->minute : null,
         );
+        if ($hours === null || ! in_array($data->time, $times, true)) {
+            return null;
+        }
 
-        return in_array($data->time, $times, true);
+        return new StaffCandidate(
+            staff_id: $staffId,
+            bookings_of_day: count($busy),
+            gap_minutes: PickAnyStaff::gapMinutes($data->time, $hours->opens_at, array_merge($busy, $blocks)),
+        );
     }
 
-    private function notifyBarberAndOwner(BookingRequestData $request): void
+    private function notifyBarberAndOwner(BookingRequestData $request, ?Staff $staff): void
     {
-        $staff = Staff::query()->whereKey($request->staff_id)->first();
         $ownerUserId = Tenant::query()
             ->whereKey($this->currentTenant->id())
             ->join('organizations', 'organizations.id', '=', 'tenants.organization_id')

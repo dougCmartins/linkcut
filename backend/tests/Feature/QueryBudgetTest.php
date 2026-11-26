@@ -14,6 +14,8 @@ use Domain\Schedule\Tests\Concerns\ScheduleFixtures;
 use Domain\Settings\Actions\CreateDefaultSettings;
 use Domain\Settings\Data\DefaultSettingsData;
 use Domain\Settings\Models\ProfileSettings;
+use Domain\Team\Models\Staff;
+use Domain\Team\Support\SeedStaffSchedule;
 use Domain\Tenant\Context\CurrentTenant;
 use Domain\Tenant\Enums\OrganizationType;
 use Domain\Tenant\Models\Organization;
@@ -105,6 +107,28 @@ final class QueryBudgetTest extends TestCase
         // Assert
         // Staff-scoped booking (P4): settings, eligible staff, hours/blocks, lock, client, booking, targeted push users.
         $this->assertLessThanOrEqual(24, $queries, "a booking took {$queries} queries");
+    }
+
+    public function test_the_public_staff_filtered_by_service_takes_one_query_more_whatever_the_team_size(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        $corte = $this->serviceId($owner, 'Corte');
+        $plain = $this->countQueries(fn () => $this->getJson('/api/public/rafael/staff')->assertOk());
+        $forOne = $this->countQueries(fn () => $this->getJson("/api/public/rafael/staff?service_ids[]={$corte}")->assertOk());
+        app(CurrentTenant::class)->run($owner->tenant_id, function () use ($owner): void {
+            foreach (range(1, 4) as $index) {
+                $staff = Staff::query()->create(['user_id' => null, 'name' => "Barbeiro {$index}", 'active' => true]);
+                SeedStaffSchedule::forStaff($owner->tenant_id, $staff->id);
+            }
+        });
+
+        // Act
+        $forFive = $this->countQueries(fn () => $this->getJson("/api/public/rafael/staff?service_ids[]={$corte}")->assertOk()->assertJsonCount(5));
+
+        // Assert
+        $this->assertSame($plain + 1, $forOne, "without services: {$plain} queries; with: {$forOne}");
+        $this->assertSame($forOne, $forFive, "1 barber: {$forOne} queries; 5 barbers: {$forFive}");
     }
 
     public function test_the_slug_check_takes_one_query_even_when_many_links_are_taken(): void

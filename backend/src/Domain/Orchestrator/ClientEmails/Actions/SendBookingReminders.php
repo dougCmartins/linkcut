@@ -16,6 +16,7 @@ use Domain\Schedule\Actions\MarkBookingsReminded;
 use Domain\Schedule\Data\BookingRequestIdsData;
 use Domain\Schedule\Data\RemindableBookingData;
 use Domain\Schedule\Data\ReminderWindowData;
+use Domain\Team\Actions\ListStaffNames;
 use Domain\Tenant\Actions\ListActiveTenants;
 use Domain\Tenant\Data\TenantData;
 use Domain\Tenant\Data\TenantIdsData;
@@ -41,6 +42,7 @@ final class SendBookingReminders
         private readonly ListOptedOutClients $listOptedOut,
         private readonly MarkBookingsReminded $markReminded,
         private readonly BookingEmails $emails,
+        private readonly ListStaffNames $listStaffNames,
     ) {}
 
     /** @return int how many reminders were sent */
@@ -49,6 +51,7 @@ final class SendBookingReminders
         $due = $this->dueBookings();
         $contacts = $this->listContacts->handle(new TenantIdsData(ids: $due->pluck('tenant_id')->unique()->values()->all()));
         $optedOut = $this->optedOut($due);
+        $staffNames = $this->listStaffNames->handle($due->map(fn (RemindableBookingData $item): int => $item->booking->staff_id)->unique()->values()->all());
 
         $sent = [];
         try {
@@ -58,7 +61,7 @@ final class SendBookingReminders
                     continue;
                 }
                 $optOutUrl = $booking->client_id !== null ? ClientLinks::optOut($booking->client_id) : null;
-                $this->emails->send($booking, BookingEmailKind::Reminder, optOutUrl: $optOutUrl, barbershop: $contacts[$item->tenant_id]);
+                $this->emails->send($booking, BookingEmailKind::Reminder, optOutUrl: $optOutUrl, barbershop: $contacts[$item->tenant_id], staffNames: $staffNames);
                 $sent[] = $booking->id;
             }
         } finally {

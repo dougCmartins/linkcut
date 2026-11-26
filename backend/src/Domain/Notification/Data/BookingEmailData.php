@@ -32,5 +32,7 @@ final class BookingEmailData extends Data
         public readonly ?string $logo_url = null,
         /** "#rrggbb" of the barbershop (button). */
         public readonly ?string $accent_color = null,
+        /** The barber of the booking (the client always sees who will do it). */
+        public readonly ?string $staff_name = null,
     ) {}
 }

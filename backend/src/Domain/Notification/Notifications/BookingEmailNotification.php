@@ -57,6 +57,7 @@ final class BookingEmailNotification extends Notification implements ShouldBeEnc
             ->greeting(__('client_mail.greeting', $replace))
             ->line(__("{$key}.intro", $replace))
             ->line(__('client_mail.details', $replace))
+            ->lineIf($data->staff_name !== null, __('client_mail.barber', ['staff' => PlainText::name((string) $data->staff_name)]))
             ->line(__('client_mail.address', ['address' => $data->barbershop_address]));
 
         $mail = match ($data->kind) {

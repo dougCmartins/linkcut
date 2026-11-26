@@ -11,6 +11,7 @@ return [
     'default_name' => 'cliente',
     'details' => '**:service** · :date às :time · :barbershop',
     'address' => 'Endereço: :address',
+    'barber' => 'Barbeiro: :staff',
     'directions' => 'Como chegar',
     'book_again' => 'Escolher outro horário',
     'register' => 'Finalizar cadastro',

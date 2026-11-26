@@ -77,8 +77,10 @@ final class BookingEmailsTest extends TestCase
         $this->assertSame('Rua Augusta, 1500 – Consolação, São Paulo/SP', $email->data->barbershop_address);
         $this->assertStringContainsString('-23.5578', urldecode($email->data->maps_url));
         $this->assertSame('http://localhost:5173/rafael', $email->data->booking_url);
+        $this->assertSame($owner->name, $email->data->staff_name);
         $mail = $email->toMail(new AnonymousNotifiable);
         $this->assertStringContainsString('Recebemos seu pedido', $mail->subject);
+        $this->assertContains('Barbeiro: '.$owner->name, $mail->introLines);
         $this->assertSame('Finalizar cadastro', $mail->actionText);
     }
 
