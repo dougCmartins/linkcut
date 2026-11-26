@@ -233,6 +233,81 @@ final class StaffAgendaTest extends TestCase
         $half->assertStatus(422);
     }
 
+    public function test_passing_to_a_barber_who_does_not_do_the_service_is_refused(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        [$staffA, $staffB] = $this->twoActiveBarbers($owner);
+        $corte = $this->serviceId($owner, 'Corte');
+        app(CurrentTenant::class)->run($owner->tenant_id, fn () => StaffService::query()->where('staff_id', $staffB)->where('service_id', $corte)->delete());
+        $request = $this->bookingRequest($owner, '2026-10-20', '11:00', BookingStatus::Confirmed, attributes: ['staff_id' => $staffA]);
+        $this->actingAsOwner($owner);
+
+        // Act
+        $response = $this->postJson("/api/schedule/requests/{$request->id}/reassign", ['staff_id' => $staffB]);
+
+        // Assert
+        $response->assertStatus(409)->assertJsonPath('code', 'STAFF_SERVICE_UNAVAILABLE');
+        $this->assertSame($staffA, (int) DB::table('booking_requests')->where('id', $request->id)->value('staff_id'));
+    }
+
+    public function test_passing_into_a_block_a_break_or_a_day_off_of_the_other_barber_is_refused(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        [$staffA, $staffB] = $this->twoActiveBarbers($owner);
+        $this->actingAsOwner($owner);
+        $week = collect(range(0, 6))->map(fn (int $weekday): array => [
+            'weekday' => $weekday,
+            'is_open' => $weekday !== 3,
+            'opens_at' => '09:00',
+            'closes_at' => '19:00',
+            'break_starts_at' => '12:00',
+            'break_ends_at' => '13:00',
+        ])->all();
+        $this->putJson("/api/team/staff/{$staffB}/hours", ['weekly_hours' => $week])->assertOk();
+        app(CurrentTenant::class)->run($owner->tenant_id, fn () => StaffTimeBlock::query()->create([
+            'staff_id' => $staffB,
+            'starts_at' => '2026-10-20 15:00:00',
+            'ends_at' => '2026-10-20 17:00:00',
+            'note' => 'Médico',
+        ]));
+        $inBlock = $this->bookingRequest($owner, '2026-10-20', '15:30', BookingStatus::Confirmed, attributes: ['staff_id' => $staffA]);
+        $inBreak = $this->bookingRequest($owner, '2026-10-20', '11:30', BookingStatus::Confirmed, attributes: ['staff_id' => $staffA]);
+        $dayOff = $this->bookingRequest($owner, '2026-10-21', '10:00', BookingStatus::Confirmed, attributes: ['staff_id' => $staffA]);
+        $free = $this->bookingRequest($owner, '2026-10-20', '09:00', BookingStatus::Confirmed, attributes: ['staff_id' => $staffA]);
+
+        // Act
+        $responses = array_map(
+            fn (int $id) => $this->postJson("/api/schedule/requests/{$id}/reassign", ['staff_id' => $staffB]),
+            [$inBlock->id, $inBreak->id, $dayOff->id],
+        );
+        $moved = $this->postJson("/api/schedule/requests/{$free->id}/reassign", ['staff_id' => $staffB]);
+
+        // Assert
+        foreach ($responses as $response) {
+            $response->assertStatus(409)->assertJsonPath('code', 'SLOT_UNAVAILABLE');
+        }
+        $this->assertSame(3, DB::table('booking_requests')->where('staff_id', $staffA)->whereIn('id', [$inBlock->id, $inBreak->id, $dayOff->id])->count());
+        $moved->assertSuccessful()->assertJsonPath('staff_id', $staffB);
+    }
+
+    public function test_a_concluded_appointment_is_not_passed_to_another_barber(): void
+    {
+        // Arrange
+        $owner = $this->barbershop();
+        [$staffA, $staffB] = $this->twoActiveBarbers($owner);
+        $request = $this->bookingRequest($owner, '2026-10-19', '09:00', BookingStatus::Completed, attributes: ['staff_id' => $staffA]);
+        $this->actingAsOwner($owner);
+
+        // Act
+        $response = $this->postJson("/api/schedule/requests/{$request->id}/reassign", ['staff_id' => $staffB]);
+
+        // Assert
+        $response->assertStatus(409)->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
+        $this->assertSame($staffA, (int) DB::table('booking_requests')->where('id', $request->id)->value('staff_id'));
+    }
+
     /** @return array{0: int, 1: int} */
     private function twoActiveBarbers(User $owner): array
     {

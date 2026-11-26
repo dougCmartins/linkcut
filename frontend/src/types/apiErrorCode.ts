@@ -41,6 +41,7 @@ export const ApiErrorCode = {
   StaffInviteInvalid: 'STAFF_INVITE_INVALID',
   StaffNotFound: 'STAFF_NOT_FOUND',
   StaffForbidden: 'STAFF_FORBIDDEN',
+  StaffServiceUnavailable: 'STAFF_SERVICE_UNAVAILABLE',
   CannotDeactivateSelf: 'CANNOT_DEACTIVATE_SELF',
   BrandReportForbidden: 'BRAND_REPORT_FORBIDDEN',
   CommissionForbidden: 'COMMISSION_FORBIDDEN',

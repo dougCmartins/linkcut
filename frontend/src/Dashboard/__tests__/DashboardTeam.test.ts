@@ -27,7 +27,7 @@ function installTeamApis(staffCount: number) {
     requestRow({ id: 3, client_name: 'Lucas Andrade', date: TODAY, starts_at: '18:00', status: 'confirmed', staff_id: 1 }),
     requestRow({ id: 4, client_name: 'Pedro Martins', date: TODAY, starts_at: '19:00', status: 'confirmed', staff_id: 2 }),
   ]
-  const staff = [member(1, 'Rafael', 7), member(2, 'Bruno', 8), member(3, 'Caio', null)].slice(0, staffCount)
+  const staff = [member(1, 'Rafael', 7), member(2, 'Bruno', 8), member(3, 'Caio', null), member(4, 'Davi', null)].slice(0, staffCount)
   const schedule = createScheduleRoutes({ today: TODAY, requests })
   const finance = createFinanceRoutes({ today: TODAY })
   return installFakeSettingsApi(undefined, {
@@ -36,6 +36,7 @@ function installTeamApis(staffCount: number) {
     'GET /team/staff': () => ({ status: 200, body: staff }),
     'POST /schedule/requests/:id/reassign': ({ params, body }: FakeCall) => {
       if (body?.staff_id === 2) return envelope('SLOT_UNAVAILABLE', 409)
+      if (body?.staff_id === 4) return envelope('STAFF_SERVICE_UNAVAILABLE', 409)
       const row = requests.find((item) => item.id === Number(params.id))!
       row.staff_id = Number(body?.staff_id)
       return { status: 200, body: row }
@@ -103,6 +104,24 @@ describe('Dashboard with a team', () => {
 
     // Assert
     expect((await within(sheet).findByRole('alert')).textContent).toContain('Bruno não está livre neste horário')
+    expect(within(lucas).getByText('Com Rafael')).toBeTruthy()
+  })
+
+  it('a barber who does not do the service shows why and nothing changes', async () => {
+    // Arrange
+    installTeamApis(4)
+    const { router } = renderWithPlugins(DashboardView, {}, () => signInAs('owner'))
+    await router.push('/painel')
+    const lucas = await cardOf('Lucas Andrade')
+    await within(lucas).findByText('Com Rafael')
+    await fireEvent.click(within(lucas).getByRole('button', { name: /Passar o atendimento de Lucas Andrade/ }))
+    const sheet = await screen.findByRole('dialog', { name: 'Passar para outro barbeiro' })
+
+    // Act
+    await fireEvent.click(within(sheet).getByRole('button', { name: 'Davi' }))
+
+    // Assert
+    expect((await within(sheet).findByRole('alert')).textContent).toContain('não faz um dos serviços')
     expect(within(lucas).getByText('Com Rafael')).toBeTruthy()
   })
 

@@ -909,6 +909,7 @@ export default {
       tenantNotFound: 'Não encontramos esta barbearia.',
       barbershopAddressMissing: 'Esta barbearia ainda não informou o endereço. Fale com o barbeiro pelo WhatsApp.',
       ownerRequired: 'Só a dona da conta pode gerenciar a equipe.',
+      staffServiceUnavailable: 'Este barbeiro não faz um dos serviços deste atendimento. Nada mudou.',
       staffInviteInvalid: 'Este convite é inválido, expirou ou já foi usado.',
       staffNotFound: 'Este barbeiro não existe mais. Atualize a página.',
       staffForbidden: 'Você não pode ver dados de outro barbeiro.',

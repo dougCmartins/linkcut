@@ -39,6 +39,7 @@ const MESSAGE_KEYS: Partial<Record<string, string>> = {
   [ApiErrorCode.StaffInviteInvalid]: 'staffInviteInvalid',
   [ApiErrorCode.StaffNotFound]: 'staffNotFound',
   [ApiErrorCode.StaffForbidden]: 'staffForbidden',
+  [ApiErrorCode.StaffServiceUnavailable]: 'staffServiceUnavailable',
   [ApiErrorCode.CannotDeactivateSelf]: 'cannotDeactivateSelf',
   [ApiErrorCode.BrandReportForbidden]: 'brandReportForbidden',
   [ApiErrorCode.CommissionForbidden]: 'commissionForbidden',
