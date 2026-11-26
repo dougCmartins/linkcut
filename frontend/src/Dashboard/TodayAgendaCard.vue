@@ -67,6 +67,8 @@ const price = computed(() => formatBRL(props.request.completedPriceInCents ?? pr
       </p>
     </div>
 
+    <!-- The barber who attends (owner with a team): filled by the dashboard. -->
+    <slot name="staff" />
     <ClientNote v-if="!isDone" :note="request.clientNotes" />
     <p v-if="isCompleted" class="mt-3 flex items-center gap-1.5 text-sm font-bold text-success">
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">

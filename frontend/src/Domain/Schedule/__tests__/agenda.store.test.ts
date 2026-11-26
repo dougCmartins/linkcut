@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAgendaStore } from '../agenda.store'
-import { TODAY, installFakeScheduleApi, requestRow } from './fakeScheduleApi'
+import { TODAY, installFakeScheduleApi, requestRow, type RequestRow } from './fakeScheduleApi'
+import { envelope, type FakeCall } from '@/utils/testFetch'
 import { AppointmentStatus } from '@/types/appointmentStatus'
 
 describe('agenda store', () => {
@@ -88,5 +89,48 @@ describe('agenda store', () => {
 
     // Assert
     await expect(accepting).rejects.toMatchObject({ code: 'INVALID_STATUS_TRANSITION' })
+  })
+
+  describe('reassign', () => {
+    function reassignRoute(requests: RequestRow[], busyStaffId: number) {
+      return {
+        'POST /schedule/requests/:id/reassign': ({ params, body }: FakeCall) => {
+          if (body?.staff_id === busyStaffId) return envelope('SLOT_UNAVAILABLE', 409)
+          const row = requests.find((item) => item.id === Number(params.id))!
+          row.staff_id = Number(body?.staff_id)
+          return { status: 200, body: row }
+        },
+      }
+    }
+
+    it('moves the appointment to the other barber in the list', async () => {
+      // Arrange
+      const requests = [requestRow({ id: 3, date: TODAY, starts_at: '18:00', status: 'confirmed', staff_id: 1 })]
+      const { calls } = installFakeScheduleApi({ requests }, reassignRoute(requests, 9))
+      const store = useAgendaStore()
+      await store.load()
+
+      // Act
+      await store.reassign(3, 2)
+
+      // Assert
+      expect(calls.at(-1)?.body).toEqual({ staff_id: 2 })
+      expect(store.todayAgenda[0]?.staffId).toBe(2)
+    })
+
+    it('a busy barber refuses it and the appointment stays where it was', async () => {
+      // Arrange
+      const requests = [requestRow({ id: 3, date: TODAY, starts_at: '18:00', status: 'confirmed', staff_id: 1 })]
+      installFakeScheduleApi({ requests }, reassignRoute(requests, 2))
+      const store = useAgendaStore()
+      await store.load()
+
+      // Act
+      const attempt = store.reassign(3, 2)
+
+      // Assert
+      await expect(attempt).rejects.toMatchObject({ code: 'SLOT_UNAVAILABLE' })
+      expect(store.todayAgenda[0]?.staffId).toBe(1)
+    })
   })
 })

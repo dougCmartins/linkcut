@@ -55,6 +55,8 @@ const price = computed(() => (props.priceInCents === undefined ? '' : formatBRL(
         <p class="font-display text-sm font-extrabold text-accent">{{ price }}</p>
       </div>
     </div>
+    <!-- The barber who attends (owner with a team): filled by the dashboard. -->
+    <slot name="staff" />
     <ClientNote :note="request.clientNotes" />
     <div class="mt-4 grid grid-cols-2 gap-3">
       <BaseButton variant="danger" block @click="emit('reject', request.id)">{{ t('dashboard.reject') }}</BaseButton>

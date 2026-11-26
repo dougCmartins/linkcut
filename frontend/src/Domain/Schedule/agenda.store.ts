@@ -7,6 +7,7 @@ import {
   fetchConfirmedAppointments,
   fetchPendingRequests,
   fetchTodayAgenda,
+  reassignBookingRequest,
   rejectBookingRequest,
   reopenBookingRequest,
 } from './booking.api'
@@ -88,5 +89,27 @@ export const useAgendaStore = defineStore('agenda', () => {
     replaceInToday(await reopenBookingRequest(id))
   }
 
-  return { pendingRequests, todayAgenda, upcoming, isLoading, isLoaded, hasFailed, load, accept, reject, complete, undoCompletion }
+  /** "Passar para outro barbeiro" (owner): on a refusal nothing changes here. */
+  async function reassign(id: number, staffId: number): Promise<void> {
+    const moved = await reassignBookingRequest(id, staffId)
+    const swap = (list: BookingRequest[]) => list.map((item) => (item.id === id ? { ...item, staffId: moved.staffId } : item))
+    pendingRequests.value = swap(pendingRequests.value)
+    todayAgenda.value = swap(todayAgenda.value)
+    upcoming.value = swap(upcoming.value)
+  }
+
+  return {
+    pendingRequests,
+    todayAgenda,
+    upcoming,
+    isLoading,
+    isLoaded,
+    hasFailed,
+    load,
+    accept,
+    reject,
+    complete,
+    undoCompletion,
+    reassign,
+  }
 })

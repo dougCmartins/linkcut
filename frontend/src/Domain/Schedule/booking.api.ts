@@ -19,6 +19,7 @@ interface BookingRequestBody {
   service_ids?: number[] | null
   price_in_cents?: number | null
   client_notes?: string | null
+  staff_id?: number | null
 }
 
 const toRequest = (body: BookingRequestBody): BookingRequest => ({
@@ -35,6 +36,7 @@ const toRequest = (body: BookingRequestBody): BookingRequest => ({
   serviceIds: (body.service_ids ?? [body.service_id]).map(String),
   priceInCents: body.price_in_cents ?? null,
   clientNotes: body.client_notes ?? null,
+  staffId: body.staff_id ?? null,
 })
 
 const publicPath = (slug: string) => `/public/${encodeURIComponent(slug)}`
@@ -139,5 +141,11 @@ export async function completeBookingRequest(id: number): Promise<BookingRequest
 /** Undo of a conclusion: back to confirmed and out of the revenue. */
 export async function reopenBookingRequest(id: number): Promise<BookingRequest> {
   const { data } = await http<BookingRequestBody>(`/schedule/requests/${id}/reopen`, { method: 'POST' })
+  return toRequest(data)
+}
+
+/** Owner only: moves the appointment to another barber; SLOT_UNAVAILABLE (409) when they are not free then. */
+export async function reassignBookingRequest(id: number, staffId: number): Promise<BookingRequest> {
+  const { data } = await http<BookingRequestBody>(`/schedule/requests/${id}/reassign`, { method: 'POST', body: { staff_id: staffId } })
   return toRequest(data)
 }

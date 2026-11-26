@@ -299,6 +299,19 @@ export default {
     commission: 'Comissões',
   },
   dashboard: {
+    staffFilter: {
+      label: 'Barbeiro',
+      all: 'Todos os barbeiros',
+    },
+    reassign: {
+      with: 'Com {name}',
+      nobody: 'sem barbeiro',
+      open: 'Passar para outro',
+      openFor: 'Passar o atendimento de {client} para outro barbeiro',
+      title: 'Passar para outro barbeiro',
+      subtitle: '{client}, às {time}. Escolha quem vai atender.',
+      busy: '{name} não está livre neste horário. Nada mudou.',
+    },
     greeting: 'Olá, {name}',
     period: 'Resumo deste mês',
     revenue: 'Faturamento',

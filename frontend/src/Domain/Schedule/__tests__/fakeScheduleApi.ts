@@ -23,6 +23,8 @@ export interface RequestRow {
   service_ids?: number[]
   price_in_cents?: number | null
   client_notes?: string | null
+  /** The barber who attends. */
+  staff_id?: number
 }
 
 /** Corte (id 1, 45 min, R$ 50) and Barba (id 2, 30 min, R$ 40), as in the Settings fixture. */

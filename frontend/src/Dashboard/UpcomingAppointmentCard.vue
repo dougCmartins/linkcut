@@ -52,6 +52,8 @@ const remindUrl = computed(() => {
       </div>
       <p class="shrink-0 font-display font-extrabold tabular-nums text-accent">{{ formatBRL(priceInCents ?? 0) }}</p>
     </div>
+    <!-- The barber who attends (owner with a team): filled by the dashboard. -->
+    <slot name="staff" />
     <ClientNote :note="request.clientNotes" />
   </article>
 </template>

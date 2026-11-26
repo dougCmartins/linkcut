@@ -27,6 +27,8 @@ export interface BookingRequest {
   priceInCents: number | null
   /** The client's note to the barber. */
   clientNotes: string | null
+  /** The barber who attends (missing in bookings older than the team). */
+  staffId?: number | null
 }
 
 /** What the client sends from the booking modal. */

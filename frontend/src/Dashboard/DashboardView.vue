@@ -7,6 +7,11 @@ import MetricCard from '@/components/ui/MetricCard.vue'
 import PendingRequestCard from './PendingRequestCard.vue'
 import TodayAgendaCard from './TodayAgendaCard.vue'
 import UpcomingAppointmentCard from './UpcomingAppointmentCard.vue'
+import AppointmentStaffLine from './AppointmentStaffLine.vue'
+import SelectField from '@/components/ui/SelectField.vue'
+import ReassignSheet from '@/Domain/Schedule/ReassignSheet.vue'
+import { useAgendaTeam } from '@/Domain/Schedule/useAgendaTeam'
+import { useQueryOverlay } from '@/composables/useQueryOverlay'
 import MarginExplanation from './MarginExplanation.vue'
 import InfoTooltip from '@/components/ui/InfoTooltip.vue'
 import UndoToast from '@/components/ui/UndoToast.vue'
@@ -108,7 +113,26 @@ const lastCompleted = useUndoWindow<{ id: number; priceInCents: number }>()
 /** Message of the last agenda change the API refused. */
 const agendaError = ref('')
 
-const agenda = computed(() => agendaStore.todayAgenda)
+// The team on the agenda (owner, 2+ barbers): who attends, the "Barbeiro" filter and "Passar para outro barbeiro".
+const agendaTeam = useAgendaTeam()
+const ALL_STAFF = 'all'
+const staffFilterOptions = computed(() => [
+  { value: ALL_STAFF, label: t('dashboard.staffFilter.all') },
+  ...agendaTeam.activeStaff.value.map((member) => ({ value: String(member.id), label: member.name })),
+])
+const staffFilter = computed({
+  get: () => (agendaTeam.filterStaffId.value === null ? ALL_STAFF : String(agendaTeam.filterStaffId.value)),
+  set: (value: string) => (agendaTeam.filterStaffId.value = value === ALL_STAFF ? null : Number(value)),
+})
+const reassignOverlay = useQueryOverlay('passar')
+const reassigning = computed(() => {
+  const id = Number(reassignOverlay.value.value)
+  return [...agendaStore.todayAgenda, ...agendaStore.upcoming, ...agendaStore.pendingRequests].find((request) => request.id === id) ?? null
+})
+
+const agenda = computed(() => agendaTeam.visible(agendaStore.todayAgenda))
+const upcoming = computed(() => agendaTeam.visible(agendaStore.upcoming))
+const pending = computed(() => agendaTeam.visible(agendaStore.pendingRequests))
 /** Cancelled by the client: shown, but not counted in "x de y concluídos". */
 const activeAgendaCount = computed(() => agenda.value.filter((request) => request.status !== AppointmentStatus.Cancelled).length)
 const completedCount = computed(() => agenda.value.filter((request) => request.status === AppointmentStatus.Completed).length)
@@ -280,6 +304,10 @@ async function undo(): Promise<void> {
       {{ agendaError || t('dashboard.agendaFailed') }}
     </p>
 
+    <div v-if="agendaTeam.showsTeam.value" class="mt-8">
+      <SelectField v-model="staffFilter" :label="t('dashboard.staffFilter.label')" :options="staffFilterOptions" />
+    </div>
+
     <section class="mt-10" aria-labelledby="today-agenda-title">
       <div class="flex items-center justify-between gap-3">
         <h2 id="today-agenda-title" class="text-xl">{{ t('dashboard.agenda.title') }}</h2>
@@ -299,7 +327,16 @@ async function undo(): Promise<void> {
             :barbershop-name="profile.name"
             :barbershop-address="shopAddress"
             @complete="complete"
-          />
+          >
+            <template v-if="agendaTeam.showsTeam.value" #staff>
+              <AppointmentStaffLine
+                :name="agendaTeam.staffNameOf(request)"
+                :client="request.clientName"
+                :can-reassign="agendaTeam.canReassign(request)"
+                @reassign="reassignOverlay.open(String(request.id))"
+              />
+            </template>
+          </TodayAgendaCard>
         </li>
       </ul>
       <p v-else class="mt-4 rounded-card bg-surface px-4 py-6 text-center text-sm text-muted ring-1 ring-line shadow-soft">
@@ -307,11 +344,20 @@ async function undo(): Promise<void> {
       </p>
     </section>
 
-    <section v-if="agendaStore.upcoming.length" class="mt-10" aria-labelledby="upcoming-title">
+    <section v-if="upcoming.length" class="mt-10" aria-labelledby="upcoming-title">
       <h2 id="upcoming-title" class="text-xl">{{ t('dashboard.upcoming.title') }}</h2>
       <ul class="mt-4 grid gap-3">
-        <li v-for="request in agendaStore.upcoming" :key="request.id">
-          <UpcomingAppointmentCard :request="request" :price-in-cents="priceOf(request)" :barbershop-name="profile.name" />
+        <li v-for="request in upcoming" :key="request.id">
+          <UpcomingAppointmentCard :request="request" :price-in-cents="priceOf(request)" :barbershop-name="profile.name">
+            <template v-if="agendaTeam.showsTeam.value" #staff>
+              <AppointmentStaffLine
+                :name="agendaTeam.staffNameOf(request)"
+                :client="request.clientName"
+                :can-reassign="agendaTeam.canReassign(request)"
+                @reassign="reassignOverlay.open(String(request.id))"
+              />
+            </template>
+          </UpcomingAppointmentCard>
         </li>
       </ul>
     </section>
@@ -320,25 +366,34 @@ async function undo(): Promise<void> {
       <div class="flex items-center justify-between">
         <h2 class="text-xl">{{ t('dashboard.pendingTitle') }}</h2>
         <span class="flex h-7 min-w-7 items-center justify-center rounded-full bg-accent px-2 text-xs font-extrabold text-on-accent">
-          {{ agendaStore.isLoaded ? agendaStore.pendingRequests.length : '·' }}
+          {{ agendaStore.isLoaded ? pending.length : '·' }}
         </span>
       </div>
 
       <TransitionGroup tag="ul" name="request" class="relative mt-4 grid gap-3">
-        <li v-for="request in agendaStore.pendingRequests" :key="request.id">
+        <li v-for="request in pending" :key="request.id">
           <PendingRequestCard
             :request="request"
             :price-in-cents="priceOf(request)"
             @accept="attempt(() => agendaStore.accept($event))"
             @reject="attempt(() => agendaStore.reject($event))"
-          />
+          >
+            <template v-if="agendaTeam.showsTeam.value" #staff>
+              <AppointmentStaffLine
+                :name="agendaTeam.staffNameOf(request)"
+                :client="request.clientName"
+                :can-reassign="agendaTeam.canReassign(request)"
+                @reassign="reassignOverlay.open(String(request.id))"
+              />
+            </template>
+          </PendingRequestCard>
         </li>
       </TransitionGroup>
       <ul v-if="!agendaStore.isLoaded" class="mt-4 grid gap-3" aria-hidden="true">
         <li class="h-40 animate-pulse rounded-card bg-surface ring-1 ring-line" />
       </ul>
       <p
-        v-else-if="agendaStore.pendingRequests.length === 0"
+        v-else-if="pending.length === 0"
         class="mt-4 rounded-card bg-surface px-4 py-6 text-center text-sm text-muted ring-1 ring-line shadow-soft"
       >
         {{ t('dashboard.pendingEmpty') }}
@@ -352,6 +407,12 @@ async function undo(): Promise<void> {
       :message="t('dashboard.agenda.completedToast', { value: formatBRL(lastCompleted.pending.value.priceInCents) })"
       :action-label="t('dashboard.agenda.undo')"
       @action="undo"
+    />
+    <ReassignSheet
+      v-if="reassigning && agendaTeam.canReassign(reassigning)"
+      :request="reassigning"
+      :staff="agendaTeam.reassignTargets(reassigning)"
+      @close="reassignOverlay.close()"
     />
   </main>
 </template>
