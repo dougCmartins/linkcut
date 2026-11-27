@@ -7,9 +7,12 @@ namespace Domain\Orchestrator\StaffMove\Data;
 use Domain\Team\Data\StaffBusinessHourData;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Attributes\Validation\ArrayType;
+use Spatie\LaravelData\Attributes\Validation\Date;
+use Spatie\LaravelData\Attributes\Validation\DateFormat;
 use Spatie\LaravelData\Attributes\Validation\In;
 use Spatie\LaravelData\Attributes\Validation\IntegerType;
 use Spatie\LaravelData\Attributes\Validation\Min;
+use Spatie\LaravelData\Attributes\Validation\Nullable;
 use Spatie\LaravelData\Attributes\Validation\Required;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\DataCollection;
@@ -27,8 +30,8 @@ final class MoveStaffData extends Data
     public function __construct(
         #[Required, IntegerType, Min(1)]
         public readonly int $to_unit_id,
-        /** Only "transfer" for now; the loan comes with step P2. */
-        #[Required, In(['transfer'])]
+        /** "transfer" (no end) or "loan" (until `ends_on`, then the barber comes back). */
+        #[Required, In(['transfer', 'loan'])]
         public readonly string $kind,
         #[Required, DataCollectionOf(StaffBusinessHourData::class)]
         public readonly DataCollection $weekly_hours,
@@ -36,6 +39,9 @@ final class MoveStaffData extends Data
         public readonly array $service_ids,
         #[Required, In(['keep', 'reset'])]
         public readonly string $permissions,
+        /** The loan's last day at the destination (required for a loan, ignored for a transfer). */
+        #[Nullable, Date, DateFormat('Y-m-d')]
+        public readonly ?string $ends_on = null,
     ) {}
 
     /** @return array<string, list<string>> */

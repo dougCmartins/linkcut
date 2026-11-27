@@ -9,6 +9,7 @@ use Domain\Team\Data\StaffMoveRecordData;
 use Domain\Team\Enums\StaffMoveKind;
 use Domain\Team\Enums\StaffMoveStatus;
 use Domain\Team\Models\StaffMove;
+use Domain\Team\Support\StaffMoveMapper;
 
 /** Writes the move down (who, from where to where, which kind, since when). */
 final class RecordStaffMove
@@ -30,15 +31,6 @@ final class RecordStaffMove
             'created_by' => $data->created_by,
         ]);
 
-        return new StaffMoveData(
-            id: $move->id,
-            user_id: $move->user_id,
-            from_staff_id: $move->from_staff_id,
-            to_staff_id: $move->to_staff_id,
-            kind: $move->kind->value,
-            starts_on: $move->starts_on->toDateString(),
-            ends_on: $move->ends_on?->toDateString(),
-            status: $move->status->value,
-        );
+        return StaffMoveMapper::toData($move);
     }
 }

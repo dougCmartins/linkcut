@@ -28,6 +28,7 @@ use Domain\Team\Data\StaffMoveRecordData;
 use Domain\Team\Data\UpdateStaffHoursData;
 use Domain\Team\Data\UpdateStaffServicesData;
 use Domain\Team\Enums\StaffMoveKind;
+use Domain\Team\Exceptions\LoanEndInvalidException;
 use Domain\Team\Exceptions\OwnerRequiredException;
 use Domain\Team\Exceptions\StaffServiceUnavailableException;
 use Domain\Tenant\Actions\EnsureTenantIsActive;
@@ -41,7 +42,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * "Mover para outra filial", a transfer (docs/decisoes/0003 P1), across domains. The current unit is the origin.
+ * "Mover para outra filial", a transfer or a loan until a date (docs/decisoes/0003 P1 and P2), across domains. The current unit is the origin.
  * Refused, with nothing changed, when the barber still has bookings to attend here (the owner passes them first).
  * In one transaction: the barber's row at the destination is turned on (the old one when they worked there before)
  * with the hours, services and switches the owner chose (Team; services checked against the destination's, Settings),
@@ -83,8 +84,12 @@ final class MoveStaff
             throw new StaffHasUpcomingAppointmentsException($upcoming);
         }
         $startsOn = $this->clock->today()->toDateString();
+        $kind = StaffMoveKind::from($data->kind);
+        if ($kind === StaffMoveKind::Loan && ($data->ends_on === null || $data->ends_on <= $startsOn)) {
+            throw new LoanEndInvalidException;
+        }
 
-        $move = DB::transaction(function () use ($barber, $data, $destination, $originId, $owner, $organizationId, $startsOn): StaffMoveData {
+        $move = DB::transaction(function () use ($barber, $data, $destination, $originId, $owner, $organizationId, $startsOn, $kind): StaffMoveData {
             $toStaffId = $this->currentTenant->run($destination->id, function () use ($barber, $data): int {
                 $this->ensureDestinationServices($data->service_ids);
                 $toStaffId = $this->placeStaff->handle(new PlaceStaffData(
@@ -108,9 +113,9 @@ final class MoveStaff
                 user_id: $barber->user_id,
                 from_staff_id: $barber->staff_id,
                 to_staff_id: $toStaffId,
-                kind: StaffMoveKind::from($data->kind),
+                kind: $kind,
                 starts_on: $startsOn,
-                ends_on: null,
+                ends_on: $kind === StaffMoveKind::Loan ? $data->ends_on : null,
                 created_by: $owner->id,
             ));
         });

@@ -15,6 +15,7 @@ use Domain\Schedule\Data\DateRangeData;
 use Domain\Settings\Actions\ShowBookingOptions;
 use Domain\Settings\Data\BusinessHourData;
 use Domain\Team\Actions\ListActiveStaffForServices;
+use Domain\Team\Actions\ListLoanEndDates;
 use Domain\Team\Actions\ListStaffBlockRangesForDate;
 use Domain\Team\Actions\ListStaffBusinessHours;
 use Domain\Team\Data\StaffBusinessHourData;
@@ -29,6 +30,7 @@ final class ShowAvailability
         private readonly ShowBookingOptions $showBookingOptions,
         private readonly ListBusySlots $listBusySlots,
         private readonly ListActiveStaffForServices $listActiveStaff,
+        private readonly ListLoanEndDates $listLoanEndDates,
         private readonly ListStaffBusinessHours $listHours,
         private readonly ListStaffBlockRangesForDate $listBlocks,
         private readonly TenantClock $clock,
@@ -47,12 +49,17 @@ final class ShowAvailability
         $now = $this->clock->now();
         $today = $now->startOfDay();
         $last = $today->addDays($options->booking_window_days - 1);
+        // A borrowed barber is offered only until the last day of the loan (docs/decisoes/0003), one query for all.
+        $lastDays = $this->listLoanEndDates->handle($staffIds);
 
         $days = [];
         for ($day = $today; $day <= $last; $day = $day->addDay()) {
             $date = $day->toDateString();
             $times = [];
             foreach ($staffIds as $staffId) {
+                if (isset($lastDays[$staffId]) && $date > $lastDays[$staffId]) {
+                    continue;
+                }
                 $staffHours = $this->staffHoursForDay($staffId, $day->dayOfWeek);
                 $hours = $staffHours === null ? null : new BusinessHourData(
                     weekday: $staffHours->weekday,

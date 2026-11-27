@@ -10,6 +10,7 @@ use Domain\Identity\Models\SignUpCode;
 use Domain\Identity\Models\TwoFactorChallenge;
 use Domain\Orchestrator\ClientEmails\Actions\InviteClientsToRegister;
 use Domain\Orchestrator\ClientEmails\Actions\SendBookingReminders;
+use Domain\Orchestrator\StaffMove\Actions\EndDueLoans;
 use Domain\Settings\Actions\PruneUnusedImages;
 use Domain\Settings\Data\PruneImagesData;
 use Domain\Tenant\Actions\ListTenantsForAdmin;
@@ -54,7 +55,13 @@ Artisan::command('client:invite-registration', function (InviteClientsToRegister
     $this->info('Invitations sent: '.$invites->handle());
 })->purpose('E-mail clients who booked but did not complete the sign-up (once)');
 
+Artisan::command('team:end-loans', function (EndDueLoans $endLoans): void {
+    $this->info('Loans ended: '.$endLoans->handle());
+})->purpose('Bring back the barbers whose loan to another unit ended (docs/decisoes/0003)');
+
 Schedule::command('schedule:send-reminders')->hourly()->withoutOverlapping();
+// Just after midnight in Brazil; each loan is checked against its unit's own local day.
+Schedule::command('team:end-loans')->dailyAt('03:10')->withoutOverlapping();
 Schedule::command('client:invite-registration')->hourly()->withoutOverlapping();
 
 // Keys of the push notifications. Idempotent: writes them to .env only when missing (the Docker entrypoint runs it).
