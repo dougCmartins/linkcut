@@ -68,7 +68,7 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
     - barbeiro, outra organização e convite pendente recebem erro;
     - transferir de volta reativa a ficha antiga (nenhuma ficha nova).
 
-- [ ] **P2 — Empréstimo (backend).**
+- [x] **P2 — Empréstimo (backend).**
   - `POST team/staff/{id}/move` com `kind: "loan"` e `ends_on` (obrigatório, depois de `starts_on`). Mesmo fluxo do P1.
   - **Durante o empréstimo:** a ficha do destino só é oferecida no agendamento até `ends_on`; a da origem não é oferecida.
   - **Ações sobre um empréstimo ativo** (`team/moves/{id}`):
@@ -115,6 +115,43 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-27 — execução 2
+- **Feito: P2, empréstimo (backend).**
+  - **Movimento:** `POST /api/team/staff/{id}/move` agora aceita `kind: "loan"` com `ends_on`, obrigatório e depois de hoje; senão dá 422 `LOAN_END_INVALID`.
+  - **Ações sobre o empréstimo ativo,** só para a dona e só da marca dela; os outros recebem 404 `STAFF_MOVE_NOT_FOUND`:
+    - `PATCH /api/team/moves/{id}/extend` com `ends_on` depois de hoje e depois do fim atual;
+    - `POST .../end`: o barbeiro volta agora;
+    - `POST .../make-permanent`: vira transferência (`ends_on` nulo, `status = made_permanent`).
+  - **Volta:**
+    - liga a ficha da origem e desliga a do destino, sem apagar nenhuma;
+    - o `users.tenant_id` volta para a origem;
+    - o movimento fica `ended`, e o barbeiro recebe um e-mail;
+    - atendimentos futuros no destino recusam a volta com o mesmo 409 do P1.
+  - **Volta automática:** `team:end-loans`, agendado todo dia às 03:10 UTC (00:10 em Brasília).
+    - Cada empréstimo é conferido no dia local da filial de destino.
+    - Rodar duas vezes não muda nada.
+    - Um empréstimo com atendimento pendente no destino é pulado e registrado no log.
+  - **Agenda pública:** o barbeiro emprestado só é oferecido no destino até o `ends_on`.
+    - Na reserva, o limite entra na mesma consulta que já lista os barbeiros (`Staff::bookableOn`), como pede a seção 4; o `QueryBudgetTest` da reserva continua dentro do orçamento.
+    - Na disponibilidade, é uma consulta só para todos os barbeiros.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/StaffMove/Tests/Feature/LoanTest.php`: 6 testes.
+      - Data de fim obrigatória e depois de hoje.
+      - Estender, encerrar agora e recusa para o barbeiro.
+      - Tornar definitivo: o comando não devolve o barbeiro depois.
+      - Atendimento no destino: recusa a volta.
+      - Comando: devolve no dia seguinte ao `ends_on` e não muda nada na 2ª vez.
+      - Agenda pública: sem horários depois do `ends_on`, e a reserva para depois dessa data é recusada.
+    - 348 testes no total.
+    - Commit `77a70c8`.
+- **Já estava aplicado:** P1 (execução 1).
+- **Pendente:** P3 (tela) e P4 (ganhos por pessoa).
+- **Perguntas para o dono/arquiteto:** a pergunta 2 da seção 6 continua aberta e não bloqueia. Por enquanto a origem não oferece o barbeiro durante o empréstimo, nem para datas depois da volta.
+- **Riscos ou desvios:**
+  - Reservar um barbeiro escolhido para uma data depois do fim do empréstimo responde 404 `STAFF_NOT_FOUND` (ele não está disponível). No modo "qualquer um", ele só não entra na escolha.
+  - A rota de encerrar o empréstimo responde 201, como as outras rotas POST do projeto.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
 
 ### 2026-11-26 — execução 1
 - **Feito: P1, dados e transferência definitiva (backend).**
