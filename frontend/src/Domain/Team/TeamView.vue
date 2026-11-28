@@ -7,6 +7,10 @@ import TextField from '@/components/ui/TextField.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 import { useApiErrors } from '@/composables/useApiErrors'
 import { useAuthStore } from '@/Domain/Identity/auth.store'
+import { useQueryOverlay } from '@/composables/useQueryOverlay'
+import { useOrganizationStore } from '@/Domain/Tenant/organization.store'
+import BrandMovesCard from './BrandMovesCard.vue'
+import MoveStaffSheet from './MoveStaffSheet.vue'
 import { useTeamStore } from './team.store'
 import type { StaffMember, StaffPermissions } from './team.model'
 
@@ -16,6 +20,32 @@ const auth = useAuthStore()
 const team = useTeamStore()
 
 const isOwner = computed(() => auth.user?.role === 'owner')
+const organization = useOrganizationStore()
+// "?mover=<id>": the move form is its own history entry, so the phone's back button closes it (docs/decisoes/0003).
+const moveOverlay = useQueryOverlay('mover')
+const movesCard = ref<InstanceType<typeof BrandMovesCard> | null>(null)
+const otherUnits = computed(() => organization.units.filter((unit) => unit.id !== organization.activeUnit?.id))
+const movingMember = computed(() => team.members.find((member) => String(member.id) === moveOverlay.value.value) ?? null)
+const notice = ref('')
+
+/** Only a barber with a login, active, in a brand with another unit. */
+function canMove(member: StaffMember): boolean {
+  return isOwner.value && organization.isMultiUnit && otherUnits.value.length > 0 && member.active && !member.pendingInvite && member.userId !== null
+}
+
+async function afterMove(): Promise<void> {
+  const name = movingMember.value?.name ?? ''
+  moveOverlay.close()
+  notice.value = t('staffMove.done', { name })
+  team.clear()
+  await team.ensureLoaded()
+  await movesCard.value?.load()
+}
+
+async function afterMoveChange(): Promise<void> {
+  team.clear()
+  await team.ensureLoaded()
+}
 const error = ref('')
 const inviting = ref(false)
 const inviteName = ref('')
@@ -23,6 +53,7 @@ const inviteEmail = ref('')
 const showInviteForm = ref(false)
 
 onMounted(() => {
+  void organization.ensureLoaded()
   void team.ensureLoaded().catch((caught: unknown) => {
     error.value = t(`errors.api.${messageKey(caught)}`)
   })
@@ -77,6 +108,10 @@ async function togglePermission(member: StaffMember, key: keyof StaffPermissions
       {{ error }}
     </p>
 
+    <p v-if="notice" class="mb-4 rounded-card bg-success/10 px-3 py-2 text-sm font-semibold text-success" role="status">{{ notice }}</p>
+
+    <BrandMovesCard v-if="isOwner && organization.isMultiUnit" ref="movesCard" @changed="afterMoveChange" />
+
     <div v-if="isOwner" class="mb-6">
       <BaseButton v-if="!showInviteForm" type="button" @click="showInviteForm = true">
         {{ t('team.addBarber') }}
@@ -119,6 +154,9 @@ async function togglePermission(member: StaffMember, key: keyof StaffPermissions
         >
           {{ t('team.agenda.openShort') }} →
         </RouterLink>
+        <button v-if="canMove(member)" type="button" class="mt-3 ml-4 inline-flex text-sm font-bold text-accent" @click="moveOverlay.open(String(member.id))">
+          {{ t('staffMove.open') }} →
+        </button>
         <div v-if="isOwner" class="mt-4 space-y-3 border-t border-line pt-3">
           <p class="text-xs font-bold uppercase tracking-wide text-muted">{{ t('team.permissions') }}</p>
           <ToggleSwitch
@@ -140,5 +178,14 @@ async function togglePermission(member: StaffMember, key: keyof StaffPermissions
       </li>
     </ul>
     <p v-else-if="team.loading" class="text-sm text-muted">{{ t('team.loading') }}</p>
+
+    <MoveStaffSheet
+      v-if="movingMember && canMove(movingMember)"
+      :member="movingMember"
+      :units="otherUnits"
+      :teammates="team.members"
+      @close="moveOverlay.close()"
+      @moved="afterMove"
+    />
   </div>
 </template>
