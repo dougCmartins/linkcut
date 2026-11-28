@@ -79,7 +79,7 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
   - **Volta automática:** comando agendado diário (no `TenantClock` da unidade de destino) que encerra os empréstimos com `ends_on` vencido. Idempotente.
   - **Aceite:** estender, encerrar e tornar definitivo funcionam e são recusados para quem não é dona; o comando agendado devolve o barbeiro no dia seguinte ao `ends_on` e rodar duas vezes não muda nada; o agendamento público não oferece o barbeiro no destino depois de `ends_on`.
 
-- [ ] **P3 — Tela do movimento (frontend).**
+- [x] **P3 — Tela do movimento (frontend).**
   - Em "Minha equipe", cada barbeiro (com login, unidade com 2+ filiais na organização) ganha "Mover para outra filial".
   - **Formulário em passos** (overlay com `useQueryOverlay`):
     1. filial de destino e tipo: "Transferência definitiva" ou "Empréstimo até [data]";
@@ -115,6 +115,39 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-28 — execução 3
+- **Feito: P3, tela do movimento.**
+  - **Leituras novas no backend:**
+    - `GET /api/team/staff/{id}/move-options?to_unit_id=`: o horário da filial de destino (a sugestão) e os serviços dela, só com os nomes, sem preço;
+    - `GET /api/team/moves`: os movimentos ativos da marca, com o nome do barbeiro e das filiais.
+    - As duas são só para a dona e só da marca dela.
+  - **Botão "Mover para outra filial"** em "Minha equipe", para cada barbeiro ativo com login, quando a marca tem outra filial.
+    - Abre um overlay `?mover=<id>`; o "voltar" do celular fecha.
+  - **Os 5 passos:**
+    1. filial de destino e tipo: "Transferência definitiva" ou "Empréstimo" com o último dia;
+    2. horário, com o `StaffHoursSection` já preenchido com o horário da filial de destino e o intervalo;
+    3. serviços, com o `StaffServicesSection` e todos marcados;
+    4. permissões: "Manter as atuais" ou "Começar sem permissões";
+    5. resumo e confirmar.
+  - **Atendimentos que impedem o movimento:** cada um aparece com "Passar para" e a escolha de outro barbeiro ativo da unidade, pela rota de passar atendimento da 0002. Quando a lista esvazia, dá para confirmar de novo.
+  - **"Movimentos ativos":** um cartão com "{barbeiro}: emprestado para {filial} até {data}" e os botões "Estender" (nova data), "Encerrar agora" e "Tornar definitivo".
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/StaffMove/Tests/Feature/MoveOptionsTest.php`: 2 testes;
+    - `frontend/src/Domain/Team/__tests__/MoveStaff.test.ts`: 4 testes:
+      - o corpo enviado ao fim dos passos;
+      - a lista de atendimentos e o "Passar";
+      - as 3 ações do empréstimo e as rotas certas;
+      - barbeiro e conta individual não veem nada.
+    - Frontend: 446 testes, typecheck e build; backend: 350 testes.
+    - Commits: as leituras do backend e `2e3529c` (frontend).
+- **Já estava aplicado:** P1 e P2 (execuções 1 e 2).
+- **Pendente:** P4 (ganhos por pessoa e por unidade, e a seção "Filial anterior" para o barbeiro).
+- **Perguntas para o dono/arquiteto:** nenhuma nova.
+- **Riscos ou desvios:**
+  - O cartão "Movimentos ativos" fica na tela "Minha equipe" de qualquer filial e mostra os movimentos da marca inteira.
+  - As datas aparecem como `AAAA-MM-DD`. Falta formatar em `dd/mm`, um ajuste pequeno de texto.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
 
 ### 2026-11-27 — execução 2
 - **Feito: P2, empréstimo (backend).**
