@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Domain\Team\Models;
 
+use Domain\Team\Enums\StaffMoveKind;
+use Domain\Team\Enums\StaffMoveStatus;
 use Domain\Tenant\Models\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -29,6 +32,21 @@ final class Staff extends Model
         return [
             'active' => 'boolean',
         ];
+    }
+
+    /**
+     * Bookable on a day: not a borrowed barber whose loan ends before it (docs/decisoes/0003). A subquery, so the
+     * list of barbers stays one query.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeBookableOn(Builder $query, string $day): void
+    {
+        $query->whereNotExists(fn ($loans) => $loans->selectRaw('1')->from('staff_moves')
+            ->whereColumn('staff_moves.to_staff_id', 'staff.id')
+            ->where('staff_moves.kind', StaffMoveKind::Loan->value)
+            ->where('staff_moves.status', StaffMoveStatus::Active->value)
+            ->where('staff_moves.ends_on', '<', $day));
     }
 
     /** @return HasOne<StaffPermission, $this> */

@@ -12,9 +12,12 @@ use Domain\Team\Support\StaffDataMapper;
 
 final class FindStaffById
 {
-    public function handle(StaffIdData $data): StaffData
+    /** With a day: a borrowed barber whose loan ends before it is not found (docs/decisoes/0003), same query. */
+    public function handle(StaffIdData $data, ?string $bookableOn = null): StaffData
     {
-        $staff = Staff::query()->whereKey($data->id)->with('permissions')->first()
+        $staff = Staff::query()->whereKey($data->id)
+            ->when($bookableOn !== null, fn ($query) => $query->bookableOn($bookableOn))
+            ->with('permissions')->first()
             ?? throw new StaffNotFoundException;
 
         return StaffDataMapper::toData($staff);

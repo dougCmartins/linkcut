@@ -133,7 +133,8 @@ final class RequestBooking
         array $serviceIds,
     ): int {
         if ($data->staff_id !== null) {
-            $this->findStaff->handle(new StaffIdData(id: $data->staff_id));
+            // A borrowed barber takes bookings only until the last day of the loan (docs/decisoes/0003).
+            $this->findStaff->handle(new StaffIdData(id: $data->staff_id), bookableOn: $data->date);
 
             return $this->candidate($data->staff_id, $data, $options, $service)?->staff_id
                 ?? throw new SlotUnavailableException;
@@ -141,7 +142,7 @@ final class RequestBooking
 
         $candidates = array_values(array_filter(array_map(
             fn (int $staffId): ?StaffCandidate => $this->candidate($staffId, $data, $options, $service),
-            $this->listActiveStaff->handle($serviceIds),
+            $this->listActiveStaff->handle($serviceIds, onDay: $data->date),
         )));
 
         return PickAnyStaff::pick($candidates) ?? throw new SlotUnavailableException;

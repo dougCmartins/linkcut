@@ -1,6 +1,6 @@
 # 0003. Transferência e empréstimo de barbeiro entre filiais
 
-- **Status:** Decidido
+- **Status:** Em execução
   <!-- Decidido → Em execução → Aplicado. Bloqueado: o executor parou por uma pergunta aberta (ver "Execução"). -->
 - **Data da decisão:** 2026-11-25
 - **Origem:** chat do arquiteto (conversa com o dono em 25/11, a partir da pergunta 4 da 0002)
@@ -53,7 +53,7 @@ Sobre o formato, o dono pediu (25/11): "abre o leque e deixa pro usuário decidi
 ## 4. Como aplicar
 Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o relatório.
 
-- [ ] **P1 — Dados e transferência definitiva (backend).**
+- [x] **P1 — Dados e transferência definitiva (backend).**
   - **Tabela `staff_moves`:** `id`, `organization_id`, `user_id`, `from_staff_id`, `to_staff_id`, `kind` (`transfer` | `loan`), `starts_on`, `ends_on` (nulo na transferência), `status` (`active` | `ended` | `made_permanent`), `created_by`, `ended_at`, `ended_by`, timestamps. Índice por `(organization_id, status)` e por `(user_id, status)`.
   - **Fluxo** em `Domain/Orchestrator/StaffMove` (cruza `Team`, `Identity` e `Schedule`):
     - `POST team/staff/{id}/move` com `{to_unit_id, kind: "transfer", weekly_hours: [...com intervalo], service_ids: [...], permissions: "keep" | "reset"}`;
@@ -68,7 +68,7 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
     - barbeiro, outra organização e convite pendente recebem erro;
     - transferir de volta reativa a ficha antiga (nenhuma ficha nova).
 
-- [ ] **P2 — Empréstimo (backend).**
+- [x] **P2 — Empréstimo (backend).**
   - `POST team/staff/{id}/move` com `kind: "loan"` e `ends_on` (obrigatório, depois de `starts_on`). Mesmo fluxo do P1.
   - **Durante o empréstimo:** a ficha do destino só é oferecida no agendamento até `ends_on`; a da origem não é oferecida.
   - **Ações sobre um empréstimo ativo** (`team/moves/{id}`):
@@ -79,7 +79,7 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
   - **Volta automática:** comando agendado diário (no `TenantClock` da unidade de destino) que encerra os empréstimos com `ends_on` vencido. Idempotente.
   - **Aceite:** estender, encerrar e tornar definitivo funcionam e são recusados para quem não é dona; o comando agendado devolve o barbeiro no dia seguinte ao `ends_on` e rodar duas vezes não muda nada; o agendamento público não oferece o barbeiro no destino depois de `ends_on`.
 
-- [ ] **P3 — Tela do movimento (frontend).**
+- [x] **P3 — Tela do movimento (frontend).**
   - Em "Minha equipe", cada barbeiro (com login, unidade com 2+ filiais na organização) ganha "Mover para outra filial".
   - **Formulário em passos** (overlay com `useQueryOverlay`):
     1. filial de destino e tipo: "Transferência definitiva" ou "Empréstimo até [data]";
@@ -115,3 +115,111 @@ Ordem: P1 → P2 → P3 → P4. P1 e P2 são backend; P3 é a tela; P4 é o rela
 
 ## 7. Execução
 <!-- Preenchido pelo executor. Uma entrada por execução, a mais nova em cima. -->
+
+### 2026-11-28 — execução 3
+- **Feito: P3, tela do movimento.**
+  - **Leituras novas no backend:**
+    - `GET /api/team/staff/{id}/move-options?to_unit_id=`: o horário da filial de destino (a sugestão) e os serviços dela, só com os nomes, sem preço;
+    - `GET /api/team/moves`: os movimentos ativos da marca, com o nome do barbeiro e das filiais.
+    - As duas são só para a dona e só da marca dela.
+  - **Botão "Mover para outra filial"** em "Minha equipe", para cada barbeiro ativo com login, quando a marca tem outra filial.
+    - Abre um overlay `?mover=<id>`; o "voltar" do celular fecha.
+  - **Os 5 passos:**
+    1. filial de destino e tipo: "Transferência definitiva" ou "Empréstimo" com o último dia;
+    2. horário, com o `StaffHoursSection` já preenchido com o horário da filial de destino e o intervalo;
+    3. serviços, com o `StaffServicesSection` e todos marcados;
+    4. permissões: "Manter as atuais" ou "Começar sem permissões";
+    5. resumo e confirmar.
+  - **Atendimentos que impedem o movimento:** cada um aparece com "Passar para" e a escolha de outro barbeiro ativo da unidade, pela rota de passar atendimento da 0002. Quando a lista esvazia, dá para confirmar de novo.
+  - **"Movimentos ativos":** um cartão com "{barbeiro}: emprestado para {filial} até {data}" e os botões "Estender" (nova data), "Encerrar agora" e "Tornar definitivo".
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/StaffMove/Tests/Feature/MoveOptionsTest.php`: 2 testes;
+    - `frontend/src/Domain/Team/__tests__/MoveStaff.test.ts`: 4 testes:
+      - o corpo enviado ao fim dos passos;
+      - a lista de atendimentos e o "Passar";
+      - as 3 ações do empréstimo e as rotas certas;
+      - barbeiro e conta individual não veem nada.
+    - Frontend: 446 testes, typecheck e build; backend: 350 testes.
+    - Commits: as leituras do backend e `2e3529c` (frontend).
+- **Já estava aplicado:** P1 e P2 (execuções 1 e 2).
+- **Pendente:** P4 (ganhos por pessoa e por unidade, e a seção "Filial anterior" para o barbeiro).
+- **Perguntas para o dono/arquiteto:** nenhuma nova.
+- **Riscos ou desvios:**
+  - O cartão "Movimentos ativos" fica na tela "Minha equipe" de qualquer filial e mostra os movimentos da marca inteira.
+  - As datas aparecem como `AAAA-MM-DD`. Falta formatar em `dd/mm`, um ajuste pequeno de texto.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
+### 2026-11-27 — execução 2
+- **Feito: P2, empréstimo (backend).**
+  - **Movimento:** `POST /api/team/staff/{id}/move` agora aceita `kind: "loan"` com `ends_on`, obrigatório e depois de hoje; senão dá 422 `LOAN_END_INVALID`.
+  - **Ações sobre o empréstimo ativo,** só para a dona e só da marca dela; os outros recebem 404 `STAFF_MOVE_NOT_FOUND`:
+    - `PATCH /api/team/moves/{id}/extend` com `ends_on` depois de hoje e depois do fim atual;
+    - `POST .../end`: o barbeiro volta agora;
+    - `POST .../make-permanent`: vira transferência (`ends_on` nulo, `status = made_permanent`).
+  - **Volta:**
+    - liga a ficha da origem e desliga a do destino, sem apagar nenhuma;
+    - o `users.tenant_id` volta para a origem;
+    - o movimento fica `ended`, e o barbeiro recebe um e-mail;
+    - atendimentos futuros no destino recusam a volta com o mesmo 409 do P1.
+  - **Volta automática:** `team:end-loans`, agendado todo dia às 03:10 UTC (00:10 em Brasília).
+    - Cada empréstimo é conferido no dia local da filial de destino.
+    - Rodar duas vezes não muda nada.
+    - Um empréstimo com atendimento pendente no destino é pulado e registrado no log.
+  - **Agenda pública:** o barbeiro emprestado só é oferecido no destino até o `ends_on`.
+    - Na reserva, o limite entra na mesma consulta que já lista os barbeiros (`Staff::bookableOn`), como pede a seção 4; o `QueryBudgetTest` da reserva continua dentro do orçamento.
+    - Na disponibilidade, é uma consulta só para todos os barbeiros.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/StaffMove/Tests/Feature/LoanTest.php`: 6 testes.
+      - Data de fim obrigatória e depois de hoje.
+      - Estender, encerrar agora e recusa para o barbeiro.
+      - Tornar definitivo: o comando não devolve o barbeiro depois.
+      - Atendimento no destino: recusa a volta.
+      - Comando: devolve no dia seguinte ao `ends_on` e não muda nada na 2ª vez.
+      - Agenda pública: sem horários depois do `ends_on`, e a reserva para depois dessa data é recusada.
+    - 348 testes no total.
+    - Commit `77a70c8`.
+- **Já estava aplicado:** P1 (execução 1).
+- **Pendente:** P3 (tela) e P4 (ganhos por pessoa).
+- **Perguntas para o dono/arquiteto:** a pergunta 2 da seção 6 continua aberta e não bloqueia. Por enquanto a origem não oferece o barbeiro durante o empréstimo, nem para datas depois da volta.
+- **Riscos ou desvios:**
+  - Reservar um barbeiro escolhido para uma data depois do fim do empréstimo responde 404 `STAFF_NOT_FOUND` (ele não está disponível). No modo "qualquer um", ele só não entra na escolha.
+  - A rota de encerrar o empréstimo responde 201, como as outras rotas POST do projeto.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR).
+
+### 2026-11-26 — execução 1
+- **Feito: P1, dados e transferência definitiva (backend).**
+  - **Tabela:** `staff_moves` com os campos e os índices da seção 4.
+  - **Rota:** `POST /api/team/staff/{id}/move` (`kind: "transfer"`), só para a dona.
+  - **Fluxo** em `Domain/Orchestrator/StaffMove/Actions/MoveStaff.php`. A unidade de origem é a escolhida no topo. Numa transação:
+    - a ficha do destino é ligada (a antiga, se ele já trabalhou lá; senão uma nova);
+    - os horários, com intervalo, e os serviços escolhidos são gravados. Os serviços são conferidos contra os do destino, senão `STAFF_SERVICE_UNAVAILABLE`;
+    - as permissões são mantidas ou desligadas, como a dona escolher;
+    - a ficha da origem é desligada, nunca apagada;
+    - o `users.tenant_id` passa para o destino;
+    - o movimento é gravado.
+  - **Depois:** o barbeiro recebe o e-mail "Você agora atende em {filial}".
+  - **Recusas:**
+    - com atendimentos futuros (pendentes ou confirmados, de hoje em diante) na origem: 409 `STAFF_HAS_UPCOMING_APPOINTMENTS`, com `data.appointments` (id, data, hora, cliente), e nada muda;
+    - outra marca ou a mesma unidade: `MOVE_DESTINATION_INVALID`;
+    - convite pendente: `STAFF_NOT_MOVABLE`;
+    - barbeiro tentando mover: 403.
+  - **Evidência:**
+    - `backend/src/Domain/Orchestrator/StaffMove/Tests/Feature/MoveStaffTest.php`: 5 testes.
+      - Transferência: o barbeiro entra no destino e recebe 403 com o `X-Unit` da origem.
+      - Ganhos: a comissão antiga fica igual na origem, e a nova sai pela regra do destino (30% contra 50% na origem).
+      - Atendimento futuro: recusa sem mudar nada.
+      - Erros: outra marca, mesma unidade, convite pendente, serviço da origem, empréstimo ainda não aceito e barbeiro.
+      - Volta: transferir de volta religa a ficha antiga, sem criar outra.
+    - 342 testes no total, o `ArchitectureTest` incluído.
+    - Commit `d036954`.
+- **Junto:** Symfony atualizado para a 7.4.24 (commit `a331cc5`). Avisos de segurança novos em `http-kernel`, `mailer` e `routing` derrubavam o `composer audit` do CI.
+- **Pendente:**
+  - **P2 (empréstimo):** a rota aceita só `transfer` por enquanto. `loan` dá 422 até o P2.
+  - **P3** (tela) e **P4** (ganhos por pessoa).
+  - **Push para o barbeiro no movimento:** só o e-mail foi feito.
+  - **LGPD:** os `staff_moves` ainda não entram na exportação.
+- **Perguntas para o dono/arquiteto:** nenhuma nova. A pergunta 2 da seção 6 não bloqueia.
+- **Riscos ou desvios:**
+  - O movimento começa sempre "hoje" (`starts_on` = hoje, na hora local da origem). A seção 4 não pede data futura para a transferência.
+  - Uma transferência de quem já tinha um movimento ativo encerra o anterior (`status = ended`), para haver um movimento ativo por pessoa.
+- **Branch / PR:** `claude/charming-euler-dh3nfa` (sem PR), a partir da `main` de 26/11. O histórico antigo do branch (P1 a P3 da 0001, substituído pela #76) foi preservado no merge.

@@ -10,4 +10,9 @@ return [
         'action' => 'Aceitar convite',
         'expiry' => 'Este link é de uso único e expira em alguns dias. Se não foi você, ignore este e-mail.',
     ],
+    'move' => [
+        'subject' => 'Você agora atende em :unit',
+        'intro' => 'A partir de :date você atende em :unit. Seu login continua o mesmo e já abre a agenda da nova filial.',
+        'next' => 'O que você ganhou na filial anterior continua registrado lá.',
+    ],
 ];
